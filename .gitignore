@@ -1,0 +1,7 @@
+# Local context files — not part of the published plugin.
+CLAUDE.md
+SUMMARY.md
+claude-*.md
+
+.DS_Store
+node_modules/
