@@ -1,7 +1,7 @@
 {
   "name": "lean-and-mean",
   "description": "Terse prose, YAGNI code, and automatic CLAUDE.md / SUMMARY.md maintenance. One operating mode, enforced every turn by hooks.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": {
     "name": "Spinlock Development",
     "url": "https://github.com/spinlockdevelopment"
