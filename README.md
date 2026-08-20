@@ -21,18 +21,30 @@ happen twice.
 
 ## Install
 
+In Claude Code:
+
 ```
 /plugin marketplace add spinlockdevelopment/lean-and-mean
 /plugin install lean-and-mean@lean-and-mean
 ```
 
+Or from your shell:
+
+```
+claude plugin marketplace add spinlockdevelopment/lean-and-mean
+claude plugin install lean-and-mean@lean-and-mean
+```
+
+Restart Claude Code afterwards — the hooks only load at session start.
+
 Requires Node.js on `PATH` (the hooks are plain Node scripts, no dependencies).
 
 Manual install, if you would rather not use the plugin system: copy
 `skills/lean-and-mean/` into `~/.claude/skills/`, copy `hooks/*.js` into
-`~/.claude/hooks/lean-and-mean/`, and add the four entries from
-`hooks/hooks.json` to `~/.claude/settings.json`, replacing
-`${CLAUDE_PLUGIN_ROOT}/hooks` with `$HOME/.claude/hooks/lean-and-mean`.
+`~/.claude/hooks/lean-and-mean/`, and copy the four event entries nested under
+the `hooks` key of `hooks/hooks.json` into the `hooks` object of
+`~/.claude/settings.json`, replacing `${CLAUDE_PLUGIN_ROOT}/hooks` with
+`$HOME/.claude/hooks/lean-and-mean`.
 
 ## Use
 
