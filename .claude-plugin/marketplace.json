@@ -9,8 +9,8 @@
     {
       "name": "lean-and-mean",
       "source": "./",
-      "description": "Terse prose, YAGNI code, and automatic CLAUDE.md / SUMMARY.md maintenance.",
-      "version": "1.0.1",
+      "description": "Terse prose and YAGNI code, installed into the project CLAUDE.md, plus /endsession.",
+      "version": "2.0.0",
       "license": "MIT",
       "keywords": ["yagni", "terse", "claude-md", "context-files", "operating-mode", "hooks"]
     }

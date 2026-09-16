@@ -1,23 +1,22 @@
 # lean-and-mean
 
-A Claude Code plugin: terse prose, YAGNI code, and automatic upkeep of your
-context files. It is one operating mode, re-asserted every turn by hooks, plus a
-skill that owns `CLAUDE.md` and `SUMMARY.md`.
+A Claude Code plugin: terse prose and YAGNI code, written into your project's
+`CLAUDE.md` once so it runs every session with nothing else in the loop. Plus
+`/endsession`, which closes a session by writing what was learned back into
+`CLAUDE.md` and `SUMMARY.md`, then stops.
 
-Two axes, one switch:
+Three axes:
 
 - **Prose** — drop articles, filler, hedging, pleasantries. Fragments are fine.
   Code, error text, commit messages, PR bodies, security warnings, and anything
-  you explicitly asked to be readable stay in full normal English at every level.
+  you explicitly asked to be readable stay in full normal English.
 - **Code** — a YAGNI ladder. Skip speculative work, reuse what is already in the
   repo, then stdlib, then the native platform feature, then an installed
   dependency, then one line, and only then new code. Never cut input validation
   at trust boundaries, error handling that prevents data loss, security, or
   accessibility.
-
-Plus a memory axis: every correction, failed approach, and footgun from a
-session becomes one binding line under `## Rules` in `CLAUDE.md`, so it does not
-happen twice.
+- **Memory** — every correction, failed approach, and footgun becomes one
+  binding line under `## Rules` in `CLAUDE.md`, so it does not happen twice.
 
 ## Install
 
@@ -35,62 +34,52 @@ claude plugin marketplace add spinlockdevelopment/lean-and-mean
 claude plugin install lean-and-mean@lean-and-mean
 ```
 
-Restart Claude Code afterwards — the hooks only load at session start.
+Restart Claude Code afterwards — the hook only loads at session start. No
+dependencies; the hook is a 16-line POSIX shell script.
 
-Requires Node.js on `PATH` (the hooks are plain Node scripts, no dependencies).
-
-Manual install, if you would rather not use the plugin system: copy
-`skills/lean-and-mean/` into `~/.claude/skills/`, copy `hooks/*.js` into
-`~/.claude/hooks/lean-and-mean/`, and copy the four event entries nested under
-the `hooks` key of `hooks/hooks.json` into the `hooks` object of
-`~/.claude/settings.json`, replacing `${CLAUDE_PLUGIN_ROOT}/hooks` with
-`$HOME/.claude/hooks/lean-and-mean`.
+Manual install: copy `skills/lean-and-mean/` and `skills/endsession/` into
+`~/.claude/skills/`, copy `hooks/session-start.sh` somewhere, and add the
+`SessionStart` entry from `hooks/hooks.json` to `~/.claude/settings.json`,
+pointing the command at that script.
 
 ## Use
 
-The mode activates itself at level `full` on first session start and stays on
-until you turn it off.
-
 | Command | Effect |
 |---------|--------|
-| `/lean-and-mean lite` | Build as asked, name the lazier alternative in one line, prose near-normal |
-| `/lean-and-mean full` | Ladder and terse prose both enforced. Default |
-| `/lean-and-mean ultra` | YAGNI-extremist code, maximally compressed prose |
-| `/lean-and-mean md review` | Restructure and prune `CLAUDE.md` + `SUMMARY.md`, promote lessons into Rules |
-| `/lean-and-mean md init` | Create a `CLAUDE.md` from the template |
-| `/lean-and-mean md split` | Force overflow sections out to `claude-<category>.md` |
-| `/lean-and-mean rules` | One-shot retro: this session's mistakes become Rules |
-| `/lean-and-mean review diff\|repo` | Bloat review — over-engineering only, not correctness |
+| `/lean-and-mean` | Create `CLAUDE.md` from the template, or review an existing one: refresh the Operating Mode block, restructure, prune, split anything over 250 lines. Idempotent |
 | `/lean-and-mean debt` | List every `// lean:` shortcut marker with its ceiling and upgrade path |
-| `stop lean-and-mean` / `normal mode` | Off. Deletes the flag; every hook goes silent |
+| `/endsession` | Final message of the session. Turns this session's mistakes into Rules, rewrites Next and Todo, prepends a `SUMMARY.md` entry, prints one report line, and stops. No questions, no follow-ups |
 
-## What the hooks do
+Installed as a plugin the skills are namespaced: `/lean-and-mean:endsession`
+and `/lean-and-mean:lean-and-mean`. A manual install into `~/.claude/skills/`
+gives the bare `/endsession` and `/lean-and-mean`.
 
-| Hook | Event | Does |
-|------|-------|------|
-| `lean-and-mean-activate.js` | SessionStart | Asserts the mode on any project, emits the ruleset and the project's Rules, and prints one maintenance line (usually "nothing due") |
-| `lean-and-mean-mode-tracker.js` | UserPromptSubmit | Level switching and a short per-turn reinforcement |
-| `lean-and-mean-wrapup.js` | Stop | At most once per session, and only after real edits: asks for the Next / Rules / `SUMMARY.md` wrap-up pass |
-| `lean-and-mean-age-summary.js` | SessionEnd | Mechanically ages `SUMMARY.md` by priority TTL and the 10-entry cap. No model involved |
+`/endsession` is a hard stop. Anything you pass as an argument that looks like
+a task is written under `## Next`, not done. The model never invokes it on its
+own.
 
-State lives in `~/.claude/.lean-and-mean-active` (the level) and
-`~/.claude/.lean-and-mean-state/` (per-session, so the Stop hook nudges once).
-Set `CLAUDE_CONFIG_DIR` to relocate both.
+## How it works
 
-`SUMMARY.md` aging never deletes a P1 or P2 entry. Past its TTL it is flagged
-` · AGED` and survives until the next `md review` either promotes its lesson
-into `## Rules` or drops it, so a hard-won rule cannot vanish on a timer.
+`CLAUDE.md` is loaded by Claude Code natively, so once the `## Operating Mode`
+block is in it the mode is on for that project with no hook, flag, or per-turn
+reminder. The block is `skills/lean-and-mean/operating-mode.md`, pasted
+verbatim.
 
-## Test
+One hook, `SessionStart`: if `CLAUDE.md` has the block it says nothing, unless
+the file is over 250 lines, in which case it prints one line. If the block is
+missing it prints the block into context, so the mode is active anyway, and
+asks you to run `/lean-and-mean` to make it permanent.
 
-```
-node hooks/lean-and-mean-age-summary.js --selftest
-```
+`SUMMARY.md` is history only, newest first, capped at ten entries; the oldest
+drops when `/endsession` writes a new one. Lessons worth keeping longer are
+already in `## Rules` by then.
+
+Off: delete the block from `CLAUDE.md`, or disable the plugin.
 
 ## Boundaries
 
 This governs code shape, spoken terseness, and context files. It does not review
-correctness — pair it with `/code-review` for that.
+correctness — pair it with `/code-review`. Bloat review of code is `/simplify`.
 
 ## License
 
