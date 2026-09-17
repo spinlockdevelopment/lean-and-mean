@@ -23,7 +23,9 @@ Off: remove the block from CLAUDE.md, or disable the plugin.
 
 ## `/lean-and-mean` — set up or review CLAUDE.md
 
-Idempotent. Rerunning converges.
+Idempotent. Rerunning converges. `/endsession` runs this same pass before it
+writes Rules, Next, Todo and SUMMARY.md, so run it by hand only for setup or
+a mid-session tidy.
 
 1. No CLAUDE.md → create from the structure below. Fill Project & Stack,
    Commands, Architecture & Layout from the repo. Leave Rules empty.

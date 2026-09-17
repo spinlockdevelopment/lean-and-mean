@@ -1,38 +1,62 @@
 ---
 name: endsession
 description: >
-  Close the session. Writes Rules, Next, Todo into CLAUDE.md and a SUMMARY.md
-  entry, then stops. Hard stop — final message, no questions, no follow-ups.
-  User-invoked only; never triggered by the model.
+  Close the session. Runs the full CLAUDE.md review and prune, writes Rules,
+  Next, Todo and a SUMMARY.md entry, prints a plain-language summary, stops.
+  Hard stop — final message, no follow-ups. User-invoked only.
 disable-model-invocation: true
 license: MIT
 ---
 
 # End session — final message
 
-This is the last message of the session. Do the pass, print the report, stop.
+Do the pass, print the summary, stop. No offers, no "next I could", no new
+work. Anything in `$ARGUMENTS` that is a task goes under `## Next`, not done now.
 
-Hard stop means: no questions, no offers, no "next I could", no new work.
-Anything in `$ARGUMENTS` that is a task goes under `## Next`, not done now.
-Do not end with a question or an offer. The report line is the final output.
+## Questions
+
+Default is zero. Ask only when a delete or merge would destroy information
+you cannot recover from the code, git, or this session — and you cannot tell
+whether it still matters: dropping or merging a Rule, dropping a Notes entry,
+dropping a P1 Todo. If it is clearly stale, throw it out without asking.
+
+All questions in one batch, before any file is written, max 3. More than 3
+undecidable items → keep them all, list them under Todo as `P3 — confirm:
+<item>`, do not ask. Nothing about the project itself.
 
 ## Pass
 
-1. **Rules** — scan this session for corrections the user made, approaches
+1. No CLAUDE.md → run `/lean-and-mean` to create it, then continue.
+2. **Review and prune** — the `/lean-and-mean` pass: refresh Operating Mode
+   block, fix structure, verify Commands and Architecture paths, prune, split
+   if over 250 lines.
+3. **Rules** — scan this session for corrections the user made, approaches
    that failed, commands that didn't exist, wrong assumptions. Each becomes one
-   line under `## Rules` in CLAUDE.md: `- <imperative>. <why — the cost>. <YYYY-MM-DD>`.
+   line under `## Rules`: `- <imperative>. <why — the cost>. <YYYY-MM-DD>`.
    Same area as an existing rule → tighten it. Nothing learned → add nothing.
-2. **Next** — rewrite `## Next` to the real next action. Delete finished
-   `## Todo` items, add newly required ones.
-3. **Sanity** — Commands still run, Architecture & Layout paths exist,
-   CLAUDE.md under 250 lines.
-4. **SUMMARY.md** — prepend `## <today> · <focus, ≤6 words>` with 1–2 fragment
+4. **Next and Todo** — rewrite `## Next` to the real next action. Delete
+   finished Todo items, add newly required ones.
+5. **SUMMARY.md** — prepend `## <today> · <focus, ≤6 words>` with 1–2 fragment
    bullets. Keep the newest 10 entries, delete the rest. Refresh `_Updated:`.
    Create the file if missing.
-5. No CLAUDE.md → run `/lean-and-mean` first, then 1–4.
 
-## Report
+## Summary
 
-One line, then stop:
+Plain, simple language. Full sentences, no jargon, no fragments. This is the
+final output.
 
-`session closed. rules +<k>. next: <one line>. summary +1.`
+```
+Session closed.
+
+Done this session:
+- <what was built or fixed, one line each>
+
+Updated:
+- CLAUDE.md: <what changed — rules added, sections pruned, lines n → m>
+- SUMMARY.md: <entry added; entries dropped, if any>
+
+Next time:
+- <the first thing to do, from ## Next>
+```
+
+Omit any line that would say "nothing". Then stop.

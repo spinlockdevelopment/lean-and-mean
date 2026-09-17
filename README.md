@@ -48,7 +48,7 @@ pointing the command at that script.
 |---------|--------|
 | `/lean-and-mean` | Create `CLAUDE.md` from the template, or review an existing one: refresh the Operating Mode block, restructure, prune, split anything over 250 lines. Idempotent |
 | `/lean-and-mean debt` | List every `// lean:` shortcut marker with its ceiling and upgrade path |
-| `/endsession` | Final message of the session. Turns this session's mistakes into Rules, rewrites Next and Todo, prepends a `SUMMARY.md` entry, prints one report line, and stops. No questions, no follow-ups |
+| `/endsession` | Final message of the session. Runs the `/lean-and-mean` review and prune, turns this session's mistakes into Rules, rewrites Next and Todo, prepends a `SUMMARY.md` entry, then prints a plain-language summary of what was done, what was updated, and what is next. Then stops |
 
 Installed as a plugin the skills are namespaced: `/lean-and-mean:endsession`
 and `/lean-and-mean:lean-and-mean`. A manual install into `~/.claude/skills/`
@@ -56,7 +56,9 @@ gives the bare `/endsession` and `/lean-and-mean`.
 
 `/endsession` is a hard stop. Anything you pass as an argument that looks like
 a task is written under `## Next`, not done. The model never invokes it on its
-own.
+own. It asks nothing unless a delete would destroy a Rule, note, or P1 Todo it
+cannot judge; then it asks once, up front, at most three items, and carries on.
+Clearly stale entries are dropped without asking.
 
 ## How it works
 
