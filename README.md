@@ -23,138 +23,56 @@ Three axes:
 
 ## Why use it
 
-The figures below are modeled from Anthropic's API list prices (September
-2026) and round-number session shapes, not measured from real sessions.
-Subscription plans meter the same tokens against usage limits, so the
-proportions carry over.
+Figures are modeled from API list prices (September 2026), not measured.
+Subscription plans meter the same tokens, so the proportions hold.
 
-| Per million tokens | Claude Fable 5.1 | Claude Opus 5 |
+| Per million tokens | Fable 5.1 | Opus 5 |
 |---|---|---|
 | Output | $50 | $25 |
-| Input, uncached | $10 | $5 |
-| Cache write, 1-hour TTL (2× input) | $20 | $10 |
+| Cache write, 1-hour (2× input) | $20 | $10 |
 | Cache read | $0.25 | $0.50 |
 
-### Long sessions cost more per turn than they look
+**Long sessions cost more per turn.** Every tool call resends the whole
+context as cache reads, so cost scales with requests × context size. A session
+growing from 30K to 500K over ~300 requests:
 
-Every request in a session resends the whole conversation, and every tool
-call is a request. Caching makes each resend cheap, but it is billed every
-time, so read cost grows with the number of requests times the size of the
-context.
-
-Take 200K–500K token sessions, a common shape: one session growing from 30K to
-500K over about 300 requests, with about 2K output tokens per request.
-
-| | One 500K session | Three sessions, restarted between tasks |
+| | One 500K session | Three, restarted between tasks |
 |---|---|---|
-| Average context per request | ~265K | ~110K |
-| Cache reads, Fable 5.1 | ~$20 | ~$8 |
-| Total, Fable 5.1 | ~$60 | ~$49 (about 20% less) |
-| Total, Opus 5 | ~$60 | ~$37 (about 40% less) |
+| Fable 5.1 | ~$60 | ~$49 (−20%) |
+| Opus 5 | ~$60 | ~$37 (−40%) |
 
-A restart costs well under a dollar: the system prompt, tools and `CLAUDE.md`
-are written to cache once. Fable's cheap cache reads shrink the percentage,
-but the dollar saving per long session stays around $10.
+A restart costs under $1 to re-cache the system prompt and `CLAUDE.md`.
 
-### Rehydration: coming back to a big session
+**Walking away is the expensive part.** The cache lasts an hour. After that,
+the next turn re-writes the whole context at 2× input: ~$8 for 400K on Fable,
+versus ~$0.60 for a fresh session. Compaction doesn't help: it fires late,
+after the large-context turns are paid for, and its summary is lossy.
+`/endsession` writes a deliberate handoff (Rules, Next, Todo, a commit) for
+about $1, so end at task boundaries and before any break.
 
-Claude Code caches for an hour. Step away longer than that and the next turn
-has to write the whole context back into cache at 2× the input price before it
-does any work:
+**Unrequested code is paid three times:** as output (a 150-line speculative
+helper with tests is ~3K tokens, ~$0.15 on Fable), as context on every later
+turn (~$0.15 more over 200 requests), and in review and maintenance, which is
+the real cost. The YAGNI ladder stops it at the source; "one runnable check"
+keeps tests proportionate; `// lean:` markers keep skipped work visible.
 
-| Context when you come back | Fable 5.1 | Opus 5 |
-|---|---|---|
-| 400K | ~$8 | ~$4 |
-| Fresh session (~30K) | ~$0.60 | ~$0.30 |
+**Concise prose is for readability, not cost.** Chat prose is a small share of
+output; trimming it saves a few percent.
 
-One idle gap on a big session can cost more than a day of cold starts. That is
-the strongest case for `/endsession` before a break.
+**A structured `CLAUDE.md` keeps every session consistent.** It is loaded on
+every request, so it stays small and predictable:
 
-### Why `/endsession` instead of running to compaction
-
-- Compaction fires late. By then you have paid the large-context read cost on
-  every turn before it.
-- Compaction's summary is uncontrolled and lossy. `/endsession` writes a
-  deliberate handoff: new Rules, the real next action under `## Next`, and an
-  updated Todo, so the next session starts small and knows exactly where to
-  pick up.
-- It is light on purpose. It runs when the context is at its largest, so it
-  only does the cheap work (about 10 requests, around $1 on Fable at 400K) and
-  defers the full review to the next session's fresh context.
-- It offers to commit first, so `git log` stays the history and nothing is left
-  half-done between sessions.
-
-Rule of thumb: keep going in the same session for tightly related follow-ups
-within the hour; end and restart at task boundaries and before any break.
-
-### YAGNI versus letting the model do what it wants
-
-Output is the most expensive token, and code is most of what a session
-outputs. Code that nobody asked for is paid for three times:
-
-1. Once as output when it is written (a 150-line speculative helper plus tests
-   is roughly 3K tokens, about $0.15 on Fable).
-2. Again as context on every later request in the session (3K tokens across
-   200 requests is about another $0.15 on Fable), and again whenever it is
-   edited.
-3. Most of all in your time: every extra line has to be reviewed, tested and
-   maintained.
-
-The per-instance dollar amounts are small; the cost adds up across a project
-and lands mostly on review. The ladder (reuse, then stdlib, then the platform,
-then an installed dependency, then one line, then new code) stops that at the
-source. "One runnable check" for non-trivial logic keeps tests proportionate
-instead of sprawling. `// lean:` markers record each shortcut's ceiling and
-upgrade path, so skipping work is a visible decision, not a silent one;
-`/lean-and-mean debt` lists them.
-
-Concise prose is not a real cost lever: chat prose is a small share of output
-tokens, and trimming it saves a few percent at most. It is there for
-readability.
-
-### Readable and consistent
-
-- Answers lead with the result. Explanations stay in full sentences; status
-  updates can be short.
-- The same Operating Mode block is in every project, so behaviour does not
-  drift between repos or sessions. The hook notices when a project's copy is
-  out of date and refreshes it.
-- Every session ends the same way: commit, Rules, Next, Todo, and a
-  plain-language summary of what was done and what comes next.
-
-### A structured CLAUDE.md
-
-`CLAUDE.md` is loaded on every request, so its size and shape matter.
-
-- **Fixed sections in a fixed order.** Claude always knows where to find the
-  commands, the layout, the conventions and the binding Rules, and where to
-  write new ones.
-- **A 250-line cap.** The file stays cheap to carry on every turn. Anything
-  bigger is split into `claude-<category>.md` files with a pointer.
-- **Rules instead of repeat mistakes.** A correction or a failed approach
-  becomes one dated line that Claude must follow next time. One line like "push
-  with the gh credential helper; plain push 403'd three times" saves every
-  future session from repeating that loop, and every avoided turn is a
-  full-context read avoided.
-- **Verified commands and paths.** Commands that don't run and paths that no
-  longer exist are pruned, so Claude doesn't waste turns on stale
-  instructions.
-- **`## Next` makes restarts cheap.** A new session reads one line and starts
-  on the right task, without re-reading a long history.
-
-### Hygiene that runs itself
-
-You rarely run anything by hand after setup. At session start, on a fresh
-and cheap context, the hook asks Claude to run the full review when:
-
-- the Operating Mode block differs from the plugin's current version,
-- `CLAUDE.md` is over 250 lines, or
-- the last `/endsession` flagged that the session changed the project's
-  layout, commands, stack or conventions.
-
-The review re-checks commands and paths, restructures, prunes finished Todo
-items and Rules the tooling now enforces, and splits the file if it has grown
-past the cap. Otherwise the hook prints nothing.
+- Fixed sections in a fixed order: Claude always knows where commands, layout,
+  conventions and Rules live.
+- Rules turn each correction into one binding line, so a mistake costs one
+  session, not every session.
+- `## Next` lets a fresh session start on the right task from one line;
+  `git log` is the history.
+- A 250-line cap, with overflow split into `claude-<category>.md`.
+- Self-maintaining: at session start, on a cheap context, the hook triggers a
+  full review when the block is out of date, the file is over the cap, or
+  `/endsession` flagged changed layout or commands. The review re-verifies
+  commands and paths and prunes stale entries. Otherwise it stays silent.
 
 ## Install
 

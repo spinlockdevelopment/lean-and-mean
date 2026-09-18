@@ -87,65 +87,34 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line);
 </div>
 
 <h2>Why it pays off</h2>
-<p>Every request in a Claude Code session resends the whole conversation, and every tool call is a request. Caching makes each resend cheap, but it's billed every time, so cost grows with the number of requests times the size of the context. Long sessions get expensive per turn.</p>
+<p>Every tool call resends the whole context as cache reads, so cost scales with requests × context size. Long sessions get expensive per turn.</p>
 
 <div class="stats">
-  <div class="stat"><b>~20–40%</b><span>less per long session by restarting at task boundaries (Fable 5.1 to Opus 5)</span></div>
-  <div class="stat"><b>~$8</b><span>to re-cache a 400K session on Fable after an hour away, versus ~$0.60 for a fresh start</span></div>
-  <div class="stat"><b>~$1</b><span>for <code>/endsession</code> at 400K context, because it does only the cheap work</span></div>
+  <div class="stat"><b>−20 to −40%</b><span>per long session by restarting at task boundaries (Fable 5.1 to Opus 5)</span></div>
+  <div class="stat"><b>~$8 vs ~$0.60</b><span>to resume a 400K Fable session after an hour away, versus starting fresh</span></div>
+  <div class="stat"><b>~$1</b><span>for <code>/endsession</code> at 400K: a deliberate handoff instead of lossy compaction</span></div>
 </div>
 
-<h3>One long session versus three short ones</h3>
-<p>A session growing from 30K to 500K tokens over about 300 requests, with about 2K output tokens per request:</p>
 <div class="table-wrap"><table>
-  <thead><tr><th></th><th class="num">One 500K session</th><th class="num">Three sessions, restarted</th></tr></thead>
+  <thead><tr><th>30K → 500K over ~300 requests</th><th class="num">One session</th><th class="num">Three, restarted</th></tr></thead>
   <tbody>
-    <tr><td>Average context per request</td><td class="num">~265K</td><td class="num">~110K</td></tr>
-    <tr><td>Cache reads, Fable 5.1</td><td class="num">~$20</td><td class="num">~$8</td></tr>
-    <tr class="hl"><td>Total, Fable 5.1</td><td class="num">~$60</td><td class="num">~$49</td></tr>
-    <tr class="hl"><td>Total, Opus 5</td><td class="num">~$60</td><td class="num">~$37</td></tr>
+    <tr class="hl"><td>Fable 5.1</td><td class="num">~$60</td><td class="num">~$49</td></tr>
+    <tr class="hl"><td>Opus 5</td><td class="num">~$60</td><td class="num">~$37</td></tr>
   </tbody>
 </table></div>
 
-<h3>Rehydration: the cost of walking away</h3>
-<p>Claude Code caches for an hour. Come back later and the next turn writes the whole context back into cache at twice the input price before doing any work.</p>
-<div class="table-wrap"><table>
-  <thead><tr><th>Context when you come back</th><th class="num">Fable 5.1</th><th class="num">Opus 5</th></tr></thead>
-  <tbody>
-    <tr><td>400K</td><td class="num">~$8</td><td class="num">~$4</td></tr>
-    <tr><td>Fresh session (~30K)</td><td class="num">~$0.60</td><td class="num">~$0.30</td></tr>
-  </tbody>
-</table></div>
-<p>Compaction doesn't save you here. It fires late, after you've paid the large-context cost on every turn, and its summary is lossy. <code>/endsession</code> writes a deliberate handoff instead.</p>
+<p><b>Unrequested code is paid three times:</b> as output (~3K tokens for a speculative helper with tests, ~$0.15 on Fable), as context on every later turn (~$0.15 more), and in review and maintenance, the real cost. The YAGNI ladder stops it at the source.</p>
 
-<h3>Code nobody asked for is paid for three times</h3>
+<p class="note">Modeled from API list prices (September 2026: output $50 / $25 per million on Fable 5.1 / Opus 5, cache reads $0.25 / $0.50, 1-hour cache writes at 2× input), not measured. Subscription plans meter the same tokens. Concise prose saves only a few percent; it's for readability.</p>
+
+<h2>A CLAUDE.md that maintains itself</h2>
 <ul>
-  <li><b>As output</b>, the most expensive token: a 150-line speculative helper with tests is about 3K tokens, roughly $0.15 on Fable.</li>
-  <li><b>As context</b> on every later request: about another $0.15 over 200 requests, and again on every edit.</li>
-  <li><b>In your time</b>, which is the real cost: every extra line is reviewed, tested and maintained.</li>
+  <li><b>Fixed sections, fixed order.</b> Commands, layout, conventions and Rules are always where Claude expects them.</li>
+  <li><b>Rules.</b> A mistake costs one session, not every session.</li>
+  <li><b><code>## Next</code>.</b> A fresh session starts on the right task from one line; <code>git log</code> is the history.</li>
+  <li><b>250-line cap.</b> Cheap to carry on every request; overflow splits into <code>claude-&lt;category&gt;.md</code>.</li>
+  <li><b>Automatic review.</b> At session start, when the block is out of date, the file is over the cap, or <code>/endsession</code> flagged changed layout or commands, Claude re-verifies commands and paths and prunes stale entries. Otherwise the hook stays silent.</li>
 </ul>
-<p>The YAGNI ladder stops it at the source, "one runnable check" keeps tests proportionate, and <code>// lean:</code> markers record every shortcut's ceiling and upgrade path so skipped work stays visible.</p>
-
-<p class="note">Figures are modeled from Anthropic's API list prices (September 2026: Fable 5.1 at $50 per million output tokens and $0.25 per million cache reads; Opus 5 at $25 and $0.50; cache writes at 2× input with the 1-hour TTL) and round-number session shapes, not measured. Subscription plans meter the same tokens against usage limits, so the proportions carry over. Concise prose itself saves only a few percent; it's there for readability.</p>
-
-<h2>A structured CLAUDE.md</h2>
-<p><code>CLAUDE.md</code> is loaded on every request, so its size and shape matter.</p>
-<ul>
-  <li><b>Fixed sections, fixed order.</b> Claude always knows where the commands, layout, conventions and Rules are, and where to write new ones.</li>
-  <li><b>A 250-line cap.</b> Cheap to carry on every turn. Anything bigger is split into <code>claude-&lt;category&gt;.md</code> files with a pointer.</li>
-  <li><b>Verified commands and paths.</b> Stale instructions are pruned, so Claude doesn't burn turns on them.</li>
-  <li><b><code>## Next</code> makes restarts cheap.</b> A new session reads one line and starts on the right task.</li>
-  <li><b><code>git log</code> is the history.</b> No session log to maintain; <code>/endsession</code> offers to commit first.</li>
-</ul>
-
-<h2>Hygiene that runs itself</h2>
-<p>After setup you rarely run anything by hand. One small shell hook runs at session start and stays silent unless something needs attention:</p>
-<ol class="flow">
-  <li>The Operating Mode block in <code>CLAUDE.md</code> is out of date because the plugin was updated.</li>
-  <li><code>CLAUDE.md</code> has grown past 250 lines.</li>
-  <li>The last <code>/endsession</code> flagged that the project's layout, commands, stack or conventions changed.</li>
-</ol>
-<p>Any of these, and Claude runs the full review before your first task, on a fresh and cheap context: re-check commands and paths, restructure, prune finished work, split if too long.</p>
 
 <h2 id="install">Install</h2>
 <p>In Claude Code:</p>
