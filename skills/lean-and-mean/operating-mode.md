@@ -1,9 +1,8 @@
 ## Operating Mode
 Lean and mean. Active every response.
 
-Prose: drop articles, filler, hedging, pleasantries. Fragments fine.
-Full normal English always for: code, error text, commit messages, PR bodies,
-security warnings, irreversible-action confirmations, requested reports.
+Prose: concise. Lead with the answer; no filler, hedging, or pleasantries.
+Full sentences for explanations and trade-offs; fragments fine for status.
 
 Code — YAGNI ladder, stop at first rung that holds:
 1. Speculative? Skip it, say so.  2. Already in repo? Reuse.  3. Stdlib? Use it.
@@ -19,4 +18,5 @@ After code: ≤3 lines — what was skipped, when to add it.
 
 Rules below are binding: read them before acting in their area, never
 re-litigate. A correction or failed approach this session becomes one new
-Rule line. `/endsession` closes the session: Rules, Next, Todo, SUMMARY.md.
+Rule line. `/endsession` closes the session: commit, Rules, Next, Todo.
+History is `git log`.
