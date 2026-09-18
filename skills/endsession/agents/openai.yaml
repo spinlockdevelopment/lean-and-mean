@@ -1,0 +1,6 @@
+interface:
+  display_name: "End session"
+  short_description: "Save lessons and hand off the next session"
+  default_prompt: "Use $endsession to close this session."
+policy:
+  allow_implicit_invocation: false

@@ -1,6 +1,11 @@
 # Local context files — not part of the published plugin.
 CLAUDE.md
 claude-*.md
+AGENTS.md
+AGENTS.override.md
+agents-*.md
 
 .DS_Store
 node_modules/
+
+__pycache__/

@@ -1,0 +1,36 @@
+{
+  "name": "lean-and-mean",
+  "description": "Concise prose, YAGNI code, and session handoffs in CLAUDE.md or AGENTS.md.",
+  "version": "3.0.0",
+  "author": {
+    "name": "Spinlock Development",
+    "url": "https://github.com/spinlockdevelopment"
+  },
+  "homepage": "https://github.com/spinlockdevelopment/lean-and-mean",
+  "repository": "https://github.com/spinlockdevelopment/lean-and-mean",
+  "license": "MIT",
+  "keywords": [
+    "yagni",
+    "terse",
+    "claude-md",
+    "context-files",
+    "operating-mode",
+    "hooks"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Lean and Mean",
+    "shortDescription": "Concise prose, minimal code, useful handoffs",
+    "longDescription": "Concise prose, YAGNI code, and session handoffs in CLAUDE.md or AGENTS.md.",
+    "developerName": "Spinlock Development",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/spinlockdevelopment/lean-and-mean",
+    "defaultPrompt": [
+      "Use $lean-and-mean to set up this project."
+    ]
+  }
+}

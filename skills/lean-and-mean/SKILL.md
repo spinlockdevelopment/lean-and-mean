@@ -1,12 +1,13 @@
 ---
 name: lean-and-mean
 description: >
-  Concise prose + YAGNI code, installed into the project's CLAUDE.md so it runs
-  without help. Owns CLAUDE.md (structure, 250-line cap, Rules, Next, Todo).
-  `/lean-and-mean` creates or reviews CLAUDE.md, idempotent; runs on its own
+  Concise prose + YAGNI code, installed into the project's context file so it runs
+  without help. Owns the context file (structure, 250-line cap, Rules, Next, Todo).
+  `/lean-and-mean` creates or reviews the context file, idempotent; runs on its own
   when the SessionStart hook asks. `/lean-and-mean debt` lists `// lean:` markers.
   Trigger: "lean and mean", "lean mode", "yagni", "be terse", "set up
-  claude.md", "review claude.md", "clean up claude.md", "context files".
+  claude.md", "review claude.md", "clean up claude.md", "set up agents.md",
+  "review agents.md", "context files".
   Do NOT compress requests needing full prose (reports, readable docs).
 argument-hint: "[debt]"
 license: MIT
@@ -16,21 +17,39 @@ license: MIT
 
 Senior dev, few words, minimal code. The mode is the `## Operating Mode`
 block in `operating-mode.md` (next to this file). It lives in the project's
-CLAUDE.md, which Claude Code loads natively — no hook, no flag, no per-turn
+context file, which the host loads natively — no hook, no flag, no per-turn
 reinforcement. The SessionStart hook is silent unless the block is missing
 or the pass below is due.
 
-Off: remove the block from CLAUDE.md, or disable the plugin.
+Off: disable the plugin and remove its Operating Mode block from the context
+file. Disabling alone does not undo persisted instructions.
 
-## `/lean-and-mean` — set up or review CLAUDE.md
+## Host and context file
+
+Use `CLAUDE.md` in Claude Code and `AGENTS.md` in Codex, at the project
+root (Git root, or the session working directory outside Git). In Codex,
+use a nonempty root `AGENTS.override.md` instead when present. Respect any
+additional instructions applying to the files you edit; do not flatten or
+rewrite nested instruction files. Never edit the other host's file implicitly.
+Below, "context file" means that selected file. Use `claude-<category>.md`
+for Claude overflow and `agents-<category>.md` for Codex overflow; substitute
+that prefix for `context-<category>.md` in the template.
+
+Claude invokes these skills with `/lean-and-mean` and `/endsession`; Codex
+uses `$lean-and-mean` and `$endsession` (select the installed skill if the UI
+shows a qualified name). Slash commands below describe the same workflow
+on either host. In Codex, treat text following the skill invocation as its
+arguments; `$ARGUMENTS` is Claude's notation, not a required environment variable.
+
+## `/lean-and-mean` — set up or review context file
 
 Idempotent. Rerunning converges. Rarely run by hand: the SessionStart hook
 asks for this pass, before the user's first task, when the Operating Mode
-block is out of date, CLAUDE.md is over 250 lines, or `/endsession` left the
+block is out of date, the context file is over 250 lines, or `/endsession` left the
 `<!-- lean-and-mean: review -->` flag. Run it then without asking, report the
 one line, and carry on with the user's request.
 
-1. No CLAUDE.md → create from the structure below. Fill Project & Stack,
+1. No context file → create from the structure below. Fill Project & Stack,
    Commands, Architecture & Layout from the repo. Leave Rules empty.
 2. Paste `operating-mode.md` verbatim under `## Operating Mode`; replace any
    older version.
@@ -42,7 +61,7 @@ one line, and carry on with the user's request.
    legacy SUMMARY.md (old `/endsession`) → delete it and its pointer; `[x]` Todo →
    delete; Rules the tooling now enforces (lint, type, test) → delete.
 6. Next must name the real next action. Empty Next on a live project is a defect.
-7. Over 250 lines → move largest non-core sections to `claude-<category>.md`
+7. Over 250 lines → move largest non-core sections to `context-<category>.md`
    (H1 + one-line purpose at top), leave a pointer in Notes & Pointers.
    Operating Mode, Commands, Rules, Next, Todo never move.
 8. Remove the `<!-- lean-and-mean: review -->` flag if present.
@@ -53,7 +72,7 @@ one line, and carry on with the user's request.
 Exact order, exact H2 names. Drop a section only if truly empty.
 
 ```markdown
-# <Project> — CLAUDE.md
+# <Project> — <selected filename>
 
 ## Operating Mode
 <operating-mode.md, verbatim>
@@ -88,7 +107,7 @@ Immediate next task first. 1–5 lines, no backlog.
 Priority-ordered. Checked items are deleted at the next pass.
 
 ## Notes & Pointers
-- [claude-<category>.md](claude-<category>.md) — <scope>
+- [context-<category>.md](context-<category>.md) — <scope>
 - History: `git log`, not this file.
 - <constraint, footgun, "do not touch X">
 ```
@@ -100,5 +119,6 @@ marker's ceiling and upgrade path. Changes nothing.
 
 ## Boundaries
 
-Code shape, terseness, context files. Not correctness — pair with
-`/code-review`. Bloat review of code → `/simplify`.
+Code shape, terseness, context files. Not correctness — use the host's available
+code-review workflow. In Claude Code, `/code-review` and
+`/simplify` may be available; do not assume these commands exist in Codex.

@@ -2,10 +2,10 @@
 
 **[Explainer and overview → spinlockdevelopment.github.io/lean-and-mean](https://spinlockdevelopment.github.io/lean-and-mean/)**
 
-A Claude Code plugin: concise prose and YAGNI code, written into your project's
-`CLAUDE.md` once so it runs every session with nothing else in the loop. Plus
+A Claude Code and Codex plugin: concise prose and YAGNI code, written into your project's
+`CLAUDE.md` (Claude Code) or `AGENTS.md` (Codex) once so it runs every session with nothing else in the loop. Plus
 `/endsession`, which closes a session by offering to commit and writing what
-was learned back into `CLAUDE.md`, then stops.
+was learned back into that file, then stops.
 
 Three axes:
 
@@ -24,7 +24,8 @@ Three axes:
 ## Why use it
 
 Figures are modeled from API list prices (September 2026), not measured.
-Subscription plans meter the same tokens, so the proportions hold.
+These illustrative estimates are not a subscription billing model or a Codex
+pricing claim; actual costs depend on the host, model, caching, and context policy.
 
 | Per million tokens | Fable 5.1 | Opus 5 |
 |---|---|---|
@@ -76,6 +77,47 @@ every request, so it stays small and predictable:
 
 ## Install
 
+### Codex
+
+From your shell, using a Codex version with plugin support:
+
+```sh
+codex plugin marketplace add spinlockdevelopment/lean-and-mean
+codex plugin add lean-and-mean@lean-and-mean
+```
+
+Or install from a local checkout containing the Codex support (use this path
+when testing changes that have not been pushed to GitHub):
+
+```sh
+codex plugin marketplace add ~/src/lean-and-mean
+codex plugin add lean-and-mean@lean-and-mean
+```
+
+Codex can read the existing `.claude-plugin/marketplace.json`; its plugin
+metadata lives in `.codex-plugin/plugin.json`. Start a new Codex session after
+installation. Review and trust the bundled SessionStart hook when prompted;
+installation alone does not authorize hooks. The hook requires a POSIX shell
+(macOS, Linux, or WSL).
+
+Open your project in a new Codex session and select the installed skill in the
+picker. Run `$lean-and-mean` once to create or review its context file. Use
+`$lean-and-mean debt` to list shortcut markers, and `$endsession` to save the
+handoff and close the session. Both hosts share the skills and Operating Mode
+text. Codex maintains root `AGENTS.md` (or nonempty `AGENTS.override.md` when
+present); Claude maintains `CLAUDE.md`. They do not synchronize those files.
+Start Codex at the project root for the same scope as the maintenance hook.
+Existing nested instruction files still apply and are not rewritten.
+
+Without plugin/hook support, copy both skill folders into `~/.agents/skills/`
+and invoke `$lean-and-mean` manually. This installs the persistent mode but
+provides no automatic session-start review.
+
+See [OpenAI plugin packaging](https://developers.openai.com/plugins/build/plugins)
+for plugin discovery and hook trust requirements.
+
+### Claude Code
+
 In Claude Code:
 
 ```
@@ -100,13 +142,16 @@ pointing the command at that script.
 
 ## Use
 
-| Command | Effect |
-|---------|--------|
-| `/lean-and-mean` | Create `CLAUDE.md` from the template, or review an existing one: refresh the Operating Mode block, restructure, prune, split anything over 250 lines. Idempotent. After setup it runs on its own when due, so you rarely type it |
-| `/lean-and-mean debt` | List every `// lean:` shortcut marker with its ceiling and upgrade path |
-| `/endsession` | Final message of the session. Offers to commit uncommitted work, turns this session's mistakes into Rules, rewrites Next and Todo, flags a full review for next session if the project's layout or commands changed, then prints a plain-language summary of what was done, what was updated, and what is next. Then stops |
+Use the command for your host. The context file is `CLAUDE.md` in Claude Code
+and `AGENTS.md` (or its nonempty override) in Codex.
 
-Installed as a plugin the skills are namespaced: `/lean-and-mean:endsession`
+| Claude Code | Codex | Effect |
+|-------------|-------|--------|
+| `/lean-and-mean` | `$lean-and-mean` | Create the context file from the template, or review an existing one: refresh the Operating Mode block, restructure, prune, split anything over 250 lines. Idempotent. After setup it runs on its own when due, so you rarely type it |
+| `/lean-and-mean debt` | `$lean-and-mean debt` | List every `// lean:` shortcut marker with its ceiling and upgrade path |
+| `/endsession` | `$endsession` | Final message of the session. Offers to commit uncommitted work, turns this session's mistakes into Rules, rewrites Next and Todo, flags a full review for next session if the project's layout or commands changed, then prints a plain-language summary of what was done, what was updated, and what is next. Then stops |
+
+In Claude Code, plugin skills are namespaced: `/lean-and-mean:endsession`
 and `/lean-and-mean:lean-and-mean`. A manual install into `~/.claude/skills/`
 gives the bare `/endsession` and `/lean-and-mean`.
 
@@ -138,7 +183,9 @@ your first task:
 There is no session log: `git log` is the history, which is why `/endsession`
 offers to commit first.
 
-Off: delete the block from `CLAUDE.md`, or disable the plugin.
+Off: disable the plugin **and** delete its Operating Mode block from the
+context file. Disabling alone leaves persisted rules active; deleting alone
+lets the enabled hook suggest setup again.
 
 ## Boundaries
 
@@ -148,3 +195,14 @@ correctness — pair it with `/code-review`. Bloat review of code is `/simplify`
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+## Development checks
+
+Run `python3 -m unittest discover -s tests -v` for the shared hook regression tests.
+
+Compatibility validation: the Codex skill loader accepts both skills. The bundled
+plugin/skill authoring validators currently reject Claude's `argument-hint`
+and/or `disable-model-invocation: true` frontmatter. These are deliberately
+retained for Claude compatibility; Codex's explicit-only policy is separately
+set in `skills/endsession/agents/openai.yaml`. Treat those validator diagnostics
+as known compatibility exceptions, not a clean validation result.
