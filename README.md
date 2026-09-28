@@ -151,6 +151,10 @@ and `AGENTS.md` (or its nonempty override) in Codex.
 | `/lean-and-mean debt` | `$lean-and-mean debt` | List every `// lean:` shortcut marker with its ceiling and upgrade path |
 | `/endsession` | `$endsession` | Final message of the session. Offers to commit uncommitted work, turns this session's mistakes into Rules, rewrites Next and Todo, flags a full review for next session if the project's layout or commands changed, then prints a plain-language summary of what was done, what was updated, and what is next. Then stops |
 
+Also bundled: `typesafe-ai`, a copy of TypeSafe AI's skill for building with
+the Jev model, routed through OpenRouter (`OPENROUTER_JEV_API_KEY`, model
+`~typesafe/jev-latest`). See [License](#license) for credit.
+
 In Claude Code, plugin skills are namespaced: `/lean-and-mean:endsession`
 and `/lean-and-mean:lean-and-mean`. A manual install into `~/.claude/skills/`
 gives the bare `/endsession` and `/lean-and-mean`.
@@ -195,6 +199,13 @@ correctness — pair it with `/code-review`. Bloat review of code is `/simplify`
 ## License
 
 MIT. See [LICENSE](LICENSE).
+
+`skills/typesafe-ai/` is copied from
+[typesafe-ai/skills](https://github.com/typesafe-ai/skills), tracked as the
+`vendor/typesafe-ai-skills` submodule. Full copyright and credit belong to
+TypeSafe AI (MIT, Copyright (c) 2026 TypeSafe AI; see
+[skills/typesafe-ai/LICENSE](skills/typesafe-ai/LICENSE)). The only change is
+routing Jev calls through OpenRouter.
 
 ## Development checks
 

@@ -10,7 +10,7 @@
       "name": "lean-and-mean",
       "source": "./",
       "description": "Concise prose and YAGNI code, installed into the project CLAUDE.md, plus /endsession.",
-      "version": "3.0.0",
+      "version": "3.1.0",
       "license": "MIT",
       "keywords": ["yagni", "terse", "claude-md", "context-files", "operating-mode", "hooks"]
     }

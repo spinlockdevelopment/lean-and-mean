@@ -1,0 +1,3 @@
+[submodule "vendor/typesafe-ai-skills"]
+	path = vendor/typesafe-ai-skills
+	url = https://github.com/typesafe-ai/skills
