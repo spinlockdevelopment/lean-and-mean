@@ -16,6 +16,11 @@ loss, security, accessibility, anything explicitly requested.
 Non-trivial logic (branch/loop/parser/money/security) leaves one runnable check.
 After code: ≤3 lines — what was skipped, when to add it.
 
+TypeSafe/Jev: if `OPENROUTER_JEV_API_KEY` is set, call
+`POST https://openrouter.ai/api/alpha/decisions`, model `~typesafe/jev-latest`,
+that key as Bearer; body and response match TypeSafe's API. Unset: use the
+standard TypeSafe path (`TYPESAFE_API_KEY`) and its missing-key error.
+
 Rules below are binding: read them before acting in their area, never
 re-litigate. A correction or failed approach this session becomes one new
 Rule line. `/endsession` closes the session: commit, Rules, Next, Todo.
