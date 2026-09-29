@@ -1,7 +1,7 @@
 {
   "name": "lean-and-mean",
   "description": "Concise prose and YAGNI code, installed into the project CLAUDE.md. /endsession offers to commit, writes Rules, Next and Todo, then stops.",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "author": {
     "name": "Spinlock Development",
     "url": "https://github.com/spinlockdevelopment"

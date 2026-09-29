@@ -150,6 +150,7 @@ and `AGENTS.md` (or its nonempty override) in Codex.
 | `/lean-and-mean` | `$lean-and-mean` | Create the context file from the template, or review an existing one: refresh the Operating Mode block, restructure, prune, split anything over 250 lines. Idempotent. After setup it runs on its own when due, so you rarely type it |
 | `/lean-and-mean debt` | `$lean-and-mean debt` | List every `// lean:` shortcut marker with its ceiling and upgrade path |
 | `/endsession` | `$endsession` | Final message of the session. Offers to commit uncommitted work, turns this session's mistakes into Rules, rewrites Next and Todo, flags a full review for next session if the project's layout or commands changed, then prints a plain-language summary of what was done, what was updated, and what is next. Then stops |
+| `@agent-lean-and-mean:dashboard-builder` | — | Builds a self-refreshing `.dashboard/index.html` progress page for long tasks. Claude Code only |
 
 Also bundled: `typesafe-ai`, a copy of TypeSafe AI's skill for building with
 the Jev model, routed through OpenRouter (`OPENROUTER_JEV_API_KEY`, model
