@@ -1,5 +1,7 @@
 # lean-and-mean
 
+**New to this? [Plain-language explanation of everything it does → docs/explained.md](docs/explained.md)**
+
 **[Explainer and overview → spinlockdevelopment.github.io/lean-and-mean](https://spinlockdevelopment.github.io/lean-and-mean/)**
 
 A Claude Code and Codex plugin: concise prose and YAGNI code, written into your project's
