@@ -5,71 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>lean-and-mean</title>
 <meta name="description" content="A Claude Code and Codex plugin for concise prose, YAGNI code, and project instructions that maintain themselves. Shorter sessions, less code, fewer repeat mistakes.">
-<style>
-:root {
-  --bg: #fbfaf7; --fg: #1c1b19; --muted: #5f5b53; --line: #e4e0d7;
-  --card: #ffffff; --accent: #b4451f; --accent-soft: #f6e6de; --code: #f1eee8;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #171614; --fg: #ece8e1; --muted: #a39d92; --line: #2e2b27;
-    --card: #1f1d1a; --accent: #e8784f; --accent-soft: #3a241b; --code: #25221e;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #171614; --fg: #ece8e1; --muted: #a39d92; --line: #2e2b27;
-  --card: #1f1d1a; --accent: #e8784f; --accent-soft: #3a241b; --code: #25221e;
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0; background: var(--bg); color: var(--fg);
-  font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-main { max-width: 780px; margin: 0 auto; padding: 0 16px 64px; }
-.topbar { display: flex; justify-content: space-between; align-items: center; max-width: 780px; margin: 0 auto; padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 15px; font-weight: 600; }
-.topbar a { text-decoration: none; }
-.topbar .brand { color: var(--fg); }
-header { padding: 56px 0 40px; border-bottom: 1px solid var(--line); }
-.eyebrow { color: var(--accent); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; font-size: 13px; }
-h1 { font-size: clamp(36px, 7vw, 56px); line-height: 1.05; margin: 12px 0 16px; letter-spacing: -0.02em; }
-h2 { font-size: 26px; margin: 56px 0 12px; letter-spacing: -0.01em; }
-h3 { font-size: 18px; margin: 28px 0 6px; }
-p { margin: 0 0 14px; }
-.lede { font-size: 20px; color: var(--muted); max-width: 640px; }
-a { color: var(--accent); }
-.cta { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
-.btn { display: inline-block; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; border: 1px solid var(--accent); }
-.btn.primary { background: var(--accent); color: var(--bg); }
-.btn.ghost { color: var(--accent); }
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0 8px; }
-.stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
-.stat b { display: block; font-size: 28px; color: var(--accent); line-height: 1.1; }
-.stat span { color: var(--muted); font-size: 14px; }
-.grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
-@media (max-width: 560px) { .grid, .stats { grid-template-columns: 1fr; } }
-.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
-.card h3 { margin-top: 0; }
-.card p { color: var(--muted); font-size: 15px; margin: 0; }
-.table-wrap { overflow-x: auto; margin: 16px 0; }
-table { width: 100%; border-collapse: collapse; font-size: 15px; font-variant-numeric: tabular-nums; }
-th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--line); }
-th { color: var(--muted); font-weight: 600; }
-td.num, th.num { text-align: right; }
-tr.hl td { background: var(--accent-soft); }
-code { background: var(--code); padding: 1px 5px; border-radius: 4px; font-size: .9em; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-pre { position: relative; background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font-size: 14px; }
-pre code { background: none; padding: 0; }
-.copy { position: absolute; top: 8px; right: 8px; font: 600 12px/1 inherit; padding: 6px 9px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--muted); cursor: pointer; }
-.note { color: var(--muted); font-size: 14px; border-left: 3px solid var(--line); padding-left: 12px; }
-ul { padding-left: 22px; } li { margin: 4px 0; }
-footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <nav class="topbar">
   <a class="brand" href="./">lean-and-mean</a>
-  <a href="https://github.com/spinlockdevelopment/lean-and-mean">View on GitHub</a>
+  <a class="gh" href="https://github.com/spinlockdevelopment/lean-and-mean"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Source on GitHub</a>
 </nav>
 <main>
 
@@ -80,23 +21,70 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line);
   <div class="cta"><a class="btn primary" href="#install">Install</a></div>
 </header>
 
+<h2>The problem</h2>
+<p>Coding assistants say and build too much: padded answers, plus helpers, options and abstractions nobody asked for, all of which must be read, reviewed and maintained. And they forget: every session starts blank, so yesterday's corrected mistake can happen again today.</p>
+<p>lean-and-mean fixes both by writing a short set of instructions into root <code>AGENTS.md</code>. Codex loads it directly; Claude Code loads it through a one-line <code>CLAUDE.md</code> containing <code>@AGENTS.md</code>. The instructions are then present every session with no plugin code running.</p>
+
 <h2>What it does</h2>
 <div class="grid">
-  <div class="card"><h3>Minimal code</h3><p>Before writing code: skip speculative work, then reuse the repo, the standard library, the platform, an installed dependency, or one line. New code comes last. Validation, data-loss handling, security and accessibility are never cut.</p></div>
-  <div class="card"><h3>Rules that stick</h3><p>Every correction becomes one dated line under <code>## Rules</code> in <code>AGENTS.md</code>. The file loads every session, so the mistake doesn't repeat.</p></div>
+  <div class="card"><h3>Minimal code</h3><p>A YAGNI ladder picks the smallest change that works. New code comes last.</p></div>
+  <div class="card"><h3>Rules that stick</h3><p>Every correction becomes one dated line under <code>## Rules</code>. The file loads every session, so the mistake doesn't repeat.</p></div>
   <div class="card"><h3>Clean handoffs</h3><p><code>/endsession</code> offers to commit, records Rules, the next task and the Todo list, then stops. The next session starts small and on the right task.</p></div>
   <div class="card"><h3>Short answers</h3><p>The answer comes first. Full sentences for explanations, short lines for status. No filler, no hedging.</p></div>
 </div>
 
-<h2>How it works</h2>
-<p>The rules live in root <code>AGENTS.md</code>, which Codex loads directly and Claude Code loads through a one-line <code>CLAUDE.md</code> containing <code>@AGENTS.md</code>. The file has fixed sections in a fixed order (Commands, Layout, Conventions, Rules, Next, Todo) and stays under 250 lines.</p>
+<h3>The YAGNI ladder</h3>
+<p>Before writing code, the assistant stops at the first step that works:</p>
+<ol>
+  <li>Only <em>maybe</em> needed later? Skip it and say so.</li>
+  <li>Already in the project? Reuse it.</li>
+  <li>In the standard library? Use it.</li>
+  <li>Native to the platform (browser, OS, framework)? Use it.</li>
+  <li>An installed dependency does it? Use it.</li>
+  <li>Fits in one line? One line.</li>
+  <li>Otherwise, the smallest new code that works.</li>
+</ol>
+<p>Minimal never means careless. It never cuts input validation at trust boundaries, error handling that prevents data loss, security, accessibility, or anything you asked for. Also:</p>
+<ul>
+  <li><b>Root cause.</b> Bugs are fixed at the shared place they come from, not in every caller.</li>
+  <li><b>Labeled shortcuts.</b> A deliberate shortcut gets a comment such as <code>// lean: up to 1,000 rows, stream if larger</code>; <code>/lean-and-mean debt</code> lists them all.</li>
+  <li><b>One runnable check</b> for logic with branches, loops, parsing, money or security.</li>
+  <li><b>A skipped note.</b> After code, at most three lines on what was left out and when to add it.</li>
+</ul>
+
+<h3>An AGENTS.md that maintains itself</h3>
+<ul>
+  <li><b>Rules.</b> Each correction becomes one dated line, capped at 15 so the list stays readable.</li>
+  <li><b>Next and Todo.</b> <code>## Next</code> names the very next task; <code>## Todo</code> is a short prioritized backlog. History stays in <code>git log</code>.</li>
+  <li><b>Fixed layout.</b> Operating Mode, Project &amp; Stack, Commands, Architecture &amp; Layout, Conventions, Rules, Next, Todo, Notes &amp; Pointers, always in that order.</li>
+  <li><b>250-line cap.</b> The file is resent on every request, so overflow moves to linked <code>agents-&lt;category&gt;.md</code> files.</li>
+</ul>
+
+<h2>Commands</h2>
 <div class="table-wrap"><table>
   <tr><th>Command</th><th>Effect</th></tr>
-  <tr><td><code>/lean-and-mean</code></td><td>Create or clean up <code>AGENTS.md</code>: refresh the rules, verify commands and paths, prune stale lines. Runs on its own when due.</td></tr>
-  <tr><td><code>/lean-and-mean debt</code></td><td>List every <code>// lean:</code> shortcut marker and its upgrade path.</td></tr>
-  <tr><td><code>/endsession</code></td><td>Commit, save Rules, Next and Todo, then stop.</td></tr>
+  <tr><td><code>/lean-and-mean</code></td><td>Create or clean up <code>AGENTS.md</code>: refresh the instructions, reorder sections, verify commands and paths, prune stale lines. Safe to rerun; usually runs on its own.</td></tr>
+  <tr><td><code>/lean-and-mean debt</code></td><td>List every <code>// lean:</code> shortcut and its upgrade path. Changes nothing.</td></tr>
+  <tr><td><code>/endsession</code></td><td>Offer to commit, save Rules, Next and Todo, then stop. Ending at natural break points keeps sessions cheap and focused. <a href="guide.html#endsession">Details</a>.</td></tr>
 </table></div>
-<p>A session-start hook stays silent unless the rules are missing, a cleanup is due (plugin updated, file over 250 lines, review flagged, or <code>CLAUDE.md</code> is more than the stub), or no <code>/advisor</code> is set. Codex uses <code>$lean-and-mean</code> and <code>$endsession</code>; Claude Code plugin installs spell them <code>/lean-and-mean:lean-and-mean</code> and <code>/lean-and-mean:endsession</code>.</p>
+<p>Claude Code plugin installs spell them <code>/lean-and-mean:lean-and-mean</code> and <code>/lean-and-mean:endsession</code>; Codex uses <code>$lean-and-mean</code> and <code>$endsession</code>.</p>
+
+<h2>What happens automatically</h2>
+<p>A <a href="guide.html#hook">session-start hook</a> stays silent unless:</p>
+<ul>
+  <li><b>The instructions aren't in <code>AGENTS.md</code>.</b> It loads them for this session and suggests <code>/lean-and-mean</code> to make them permanent.</li>
+  <li><b>A cleanup is due:</b> the plugin was updated, the file passed 250 lines, the last <code>/endsession</code> flagged a review, or <code>CLAUDE.md</code> holds more than the stub (the cleanup moves it into <code>AGENTS.md</code>). The assistant runs the cleanup before your first task.</li>
+  <li><b>No advisor is set</b> (Claude Code only).</li>
+</ul>
+
+<h2>Extras</h2>
+<p>Each extra is covered in full in the <a href="guide.html">guide</a>.</p>
+<ul>
+  <li><b>dashboard-builder</b> (Claude Code). A subagent Claude calls before any task over about five steps or 30 minutes. It builds <code>.dashboard/index.html</code>, a self-refreshing page with tasks, open questions, deliverables and anything stuck. Claude updates it after every step, and a question that needs you is listed with the default Claude is proceeding on. Style is asked once and remembered. <a href="guide.html#dashboard">How the dashboard works</a>.</li>
+  <li><b>Advisor.</b> Claude Code can consult a stronger model before a plan, on a recurring error, and before declaring done. Enable once with <code>/advisor fable</code> or <code>/advisor opus</code>. Its cost grows with session length, one more reason to use <code>/endsession</code>. <a href="guide.html#advisor">Advisor and effort settings</a>.</li>
+  <li><b>Effort.</b> Run the main session at high effort and hand routine subagent work to Sonnet at medium effort.</li>
+  <li><b>typesafe-ai.</b> TypeSafe AI's skill for building features on their Jev model, which turns text and app state into typed yes/no and pick-one answers. Routed through OpenRouter with <code>OPENROUTER_JEV_API_KEY</code>. <a href="guide.html#typesafe">What Jev is for</a>.</li>
+</ul>
 
 <h2>Why it pays off</h2>
 <div class="stats">
@@ -104,7 +92,7 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line);
   <div class="stat"><b>~$8 vs ~$0.60</b><span>to resume a 400K Fable session after an hour away, versus starting fresh</span></div>
   <div class="stat"><b>~$1</b><span>for <code>/endsession</code> at 400K: a deliberate handoff instead of lossy compaction</span></div>
 </div>
-<p class="note">Modeled from API list prices (September 2026), not measured. Every tool call resends the whole context, so cost scales with requests × context size. Details in the <a href="https://github.com/spinlockdevelopment/lean-and-mean#why-use-it">README</a>.</p>
+<p class="note">Modeled from API list prices (September 2026), not measured. Every tool call resends the whole context, so cost scales with requests × context size. See <a href="guide.html#cost">why sessions should be short</a> for the full model.</p>
 
 <h2 id="install">Install</h2>
 <h3>Claude Code</h3>
@@ -115,6 +103,10 @@ claude plugin install lean-and-mean@lean-and-mean</code></pre>
 <pre><code>codex plugin marketplace add spinlockdevelopment/lean-and-mean
 codex plugin add lean-and-mean@lean-and-mean</code></pre>
 <p>Start a new session at the project root, trust the SessionStart hook when prompted, and run <code>$lean-and-mean</code> once.</p>
+<p>No plugin support, or want bare command names? See <a href="guide.html#manual">manual install</a>.</p>
+
+<h3>Turning it off</h3>
+<p>Disable the plugin <b>and</b> delete the <code>## Operating Mode</code> section from <code>AGENTS.md</code>. The instructions live in the file, so disabling alone isn't enough.</p>
 
 <h2>Raw instructions</h2>
 <p>The plugin is plain text the model follows:</p>

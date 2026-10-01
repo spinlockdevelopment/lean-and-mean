@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lean-and-mean guide</title>
+<meta name="description" content="In-depth guide to lean-and-mean: /endsession, the session-start hook, the cost model, advisor and effort settings, the dashboard-builder agent, and the bundled typesafe-ai skill.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="topbar">
+  <a class="brand" href="./">lean-and-mean</a>
+  <a class="gh" href="https://github.com/spinlockdevelopment/lean-and-mean"><svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>Source on GitHub</a>
+</nav>
+<main>
+
+<header>
+  <div class="eyebrow"><a href="./">lean-and-mean</a> · Guide</div>
+  <h1>In depth</h1>
+  <p class="lede">How the session handoff, the hook and the cost model work, and what the bundled extras do.</p>
+</header>
+
+<p>On this page: <a href="#endsession">/endsession</a> · <a href="#hook">The session-start hook</a> · <a href="#cost">Why sessions should be short</a> · <a href="#advisor">Advisor and effort</a> · <a href="#dashboard">dashboard-builder</a> · <a href="#typesafe">typesafe-ai</a> · <a href="#manual">Manual install</a></p>
+
+<h2 id="endsession">/endsession</h2>
+<p>The last message of a session. It offers to commit uncommitted work, turns this session's mistakes and failed approaches into Rules, rewrites <code>## Next</code> and <code>## Todo</code>, flags a full review for the next session if the project's layout or commands changed, then prints a short summary of what was done, what was updated and what comes next. Then it stops.</p>
+<ul>
+  <li><b>Hard stop.</b> Anything you pass that looks like a task is written under <code>## Next</code>, not done. The model never invokes it on its own.</li>
+  <li><b>One question round.</b> It asks once, up front, about at most three things: whether to commit (when the tree is dirty), and any delete that would remove a Rule or P1 Todo it can't judge. Clearly stale entries are dropped without asking.</li>
+  <li><b>Light on purpose.</b> Context is largest at the end of a session, so the full <code>AGENTS.md</code> review waits for the next session's fresh, cheap context. <code>/endsession</code> only leaves a <code>&lt;!-- lean-and-mean: review --&gt;</code> flag.</li>
+</ul>
+
+<h2 id="hook">The session-start hook</h2>
+<p>One short POSIX shell script runs when a session starts. Once the <code>## Operating Mode</code> block is in <code>AGENTS.md</code>, the mode needs no hook, flag or per-turn reminder: the host loads the file natively. The hook only covers the gaps:</p>
+<div class="table-wrap"><table>
+  <tr><th>Condition</th><th>What it prints</th></tr>
+  <tr><td>Block missing from <code>AGENTS.md</code></td><td>The block itself, so the mode is active anyway, plus a nudge to run <code>/lean-and-mean</code></td></tr>
+  <tr><td>Block differs from the plugin's current copy (plugin updated)</td><td rowspan="4">An instruction to run the full <code>/lean-and-mean</code> pass before your first task</td></tr>
+  <tr><td><code>AGENTS.md</code> over 250 lines</td></tr>
+  <tr><td><code>/endsession</code> left the review flag</td></tr>
+  <tr><td>Claude Code: <code>CLAUDE.md</code> is anything but <code>@AGENTS.md</code></td></tr>
+  <tr><td>Claude Code: no <code>advisorModel</code> in any settings file</td><td>A one-line suggestion to set <a href="#advisor">an advisor</a></td></tr>
+  <tr><td>Anything else</td><td>Nothing</td></tr>
+</table></div>
+<p>The <code>CLAUDE.md</code> check is also the upgrade path: a 3.x project kept its block in <code>CLAUDE.md</code>, so the pass merges that file into <code>AGENTS.md</code> and writes the one-line stub. Anything added to <code>CLAUDE.md</code> later moves over the same way. A <code>CLAUDE.local.md</code> keeps working alongside the stub.</p>
+
+<h2 id="cost">Why sessions should be short</h2>
+<p>Every tool call resends the whole context as cache reads, so cost scales with requests × context size. A session growing from 30K to 500K tokens over ~300 requests:</p>
+<div class="table-wrap"><table>
+  <thead><tr><th></th><th class="num">One 500K session</th><th class="num">Three, restarted between tasks</th></tr></thead>
+  <tbody>
+    <tr class="hl"><td>Fable 5.1</td><td class="num">~$60</td><td class="num">~$49 (−20%)</td></tr>
+    <tr class="hl"><td>Opus 5</td><td class="num">~$60</td><td class="num">~$37 (−40%)</td></tr>
+  </tbody>
+</table></div>
+<p>A restart costs under $1 to re-cache the system prompt and <code>AGENTS.md</code>.</p>
+<p><b>Walking away is the expensive part.</b> The cache lasts an hour. After that, the next turn re-writes the whole context at 2× input: ~$8 for 400K on Fable, versus ~$0.60 for a fresh session. Compaction doesn't help: it fires late, after the large-context turns are paid for, and its summary is lossy. <code>/endsession</code> writes a deliberate handoff for about $1, so end at task boundaries and before any break.</p>
+<p><b>Unrequested code is paid three times:</b> as output (a 150-line speculative helper with tests is ~3K tokens, ~$0.15 on Fable), as context on every later turn (~$0.15 more over 200 requests), and in review and maintenance, which is the real cost.</p>
+<p><b>Concise prose is for readability, not cost.</b> Chat prose is a small share of output; trimming it saves a few percent.</p>
+<p class="note">Modeled from API list prices (September 2026), not measured: output $50 / $25 per million on Fable 5.1 / Opus 5, cache reads $0.25 / $0.50, 1-hour cache writes at 2× input. Not a subscription billing model or a Codex pricing claim; actual costs depend on host, model, caching and context policy.</p>
+
+<h2 id="advisor">Advisor and effort</h2>
+<p>Claude Code can pair the main model with an advisor: a stronger reviewer it consults before committing to a plan, when the same error keeps coming back, and before declaring a task done. Set it once:</p>
+<pre><code>/advisor fable</code></pre>
+<p>(or <code>opus</code>; an Opus 5.5 main model accepts only those two). Each advisor call re-reads the full transcript uncached, and subagents inherit it, so its cost grows with session length. That is another reason to <code>/endsession</code> at task boundaries.</p>
+<ul>
+  <li><b>Main session on high effort:</b> <code>"effortLevel": "high"</code> in <code>~/.claude/settings.json</code>.</li>
+  <li><b>Routine subagent work on Sonnet at medium effort:</b> <code>model: sonnet</code>, <code>effort: medium</code>. <code>CLAUDE_CODE_EFFORT_LEVEL</code> overrides subagent effort.</li>
+  <li><b>Turning the advisor off:</b> <code>CLAUDE_CODE_DISABLE_ADVISOR_TOOL</code> or <code>DISABLE_TELEMETRY</code>. Either also silences the hook's suggestion.</li>
+</ul>
+
+<h2 id="dashboard">dashboard-builder</h2>
+<p>A subagent, Claude Code only, that builds <code>.dashboard/index.html</code>: one self-contained page you open by double-click to follow a long task without reading the transcript. Claude delegates to it on its own before any task over about five steps or 30 minutes; you can also call it with <code>@agent-lean-and-mean:dashboard-builder</code>.</p>
+<ul>
+  <li><b>Style, asked once.</b> On first use the agent replies <code>STYLE?</code>; Claude asks you for dark or light, dense or airy, and one accent colour. The agent saves the answer in its user memory and reuses it in every project.</li>
+  <li><b>Panels fit the task.</b> Tasks with text status (todo, doing, done, blocked), open questions, deliverables with paths, and anything stuck. Questions and stuck items go on top when present; empty panels are dropped; the plan can imply extra ones.</li>
+  <li><b>Claude keeps it current.</b> After every step Claude edits the page's <code>dashboard-data</code> JSON block, never the markup. A decision it needs from you goes into questions with its default, and it carries on with that default rather than waiting.</li>
+  <li><b>Honest times.</b> The page refreshes every 10 seconds, shows each time with its age ("4 min ago"), and marks itself stale when nothing has updated for 10 minutes. Timestamps come from the shell clock, never invented.</li>
+  <li><b>Contained.</b> No network requests. It writes <code>.dashboard/.gitignore</code> so the page is never committed, and the agent reads and writes nothing outside <code>.dashboard/</code> and its memory. It has no shell access.</li>
+</ul>
+
+<h2 id="typesafe">typesafe-ai</h2>
+<p>A bundled copy of <a href="https://github.com/typesafe-ai/skills">TypeSafe AI's skill</a> for building app features on Jev, their System One model. Jev doesn't generate text: it takes natural language plus application state and returns typed answers and probabilities, such as yes/no or pick-one, that ordinary code can combine. It fits routing, ranking, extraction, verification, or anywhere a prompt-and-parse step could become a structured decision.</p>
+<p>The skill reads TypeSafe's live docs and cookbooks as part of each task. The only change from the original is the endpoint: Jev is called through OpenRouter.</p>
+<pre><code>export OPENROUTER_JEV_API_KEY=...</code></pre>
+<p>Calls go to <code>POST https://openrouter.ai/api/alpha/decisions</code> with model <code>~typesafe/jev-latest</code>; request and response match TypeSafe's API.</p>
+<p>Copyright and credit belong to TypeSafe AI (MIT).</p>
+
+<h2 id="manual">Manual install</h2>
+<p><b>Claude Code:</b> copy <code>skills/lean-and-mean/</code> and <code>skills/endsession/</code> into <code>~/.claude/skills/</code>, copy <code>hooks/session-start.sh</code> somewhere, and add the <code>SessionStart</code> entry from <code>hooks/hooks.json</code> to <code>~/.claude/settings.json</code>, pointing at that script. Manual installs get the bare <code>/endsession</code> and <code>/lean-and-mean</code>.</p>
+<p><b>Codex without plugin support:</b> copy both skill folders into <code>~/.agents/skills/</code> and run <code>$lean-and-mean</code> yourself. The mode persists, but there is no automatic session-start review. Remove any <code>AGENTS.override.md</code>: Codex reads it instead of <code>AGENTS.md</code>. The hook needs a POSIX shell (macOS, Linux or WSL).</p>
+
+<footer><a href="./">← Back to overview</a> · Spinlock Development</footer>
+
+</main>
+<script>
+document.querySelectorAll('pre').forEach(function (pre) {
+  var b = document.createElement('button');
+  b.className = 'copy'; b.type = 'button'; b.textContent = 'Copy';
+  b.setAttribute('aria-label', 'Copy commands');
+  b.addEventListener('click', function () {
+    navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+      b.textContent = 'Copied'; setTimeout(function () { b.textContent = 'Copy'; }, 1500);
+    }, function () { b.textContent = 'Select and copy'; });
+  });
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

@@ -64,7 +64,9 @@ prose the model follows; nothing else runs.
 | `tests/test_session_start.py` | Hook tests: both hosts, stub check, advisor note; fake HOME |
 | `agents/dashboard-builder.md` | Progress-dashboard subagent; its description carries the trigger rule |
 | `hooks/hooks.json` | Wires the hook via `${CLAUDE_PLUGIN_ROOT}` |
-| `docs/index.html` | GitHub Pages, the one short web page; GitHub link in top bar, raw SKILL.md links; keep figures in sync with README "Why use it" |
+| `docs/index.html` | GitHub Pages overview; GitHub link in top bar, raw SKILL.md links, inline links into `guide.html` |
+| `docs/guide.html` | Pages deep dive: /endsession, hook, cost model, advisor, dashboard-builder, typesafe-ai, manual install; keep figures in sync with README "Why use it" |
+| `docs/style.css` | Shared Pages styles |
 | `docs/explained.md` | Long-form walkthrough, linked atop README; update when features change |
 | `.claude-plugin/`, `.codex-plugin/` | Claude plugin.json + marketplace.json, Codex plugin.json; versions must match |
 | `AGENTS.md`, `CLAUDE.md` | This file, committed; CLAUDE.md is the `@AGENTS.md` stub |
