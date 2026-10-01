@@ -1,6 +1,6 @@
 # lean-and-mean
 
-**New to this? [Plain-language explanation of everything it does → docs/explained.md](docs/explained.md)**
+**New to this? Plain-language explanation of everything it does → [web page](https://spinlockdevelopment.github.io/lean-and-mean/explained.html) · [docs/explained.md](docs/explained.md)**
 
 **[Explainer and overview → spinlockdevelopment.github.io/lean-and-mean](https://spinlockdevelopment.github.io/lean-and-mean/)**
 
