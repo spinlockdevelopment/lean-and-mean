@@ -164,7 +164,8 @@ which works on every Claude Code version and alongside a `CLAUDE.local.md`.
 
 Also bundled: `typesafe-ai`, a copy of TypeSafe AI's skill for building with
 the Jev model, routed through OpenRouter (`OPENROUTER_JEV_API_KEY`, model
-`~typesafe/jev-latest`). See [License](#license) for credit.
+`~typesafe/jev-latest`; without that key Jev isn't used, no fallback).
+Disabled for now: Claude won't load it on its own. See [License](#license) for credit.
 
 In Claude Code, plugin skills are namespaced: `/lean-and-mean:endsession`
 and `/lean-and-mean:lean-and-mean`. A manual install into `~/.claude/skills/`

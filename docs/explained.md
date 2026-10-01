@@ -123,6 +123,7 @@ unless one of these is true:
   in `.dashboard/` showing progress, open questions and results.
 - **typesafe-ai.** A bundled guide for building app features with TypeSafe's
   Jev model, which makes quick, structured yes/no and pick-one decisions.
+  Disabled for now: the assistant won't load it on its own.
 
 ## Turning it off
 

@@ -84,7 +84,8 @@
 <p>The skill reads TypeSafe's live docs and cookbooks as part of each task. The only change from the original is the endpoint: Jev is called through OpenRouter.</p>
 <pre><code>export OPENROUTER_JEV_API_KEY=...</code></pre>
 <p>Calls go to <code>POST https://openrouter.ai/api/alpha/decisions</code> with model <code>~typesafe/jev-latest</code>; request and response match TypeSafe's API.</p>
-<p>Copyright and credit belong to TypeSafe AI (MIT).</p>
+<p>Without that key, Jev isn't used; there is no fallback to TypeSafe's own endpoint or <code>TYPESAFE_API_KEY</code>.</p>
+<p class="note">Disabled for now: the skill is out of the Operating Mode block and the assistant won't load it on its own. Copyright and credit belong to TypeSafe AI (MIT).</p>
 
 <h2 id="manual">Manual install</h2>
 <p><b>Claude Code:</b> copy <code>skills/lean-and-mean/</code> and <code>skills/endsession/</code> into <code>~/.claude/skills/</code>, copy <code>hooks/session-start.sh</code> somewhere, and add the <code>SessionStart</code> entry from <code>hooks/hooks.json</code> to <code>~/.claude/settings.json</code>, pointing at that script. Manual installs get the bare <code>/endsession</code> and <code>/lean-and-mean</code>.</p>

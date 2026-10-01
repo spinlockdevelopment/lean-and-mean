@@ -83,7 +83,7 @@
   <li><b>dashboard-builder</b> (Claude Code). A subagent Claude calls before any task over about five steps or 30 minutes. It builds <code>.dashboard/index.html</code>, a self-refreshing page with tasks, open questions, deliverables and anything stuck. Claude updates it after every step, and a question that needs you is listed with the default Claude is proceeding on. Style is asked once and remembered. <a href="guide.html#dashboard">How the dashboard works</a>.</li>
   <li><b>Advisor.</b> Claude Code can consult a stronger model before a plan, on a recurring error, and before declaring done. Enable once with <code>/advisor fable</code> or <code>/advisor opus</code>. Its cost grows with session length, one more reason to use <code>/endsession</code>. <a href="guide.html#advisor">Advisor and effort settings</a>.</li>
   <li><b>Effort.</b> Run the main session at high effort and hand routine subagent work to Sonnet at medium effort.</li>
-  <li><b>typesafe-ai.</b> TypeSafe AI's skill for building features on their Jev model, which turns text and app state into typed yes/no and pick-one answers. Routed through OpenRouter with <code>OPENROUTER_JEV_API_KEY</code>. <a href="guide.html#typesafe">What Jev is for</a>.</li>
+  <li><b>typesafe-ai.</b> TypeSafe AI's skill for building features on their Jev model, which turns text and app state into typed yes/no and pick-one answers. Routed through OpenRouter with <code>OPENROUTER_JEV_API_KEY</code>. Disabled for now: the assistant won't load it on its own. <a href="guide.html#typesafe">What Jev is for</a>.</li>
 </ul>
 
 <h2>Why it pays off</h2>

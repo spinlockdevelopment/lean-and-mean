@@ -20,11 +20,6 @@ loss, security, accessibility, anything explicitly requested.
 Non-trivial logic (branch/loop/parser/money/security) leaves one runnable check.
 After code: ≤3 lines — what was skipped, when to add it.
 
-TypeSafe/Jev: if `OPENROUTER_JEV_API_KEY` is set, call
-`POST https://openrouter.ai/api/alpha/decisions`, model `~typesafe/jev-latest`,
-that key as Bearer; body and response match TypeSafe's API. Unset: use the
-standard TypeSafe path (`TYPESAFE_API_KEY`) and its missing-key error.
-
 Rules below are binding: read them before acting in their area, never
 re-litigate. A correction or failed approach this session becomes one new
 Rule line. `/endsession` closes the session: commit, Rules, Next, Todo.
@@ -36,7 +31,7 @@ block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
 CLAUDE.md) so it runs natively; `/endsession` offers to commit, promotes
 session mistakes into Rules, rewrites Next/Todo, then hard-stops. Full
 AGENTS.md review runs at next session start when the hook says it is due.
-v4.0.0, published via the spinlockdevelopment/lean-and-mean marketplace.
+v4.1.0, published via the spinlockdevelopment/lean-and-mean marketplace.
 - POSIX sh (one hook), Markdown skills, JSON manifests. Python stdlib tests only.
 
 ## Commands
@@ -59,7 +54,7 @@ prose the model follows; nothing else runs.
 | `skills/lean-and-mean/SKILL.md` | `/lean-and-mean` create-or-review pass, AGENTS.md structure and CLAUDE.md migration, `debt` |
 | `skills/endsession/SKILL.md` | `/endsession` light hard-stop wrap-up: commit, Rules, Next, Todo, review flag; `disable-model-invocation: true` |
 | `skills/endsession/agents/openai.yaml` | Codex metadata for `$endsession` |
-| `skills/typesafe-ai/` | Copy of TypeSafe AI's skill (MIT, their credit), Jev routed via OpenRouter; resync from `vendor/typesafe-ai-skills` submodule |
+| `skills/typesafe-ai/` | Copy of TypeSafe AI's skill (MIT, their credit), Jev routed via OpenRouter; disabled (`disable-model-invocation: true`); resync from `vendor/typesafe-ai-skills` submodule |
 | `hooks/session-start.sh` | Only hook; silent unless block missing, full pass due, or no `advisorModel` (Claude only) |
 | `tests/test_session_start.py` | Hook tests: both hosts, stub check, advisor note; fake HOME |
 | `agents/dashboard-builder.md` | Progress-dashboard subagent; its description carries the trigger rule |
@@ -84,6 +79,7 @@ prose the model follows; nothing else runs.
 - Document plugin skills as `/lean-and-mean:<skill>`. Bare `/endsession` only exists for manual installs. 2026-09-15
 - Hook markers match whole lines (`grep -qx`). AGENTS.md quotes the review flag inline, so a substring match fired falsely. 2026-09-17
 - On Fable, spawn subagents as fresh agents with `model: opus` or `sonnet` (Sonnet 5.5 via the alias, `effort: medium` in agent files; planner's pick), never `fork`: forks inherit Fable and ignore the override. Fable only when the user asks. Fable output costs 2× Opus, 5× Sonnet. 2026-09-17
+- Jev is OpenRouter-only: no `OPENROUTER_JEV_API_KEY` means don't use Jev, never fall back to `TYPESAFE_API_KEY` or `api.typesafe.ai`. typesafe-ai stays disabled (out of the Operating Mode block, `disable-model-invocation: true`) until the user asks to check it again. 2026-10-01
 - Size card grids to divide the card count (4 cards → 2×2), not `auto-fit`. Auto-fit wrapped four cards to 3+1 on the Pages site. 2026-09-17
 - Check provider docs before calling a model unavailable. Jev is on OpenRouter at `/api/alpha/decisions`, absent from `/api/v1/models`; I wrongly said it wasn't. 2026-09-28
 - Hand the user a `!` command for pushes of third-party routing text and for `git restore` of their changes. Auto mode blocks both for me; retrying wastes turns. 2026-09-28
@@ -93,7 +89,7 @@ prose the model follows; nothing else runs.
 - Give every context-file layout change a hook test that starts from the previous release's project state. 4.0.0 nearly shipped with the 3.x migration unreachable behind the block-missing exit; only the advisor caught it. 2026-10-01
 
 ## Next
-Pull the plugin update to 4.0.0 and open one 3.x project to confirm it migrates CLAUDE.md → AGENTS.md and writes the stub. Then trial dashboard-builder on a long task. Then SubagentStart hook.
+Pull the plugin update to 4.1.0 and open one 3.x project to confirm it migrates CLAUDE.md → AGENTS.md and writes the stub. Then trial dashboard-builder on a long task. Then SubagentStart hook.
 
 ## Todo
 - [ ] P2 — Trial dashboard-builder: does its description trigger delegation unprompted, and does the `STYLE?` round trip work
@@ -102,6 +98,7 @@ Pull the plugin update to 4.0.0 and open one 3.x project to confirm it migrates 
 - [ ] P3 — Replace modeled cost figures in README and docs/index.html with measured ones from `~/.claude/projects` session logs
 - [ ] P3 — Trim `lean-and-mean` skill description to two lines
 - [ ] P3 — Decide whether `docs/explained.md` stays now that the Pages site is one short page
+- [ ] P3 — typesafe-ai disabled 2026-10-01; re-enable only when the user asks to check it again
 - [ ] P3 — Resync `skills/typesafe-ai/SKILL.md` after `git submodule update --remote`, keeping the Endpoint section
 - [ ] P3 — `/lean-and-mean` init: over ~500 source files, add a Rule to prefer `graphify query` over cross-module grep
 

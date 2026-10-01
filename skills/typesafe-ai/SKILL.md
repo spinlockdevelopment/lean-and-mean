@@ -1,6 +1,7 @@
 ---
 name: typesafe-ai
 license: MIT
+disable-model-invocation: true
 description: >
   Build AI-powered software with TypeSafe: small units of AI intelligence you
   can use like programming primitives. Its System One models, including Jev,
@@ -37,8 +38,8 @@ TypeSafe endpoint or `TYPESAFE_API_KEY`, substitute:
 - `"model": "~typesafe/jev-latest"` in the body
 
 Request body (`state`, `questions`) and response (`answers`, `usage`) match the
-TypeSafe API. If `OPENROUTER_JEV_API_KEY` is unset, report the missing key and
-stop; do not fall back to another endpoint or key.
+TypeSafe API. If `OPENROUTER_JEV_API_KEY` is unset, don't use Jev: no fallback to
+`api.typesafe.ai`, `TYPESAFE_API_KEY`, or any other endpoint or key.
 
 ## Read the live docs
 
