@@ -1,6 +1,4 @@
-# lean-and-mean, explained from scratch
-
-This page assumes you know what a code editor and Git are, and nothing else.
+# How lean-and-mean works
 
 ## The problem it solves
 
@@ -130,7 +128,7 @@ Disable the plugin **and** delete the `## Operating Mode` section from
 `CLAUDE.md`. Disabling alone isn't enough, because the instructions live in the
 file, not in the plugin.
 
-## Words used here
+## Glossary
 
 - **Session**: one conversation with the assistant, from start until you close it.
 - **Plugin**: an add-on you install into Claude Code.

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>lean-and-mean explained</title>
-<meta name="description" content="A plain-language walkthrough of everything the lean-and-mean plugin does, for readers new to Claude Code.">
+<title>How lean-and-mean works</title>
+<meta name="description" content="Everything the lean-and-mean plugin does: concise answers, minimal code, Rules that persist across sessions, and the commands and hook behind them.">
 <style>
 :root {
   --bg: #fbfaf7; --fg: #1c1b19; --muted: #5f5b53; --line: #e4e0d7;
@@ -56,9 +56,8 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line);
 <main>
 
 <header>
-  <div class="eyebrow"><a href="./">lean-and-mean</a> · explained from scratch</div>
-  <h1>What lean-and-mean does, in plain language</h1>
-  <p class="lede">This page assumes you know what a code editor and Git are, and nothing else.</p>
+  <div class="eyebrow"><a href="./">lean-and-mean</a></div>
+  <h1>How lean-and-mean works</h1>
 </header>
 
 <h2>The problem it solves</h2>
@@ -170,7 +169,7 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line);
 <h2>Turning it off</h2>
 <p>Disable the plugin <strong>and</strong> delete the <code>## Operating Mode</code> section from <code>CLAUDE.md</code>. Disabling alone isn't enough, because the instructions live in the file, not in the plugin.</p>
 
-<h2>Words used here</h2>
+<h2>Glossary</h2>
 <dl>
   <dt>Session</dt><dd>One conversation with the assistant, from start until you close it.</dd>
   <dt>Plugin</dt><dd>An add-on you install into Claude Code.</dd>
