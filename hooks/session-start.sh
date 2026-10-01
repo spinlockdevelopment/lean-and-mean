@@ -27,4 +27,7 @@ why=""
 n=$(($(wc -l < "$md"))); [ "$n" -gt 250 ] && why="$why $n lines, over the 250 cap;"
 grep -qxF '<!-- lean-and-mean: review -->' "$md" && why="$why /endsession flagged a review;"
 [ -n "$why" ] && printf 'lean-and-mean: %s needs the full pass —%s Run the lean-and-mean skill (%s) before the user task, then continue with it.\n' "$md" "$why" "$invoke"
+# Claude only, silent once advisorModel is set anywhere or the tool is disabled.
+[ -z "${PLUGIN_ROOT:-}${CLAUDE_CODE_DISABLE_ADVISOR_TOOL:-}" ] && ! grep -qs '"advisorModel"' "$HOME/.claude/settings.json" "$project/.claude/settings.json" "$project/.claude/settings.local.json" &&
+  echo 'lean-and-mean: no advisor set. Tell the user once, in one line: /advisor fable (or opus) adds a reviewer before plans, on repeat errors and before done; each call re-reads the transcript uncached, so /endsession at task boundaries keeps it cheap.'
 exit 0

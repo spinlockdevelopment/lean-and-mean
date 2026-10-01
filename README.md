@@ -57,6 +57,16 @@ turn (~$0.15 more over 200 requests), and in review and maintenance, which is
 the real cost. The YAGNI ladder stops it at the source; "one runnable check"
 keeps tests proportionate; `// lean:` markers keep skipped work visible.
 
+**Pair a strong main model with an advisor; delegate on medium.** Run the
+main session on high (`"effortLevel": "high"` in `~/.claude/settings.json`) and
+set `/advisor fable` (or `opus`; an Opus 5.5 main model accepts only those).
+The advisor is consulted before plans, on repeat errors and before "done", but
+each call re-reads the full transcript uncached and subagents inherit it, so
+its cost grows with session length: another reason to `/endsession` at task
+boundaries. Delegate routine subagent work to `model: sonnet`, `effort: medium`.
+`CLAUDE_CODE_EFFORT_LEVEL` overrides subagent effort; `DISABLE_TELEMETRY` and
+`CLAUDE_CODE_DISABLE_ADVISOR_TOOL` turn the advisor off.
+
 **Concise prose is for readability, not cost.** Chat prose is a small share of
 output; trimming it saves a few percent.
 
@@ -184,6 +194,10 @@ your first task:
 - the block differs from the plugin's current `operating-mode.md` (plugin updated),
 - `CLAUDE.md` is over 250 lines, or
 - the last `/endsession` left a `<!-- lean-and-mean: review -->` flag.
+
+In Claude Code it also asks Claude to suggest `/advisor` once per session until
+`advisorModel` is set in user or project settings, or
+`CLAUDE_CODE_DISABLE_ADVISOR_TOOL` is set.
 
 There is no session log: `git log` is the history, which is why `/endsession`
 offers to commit first.
