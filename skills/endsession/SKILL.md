@@ -17,16 +17,11 @@ This pass is deliberately light: context is at its largest now, so every extra
 step is expensive. The full context file review runs at the start of a later
 session, on a fresh context, when the SessionStart hook asks for it.
 
-## Host and context file
+## Context file
 
-Use `CLAUDE.md` in Claude Code and `AGENTS.md` in Codex, at the project
-root (Git root, or the session working directory outside Git). In Codex,
-use a nonempty root `AGENTS.override.md` instead when present. Respect any
-additional instructions applying to the files you edit; do not flatten or
-rewrite nested instruction files. Never edit the other host's file implicitly.
-Below, "context file" means that selected file. Use `claude-<category>.md`
-for Claude overflow and `agents-<category>.md` for Codex overflow; substitute
-that prefix for `context-<category>.md` in the template.
+Root `AGENTS.md` on both hosts (Git root, or the session working directory
+outside Git); `CLAUDE.md` is only the `@AGENTS.md` stub. Overflow is
+`agents-<category>.md`. Below, "context file" means root `AGENTS.md`.
 
 Claude invokes these skills with `/lean-and-mean` and `/endsession`; Codex
 uses `$lean-and-mean` and `$endsession` (select the installed skill if the UI
@@ -51,7 +46,8 @@ Nothing about the project itself.
 
 ## Pass
 
-1. No context file → run `/lean-and-mean` to create it, then continue.
+1. No context file, or `CLAUDE.md` is not the stub → run `/lean-and-mean`,
+   then continue.
 2. **Rules** — scan this session for corrections the user made, approaches
    that failed, commands that didn't exist, wrong assumptions. Each becomes one
    line under `## Rules`: `- <imperative>. <why — the cost>. <YYYY-MM-DD>`.

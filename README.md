@@ -1,11 +1,9 @@
 # lean-and-mean
 
-**How it works → [web page](https://spinlockdevelopment.github.io/lean-and-mean/explained.html) · [docs/explained.md](docs/explained.md)**
-
-**[Explainer and overview → spinlockdevelopment.github.io/lean-and-mean](https://spinlockdevelopment.github.io/lean-and-mean/)**
+**How it works → [spinlockdevelopment.github.io/lean-and-mean](https://spinlockdevelopment.github.io/lean-and-mean/) · [docs/explained.md](docs/explained.md)**
 
 A Claude Code and Codex plugin: concise prose and YAGNI code, written into your project's
-`CLAUDE.md` (Claude Code) or `AGENTS.md` (Codex) once so it runs every session with nothing else in the loop. Plus
+`AGENTS.md` once so it runs every session, on both hosts, with nothing else in the loop. Plus
 `/endsession`, which closes a session by offering to commit and writing what
 was learned back into that file, then stops.
 
@@ -19,7 +17,7 @@ Three axes:
   at trust boundaries, error handling that prevents data loss, security, or
   accessibility.
 - **Memory** — every correction, failed approach, and footgun becomes one
-  binding line under `## Rules` in `CLAUDE.md`, so it does not happen twice.
+  binding line under `## Rules` in `AGENTS.md`, so it does not happen twice.
 
 [Why use it](#why-use-it) covers the cost model behind these choices.
 
@@ -44,7 +42,7 @@ growing from 30K to 500K over ~300 requests:
 | Fable 5.1 | ~$60 | ~$49 (−20%) |
 | Opus 5 | ~$60 | ~$37 (−40%) |
 
-A restart costs under $1 to re-cache the system prompt and `CLAUDE.md`.
+A restart costs under $1 to re-cache the system prompt and `AGENTS.md`.
 
 **Walking away is the expensive part.** The cache lasts an hour. After that,
 the next turn re-writes the whole context at 2× input: ~$8 for 400K on Fable,
@@ -72,7 +70,7 @@ boundaries. Delegate routine subagent work to `model: sonnet`, `effort: medium`.
 **Concise prose is for readability, not cost.** Chat prose is a small share of
 output; trimming it saves a few percent.
 
-**A structured `CLAUDE.md` keeps every session consistent.** It is loaded on
+**A structured `AGENTS.md` keeps every session consistent.** It is loaded on
 every request, so it stays small and predictable:
 
 - Fixed sections in a fixed order: Claude always knows where commands, layout,
@@ -81,7 +79,7 @@ every request, so it stays small and predictable:
   session, not every session.
 - `## Next` lets a fresh session start on the right task from one line;
   `git log` is the history.
-- A 250-line cap, with overflow split into `claude-<category>.md`.
+- A 250-line cap, with overflow split into `agents-<category>.md`.
 - Self-maintaining: at session start, on a cheap context, the hook triggers a
   full review when the block is out of date, the file is over the cap, or
   `/endsession` flagged changed layout or commands. The review re-verifies
@@ -115,10 +113,9 @@ installation alone does not authorize hooks. The hook requires a POSIX shell
 Open your project in a new Codex session and select the installed skill in the
 picker. Run `$lean-and-mean` once to create or review its context file. Use
 `$lean-and-mean debt` to list shortcut markers, and `$endsession` to save the
-handoff and close the session. Both hosts share the skills and Operating Mode
-text. Codex maintains root `AGENTS.md` (or nonempty `AGENTS.override.md` when
-present); Claude maintains `CLAUDE.md`. They do not synchronize those files.
-Start Codex at the project root for the same scope as the maintenance hook.
+handoff and close the session. Both hosts share the skills, the Operating
+Mode text, and root `AGENTS.md`. `AGENTS.override.md` is unsupported: Codex
+reads it instead of `AGENTS.md`, so remove it. Start Codex at the project root for the same scope as the maintenance hook.
 Existing nested instruction files still apply and are not rewritten.
 
 Without plugin/hook support, copy both skill folders into `~/.agents/skills/`
@@ -154,8 +151,9 @@ pointing the command at that script.
 
 ## Use
 
-Use the command for your host. The context file is `CLAUDE.md` in Claude Code
-and `AGENTS.md` (or its nonempty override) in Codex.
+Use the command for your host. Both share one context file, root `AGENTS.md`.
+Claude Code loads it through a one-line `CLAUDE.md` containing `@AGENTS.md`,
+which works on every Claude Code version and alongside a `CLAUDE.local.md`.
 
 | Claude Code | Codex | Effect |
 |-------------|-------|--------|
@@ -182,9 +180,9 @@ waits for the next session's fresh context.
 
 ## How it works
 
-`CLAUDE.md` is loaded by Claude Code natively, so once the `## Operating Mode`
-block is in it the mode is on for that project with no hook, flag, or per-turn
-reminder. The block is `skills/lean-and-mean/operating-mode.md`, pasted
+`AGENTS.md` is loaded natively (by Claude Code through the `@AGENTS.md`
+stub in `CLAUDE.md`), so once the `## Operating Mode` block is in it the
+mode is on for that project with no hook, flag, or per-turn reminder. The block is `skills/lean-and-mean/operating-mode.md`, pasted
 verbatim.
 
 One hook, `SessionStart`. If the block is missing it prints the block into
@@ -194,8 +192,12 @@ make it permanent. If the block is there it says nothing, unless the full
 your first task:
 
 - the block differs from the plugin's current `operating-mode.md` (plugin updated),
-- `CLAUDE.md` is over 250 lines, or
-- the last `/endsession` left a `<!-- lean-and-mean: review -->` flag.
+- `AGENTS.md` is over 250 lines,
+- the last `/endsession` left a `<!-- lean-and-mean: review -->` flag, or
+- in Claude Code, `CLAUDE.md` is anything but the `@AGENTS.md` stub. The pass
+  merges an existing `CLAUDE.md` into `AGENTS.md` and writes the stub, so
+  upgrading from 3.x migrates on its own. Anything else added to `CLAUDE.md`
+  later moves into `AGENTS.md` the same way.
 
 In Claude Code it also asks Claude to suggest `/advisor` once per session until
 `advisorModel` is set in user or project settings, or

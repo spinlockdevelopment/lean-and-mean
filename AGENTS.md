@@ -1,0 +1,105 @@
+# lean-and-mean — AGENTS.md
+
+## Operating Mode
+Lean and mean. Active every response.
+
+Prose: concise. Lead with the answer; no filler, hedging, or pleasantries.
+Full sentences for explanations and trade-offs; fragments fine for status.
+No meta: never state the audience, level, or style ("plain language", "from
+scratch", "assumes you know"). Write that way; don't announce it.
+
+Code — YAGNI ladder, stop at first rung that holds:
+1. Speculative? Skip it, say so.  2. Already in repo? Reuse.  3. Stdlib? Use it.
+4. Native platform feature? Use it.  5. Installed dep? Use it.  6. One line?
+One line.  7. Else minimum new code.
+
+Bug fix = root cause at the shared call site, not per caller.
+Mark shortcuts `// lean: <ceiling>, <upgrade path>`.
+Never cut: input validation at trust boundaries, error handling against data
+loss, security, accessibility, anything explicitly requested.
+Non-trivial logic (branch/loop/parser/money/security) leaves one runnable check.
+After code: ≤3 lines — what was skipped, when to add it.
+
+TypeSafe/Jev: if `OPENROUTER_JEV_API_KEY` is set, call
+`POST https://openrouter.ai/api/alpha/decisions`, model `~typesafe/jev-latest`,
+that key as Bearer; body and response match TypeSafe's API. Unset: use the
+standard TypeSafe path (`TYPESAFE_API_KEY`) and its missing-key error.
+
+Rules below are binding: read them before acting in their area, never
+re-litigate. A correction or failed approach this session becomes one new
+Rule line. `/endsession` closes the session: commit, Rules, Next, Todo.
+History is `git log`.
+
+## Project & Stack
+Claude Code and Codex plugin. Puts a concise-prose + YAGNI operating-mode
+block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
+CLAUDE.md) so it runs natively; `/endsession` offers to commit, promotes
+session mistakes into Rules, rewrites Next/Todo, then hard-stops. Full
+AGENTS.md review runs at next session start when the hook says it is due.
+v4.0.0, published via the spinlockdevelopment/lean-and-mean marketplace.
+- POSIX sh (one hook), Markdown skills, JSON manifests. Python stdlib tests only.
+
+## Commands
+sh -n hooks/session-start.sh
+python3 -m unittest discover tests
+CLAUDE_PROJECT_DIR=/path/to/project sh hooks/session-start.sh
+node -e 'for (const f of ["hooks/hooks.json",".claude-plugin/plugin.json",".claude-plugin/marketplace.json",".codex-plugin/plugin.json"]) JSON.parse(require("fs").readFileSync(f))'
+git -c credential.helper= -c credential.helper='!gh auth git-credential' push
+
+## Architecture & Layout
+SessionStart hook prints the block when AGENTS.md lacks it, or asks for the
+full pass when the block is stale, AGENTS.md is over 250 lines,
+`/endsession` left `<!-- lean-and-mean: review -->`, or (Claude) CLAUDE.md
+is not the `@AGENTS.md` stub. Skills are
+prose the model follows; nothing else runs.
+
+| Path | Purpose |
+|------|---------|
+| `skills/lean-and-mean/operating-mode.md` | The block, source of truth; pasted verbatim into AGENTS.md |
+| `skills/lean-and-mean/SKILL.md` | `/lean-and-mean` create-or-review pass, AGENTS.md structure and CLAUDE.md migration, `debt` |
+| `skills/endsession/SKILL.md` | `/endsession` light hard-stop wrap-up: commit, Rules, Next, Todo, review flag; `disable-model-invocation: true` |
+| `skills/endsession/agents/openai.yaml` | Codex metadata for `$endsession` |
+| `skills/typesafe-ai/` | Copy of TypeSafe AI's skill (MIT, their credit), Jev routed via OpenRouter; resync from `vendor/typesafe-ai-skills` submodule |
+| `hooks/session-start.sh` | Only hook; silent unless block missing, full pass due, or no `advisorModel` (Claude only) |
+| `tests/test_session_start.py` | Hook tests: both hosts, stub check, advisor note; fake HOME |
+| `agents/dashboard-builder.md` | Progress-dashboard subagent; its description carries the trigger rule |
+| `hooks/hooks.json` | Wires the hook via `${CLAUDE_PLUGIN_ROOT}` |
+| `docs/index.html` | GitHub Pages, the one short web page; GitHub link in top bar, raw SKILL.md links; keep figures in sync with README "Why use it" |
+| `docs/explained.md` | Long-form walkthrough, linked atop README; update when features change |
+| `.claude-plugin/`, `.codex-plugin/` | Claude plugin.json + marketplace.json, Codex plugin.json; versions must match |
+| `AGENTS.md`, `CLAUDE.md` | This file, committed; CLAUDE.md is the `@AGENTS.md` stub |
+
+## Conventions
+- Version bump in all three manifests together. Breaking behavior → major.
+- Hook stays POSIX sh, under 35 lines, zero output in the common case.
+- Skill descriptions short: every installed skill's description costs context each turn.
+- Commit messages full English, end with `Co-Authored-By: <running model> <noreply@anthropic.com>`, e.g. `Claude Opus 5`.
+
+## Rules
+- Push with the `gh` credential command in Commands. Plain `git push` uses a stale keychain token and 403'd three times. 2026-09-16
+- Fine-grained PAT needs resource owner `spinlockdevelopment` plus Contents write; enabling Pages via API also needs Pages write (403'd without it). Reading a public repo proves nothing about push rights. 2026-09-17
+- Wrap `wc -l` as `$(($(wc -l < f)))`. macOS pads the count with spaces. 2026-09-15
+- Document plugin skills as `/lean-and-mean:<skill>`. Bare `/endsession` only exists for manual installs. 2026-09-15
+- Hook markers match whole lines (`grep -qx`). AGENTS.md quotes the review flag inline, so a substring match fired falsely. 2026-09-17
+- On Fable, spawn subagents as fresh agents with `model: opus` or `sonnet` (Sonnet 5.5 via the alias, `effort: medium` in agent files; planner's pick), never `fork`: forks inherit Fable and ignore the override. Fable only when the user asks. Fable output costs 2× Opus, 5× Sonnet. 2026-09-17
+- Size card grids to divide the card count (4 cards → 2×2), not `auto-fit`. Auto-fit wrapped four cards to 3+1 on the Pages site. 2026-09-17
+- Check provider docs before calling a model unavailable. Jev is on OpenRouter at `/api/alpha/decisions`, absent from `/api/v1/models`; I wrongly said it wasn't. 2026-09-28
+- Hand the user a `!` command for pushes of third-party routing text and for `git restore` of their changes. Auto mode blocks both for me; retrying wastes turns. 2026-09-28
+- `source ~/.zshrc` in the same Bash call after the user adds an env var. The tool's shell env is snapshotted at session start. 2026-09-28
+- Plugin agents can't enforce a folder scope: they ignore `hooks` and `permissionMode`, and `tools` takes names only. Scope by instruction plus omitting Bash. 2026-09-28
+
+## Next
+Pull the plugin update to 4.0.0; other projects migrate CLAUDE.md → AGENTS.md at next session start. Then trial dashboard-builder on a long task. Then SubagentStart hook.
+
+## Todo
+- [ ] P2 — Trial dashboard-builder: does its description trigger delegation unprompted, and does the `STYLE?` round trip work
+- [ ] P2 — SubagentStart hook: same script, subagents don't load AGENTS.md
+- [ ] P2 — `/endsession` policy for built-in auto memory (MEMORY.md): promote into Rules and clear, or document disabling
+- [ ] P3 — Replace modeled cost figures in README and docs/index.html with measured ones from `~/.claude/projects` session logs
+- [ ] P3 — Trim `lean-and-mean` skill description to two lines
+- [ ] P3 — Resync `skills/typesafe-ai/SKILL.md` after `git submodule update --remote`, keeping the Endpoint section
+- [ ] P3 — `/lean-and-mean` init: over ~500 source files, add a Rule to prefer `graphify query` over cross-module grep
+
+## Notes & Pointers
+- History: `git log`. SUMMARY.md dropped in v3.
+- graphify: adopt only above ~500 files, AGENTS.md section only, no hook-guard, rebuild from git post-commit not Stop.

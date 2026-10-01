@@ -20,13 +20,18 @@ class SessionStart(unittest.TestCase):
         shutil.copytree(ROOT / 'skills', self.plugin / 'skills')
         self.project = self.root / 'project with spaces'
         self.project.mkdir()
+        # An advisor is set in the fake home, so only the tests that clear it see the note.
+        self.home = self.root / 'home'
+        (self.home / '.claude').mkdir(parents=True)
+        (self.home / '.claude/settings.json').write_text('{"advisorModel": "opus"}')
         self.block = (ROOT / 'skills/lean-and-mean/operating-mode.md').read_text()
         self.command = json.loads((self.plugin / 'hooks/hooks.json').read_text())['hooks']['SessionStart'][0]['hooks'][0]['command']
 
-    def run_hook(self, host, cwd=None):
+    def run_hook(self, host, cwd=None, **extra):
         env = os.environ.copy()
-        for key in ('PLUGIN_ROOT', 'CLAUDE_PLUGIN_ROOT', 'CLAUDE_PROJECT_DIR'):
+        for key in ('PLUGIN_ROOT', 'CLAUDE_PLUGIN_ROOT', 'CLAUDE_PROJECT_DIR', 'CLAUDE_CODE_DISABLE_ADVISOR_TOOL'):
             env.pop(key, None)
+        env['HOME'] = str(self.home)
         env['CLAUDE_PLUGIN_ROOT'] = str(self.plugin)
         if host == 'codex':
             env['PLUGIN_ROOT'] = str(self.plugin)
@@ -34,6 +39,7 @@ class SessionStart(unittest.TestCase):
             env['CLAUDE_PROJECT_DIR'] = str(self.root / 'wrong')
         else:
             env['CLAUDE_PROJECT_DIR'] = str(self.project)
+        env.update(extra)
         result = subprocess.run(['sh', '-c', self.command], cwd=cwd or self.project,
                                 env=env, input='{}', text=True, capture_output=True)
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -41,16 +47,17 @@ class SessionStart(unittest.TestCase):
         return result.stdout
 
     def test_review_conditions_for_both_hosts(self):
-        for host, filename in [('claude', 'CLAUDE.md'), ('codex', 'AGENTS.md')]:
-            path = self.project / filename
-            cases = [
-                (None, 'Not in'),
-                ('# Project\n', 'Not in'),
-                (self.block + '\n## Rules\n', ''),
-                (self.block.replace('Lean and mean.', 'Old mode.') + '\n## Rules\n', 'out of date'),
-                (self.block + '\n## Rules\n' + 'line\n' * 251, 'over the 250 cap'),
-                (self.block + '\n## Rules\n<!-- lean-and-mean: review -->\n', 'flagged a review'),
-            ]
+        path = self.project / 'AGENTS.md'
+        (self.project / 'CLAUDE.md').write_text('@AGENTS.md\n')
+        cases = [
+            (None, 'Not in'),
+            ('# Project\n', 'Not in'),
+            (self.block + '\n## Rules\n', ''),
+            (self.block.replace('Lean and mean.', 'Old mode.') + '\n## Rules\n', 'out of date'),
+            (self.block + '\n## Rules\n' + 'line\n' * 251, 'over the 250 cap'),
+            (self.block + '\n## Rules\n<!-- lean-and-mean: review -->\n', 'flagged a review'),
+        ]
+        for host in ('claude', 'codex'):
             for content, expected in cases:
                 with self.subTest(host=host, expected=expected):
                     if content is None:
@@ -61,24 +68,29 @@ class SessionStart(unittest.TestCase):
                     output = self.run_hook(host)
                     if expected:
                         self.assertIn(expected, output)
-                        self.assertIn(filename, output)
+                        self.assertIn('AGENTS.md', output)
                     else:
                         self.assertEqual(output, '')
                     self.assertEqual(path.read_bytes() if path.exists() else None, before)
-            path.unlink()
+
+    def test_claude_requires_stub(self):
+        (self.project / 'AGENTS.md').write_text(self.block)
+        self.assertIn('not the @AGENTS.md stub', self.run_hook('claude'))
+        (self.project / 'CLAUDE.md').write_text(self.block)
+        self.assertIn('not the @AGENTS.md stub', self.run_hook('claude'))
+        (self.project / 'CLAUDE.md').write_text('@AGENTS.md\n')
+        self.assertEqual(self.run_hook('claude'), '')
+
+    def test_claude_3x_project_migrates(self):
+        (self.project / 'CLAUDE.md').write_text(self.block + '\n## Rules\n')
+        output = self.run_hook('claude')
+        self.assertIn('needs the full pass', output)
+        self.assertNotIn('Not in', output)
+        self.assertNotIn('Lean and mean.', output)
 
     def test_codex_ignores_claude_file(self):
-        (self.project / 'CLAUDE.md').write_text(self.block)
-        self.assertIn('AGENTS.md', self.run_hook('codex'))
-
-    def test_codex_override_precedence(self):
         (self.project / 'AGENTS.md').write_text(self.block)
-        override = self.project / 'AGENTS.override.md'
-        override.write_text('Other instructions\n')
-        self.assertIn('AGENTS.override.md', self.run_hook('codex'))
-        override.write_text(self.block)
-        self.assertEqual(self.run_hook('codex'), '')
-        override.write_text('')
+        (self.project / 'CLAUDE.md').write_text(self.block)
         self.assertEqual(self.run_hook('codex'), '')
 
     def test_codex_subdirectory_uses_git_root(self):
@@ -89,8 +101,20 @@ class SessionStart(unittest.TestCase):
         self.assertEqual(self.run_hook('codex', nested), '')
 
     def test_claude_uses_project_dir_from_another_cwd(self):
-        (self.project / 'CLAUDE.md').write_text(self.block)
+        (self.project / 'AGENTS.md').write_text(self.block)
+        (self.project / 'CLAUDE.md').write_text('@AGENTS.md\n')
         self.assertEqual(self.run_hook('claude', self.root), '')
+
+    def test_advisor_note(self):
+        (self.project / 'AGENTS.md').write_text(self.block)
+        (self.project / 'CLAUDE.md').write_text('@AGENTS.md\n')
+        (self.home / '.claude/settings.json').write_text('{}')
+        self.assertIn('no advisor set', self.run_hook('claude'))
+        self.assertEqual(self.run_hook('claude', CLAUDE_CODE_DISABLE_ADVISOR_TOOL='1'), '')
+        self.assertEqual(self.run_hook('codex'), '')
+        (self.project / '.claude').mkdir()
+        (self.project / '.claude/settings.local.json').write_text('{"advisorModel": "fable"}')
+        self.assertEqual(self.run_hook('claude'), '')
 
 
 if __name__ == '__main__':

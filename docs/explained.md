@@ -16,9 +16,10 @@ assistant already reads at the start of every session.
 
 ## The key idea: one file the assistant always reads
 
-Claude Code automatically loads a file called `CLAUDE.md` from the root of
-your project (Codex, a similar tool, uses `AGENTS.md`). Whatever is in it, the
-assistant treats as standing instructions.
+Claude Code and Codex both load a file called `AGENTS.md` from the root of
+your project. Whatever is in it, the assistant treats as standing
+instructions. Claude Code reaches it through a one-line `CLAUDE.md` that
+contains just `@AGENTS.md`, meaning "load AGENTS.md here".
 
 lean-and-mean puts its rules in that file. After that, the plugin barely needs
 to do anything: the instructions are just *there*, every session, for free.
@@ -68,7 +69,7 @@ After writing code, the assistant adds at most three lines: what it left out,
 and when you would want to add it.
 
 ### 8. Memory that survives sessions (Rules)
-`CLAUDE.md` has a `## Rules` section. Every time the assistant makes a mistake
+`AGENTS.md` has a `## Rules` section. Every time the assistant makes a mistake
 and you correct it, that lesson becomes one line there, with the date. Because
 the file is read every session, the same mistake doesn't repeat. Capped at 15
 rules so the list stays readable.
@@ -78,7 +79,7 @@ rules so the list stays readable.
 - `## Todo`: a short, prioritized backlog.
 - History is not kept in the file; `git log` already has it.
 
-### 10. A tidy, fixed layout for CLAUDE.md
+### 10. A tidy, fixed layout for AGENTS.md
 The file always has the same sections in the same order: Operating Mode,
 Project & Stack, Commands, Architecture & Layout, Conventions, Rules, Next,
 Todo, Notes & Pointers. It must stay under 250 lines; anything bigger is moved
@@ -89,7 +90,7 @@ re-reads it on every step.
 
 | Command | What it does |
 |---|---|
-| `/lean-and-mean` | Sets up `CLAUDE.md` the first time, or cleans up an existing one: updates the instructions, reorders sections, checks that listed commands and paths are real, deletes stale lines. Safe to run repeatedly. You rarely need to type it. |
+| `/lean-and-mean` | Sets up `AGENTS.md` the first time, or cleans up an existing one: updates the instructions, reorders sections, checks that listed commands and paths are real, deletes stale lines. Safe to run repeatedly. You rarely need to type it. |
 | `/lean-and-mean debt` | Lists every `// lean:` shortcut in the project. Changes nothing. |
 | `/endsession` | Wraps up a work session: offers to commit your work, saves lessons as Rules, updates Next and Todo, then stops. Ending sessions at natural break points keeps them cheap and focused. |
 
@@ -101,10 +102,11 @@ and `/lean-and-mean:endsession`.
 A tiny script (a "hook") runs each time you start a session. It stays silent
 unless one of these is true:
 
-- **The instructions aren't in `CLAUDE.md` yet.** It loads them for this
+- **The instructions aren't in `AGENTS.md` yet.** It loads them for this
   session anyway and suggests running `/lean-and-mean` to make it permanent.
 - **A cleanup is due.** The plugin was updated, the file grew past 250 lines,
-  or the last `/endsession` asked for a review. It tells the assistant to run
+  the last `/endsession` asked for a review, or `CLAUDE.md` holds more than the
+  one-line stub (the cleanup moves that content into `AGENTS.md`). It tells the assistant to run
   the cleanup before your first task.
 - **No advisor is set** (Claude Code only). It suggests turning one on; see below.
 
@@ -125,13 +127,6 @@ unless one of these is true:
 ## Turning it off
 
 Disable the plugin **and** delete the `## Operating Mode` section from
-`CLAUDE.md`. Disabling alone isn't enough, because the instructions live in the
+`AGENTS.md`. Disabling alone isn't enough, because the instructions live in the
 file, not in the plugin.
 
-## Glossary
-
-- **Session**: one conversation with the assistant, from start until you close it.
-- **Plugin**: an add-on you install into Claude Code.
-- **Hook**: a small script Claude Code runs automatically at a set moment.
-- **Context**: everything the assistant has read in the current session. Bigger context costs more per step.
-- **YAGNI**: "You Aren't Gonna Need It", meaning don't build for imagined future needs.

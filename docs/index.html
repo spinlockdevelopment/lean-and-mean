@@ -26,7 +26,10 @@ body {
   font: 17px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 main { max-width: 780px; margin: 0 auto; padding: 0 16px 64px; }
-header { padding: 72px 0 40px; border-bottom: 1px solid var(--line); }
+.topbar { display: flex; justify-content: space-between; align-items: center; max-width: 780px; margin: 0 auto; padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 15px; font-weight: 600; }
+.topbar a { text-decoration: none; }
+.topbar .brand { color: var(--fg); }
+header { padding: 56px 0 40px; border-bottom: 1px solid var(--line); }
 .eyebrow { color: var(--accent); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; font-size: 13px; }
 h1 { font-size: clamp(36px, 7vw, 56px); line-height: 1.05; margin: 12px 0 16px; letter-spacing: -0.02em; }
 h2 { font-size: 26px; margin: 56px 0 12px; letter-spacing: -0.01em; }
@@ -38,12 +41,12 @@ a { color: var(--accent); }
 .btn { display: inline-block; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; border: 1px solid var(--accent); }
 .btn.primary { background: var(--accent); color: var(--bg); }
 .btn.ghost { color: var(--accent); }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin: 24px 0 8px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 24px 0 8px; }
 .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
 .stat b { display: block; font-size: 28px; color: var(--accent); line-height: 1.1; }
 .stat span { color: var(--muted); font-size: 14px; }
 .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 16px; }
-@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .grid, .stats { grid-template-columns: 1fr; } }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px; }
 .card h3 { margin-top: 0; }
 .card p { color: var(--muted); font-size: 15px; margin: 0; }
@@ -64,89 +67,65 @@ footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line);
 </style>
 </head>
 <body>
+<nav class="topbar">
+  <a class="brand" href="./">lean-and-mean</a>
+  <a href="https://github.com/spinlockdevelopment/lean-and-mean">View on GitHub</a>
+</nav>
 <main>
 
 <header>
   <div class="eyebrow">Claude Code &amp; Codex plugin</div>
   <h1>lean-and-mean</h1>
-  <p class="lede">Concise prose, YAGNI code, and a <code>CLAUDE.md</code> or <code>AGENTS.md</code> that maintains itself. Shorter sessions, less code nobody asked for, and no repeat mistakes.</p>
-  <div class="cta">
-    <a class="btn primary" href="#install">Install</a>
-    <a class="btn ghost" href="explained.html">How it works</a>
-    <a class="btn ghost" href="https://github.com/spinlockdevelopment/lean-and-mean">View on GitHub</a>
-  </div>
+  <p class="lede">Short answers, minimal code, and an <code>AGENTS.md</code> that remembers every correction. Shorter sessions, less code nobody asked for, no repeat mistakes.</p>
+  <div class="cta"><a class="btn primary" href="#install">Install</a></div>
 </header>
 
 <h2>What it does</h2>
 <div class="grid">
-  <div class="card"><h3>Code: a YAGNI ladder</h3><p>Skip speculative work. Reuse what's in the repo, then stdlib, then the platform, then an installed dependency, then one line, and only then new code. Never cuts validation, data-loss handling, security or accessibility.</p></div>
-  <div class="card"><h3>Memory: binding Rules</h3><p>Every correction and failed approach becomes one dated line in the project context file that the assistant follows next time, so it doesn't happen twice.</p></div>
-  <div class="card"><h3>Sessions: a clean handoff</h3><p><code>/endsession</code> in Claude Code or <code>$endsession</code> in Codex offers to commit, records Rules, the next action and the Todo list, then stops. The next session starts small and on the right task.</p></div>
-  <div class="card"><h3>Prose: readable</h3><p>Answers lead with the result. Full sentences for explanations, short lines for status. No filler.</p></div>
+  <div class="card"><h3>Minimal code</h3><p>Before writing code: skip speculative work, then reuse the repo, the standard library, the platform, an installed dependency, or one line. New code comes last. Validation, data-loss handling, security and accessibility are never cut.</p></div>
+  <div class="card"><h3>Rules that stick</h3><p>Every correction becomes one dated line under <code>## Rules</code> in <code>AGENTS.md</code>. The file loads every session, so the mistake doesn't repeat.</p></div>
+  <div class="card"><h3>Clean handoffs</h3><p><code>/endsession</code> offers to commit, records Rules, the next task and the Todo list, then stops. The next session starts small and on the right task.</p></div>
+  <div class="card"><h3>Short answers</h3><p>The answer comes first. Full sentences for explanations, short lines for status. No filler, no hedging.</p></div>
 </div>
 
-<h2>Why it pays off</h2>
-<p>Every tool call resends the whole context as cache reads, so cost scales with requests × context size. Long sessions get expensive per turn.</p>
+<h2>How it works</h2>
+<p>The rules live in root <code>AGENTS.md</code>, which Codex loads directly and Claude Code loads through a one-line <code>CLAUDE.md</code> containing <code>@AGENTS.md</code>. The file has fixed sections in a fixed order (Commands, Layout, Conventions, Rules, Next, Todo) and stays under 250 lines.</p>
+<div class="table-wrap"><table>
+  <tr><th>Command</th><th>Effect</th></tr>
+  <tr><td><code>/lean-and-mean</code></td><td>Create or clean up <code>AGENTS.md</code>: refresh the rules, verify commands and paths, prune stale lines. Runs on its own when due.</td></tr>
+  <tr><td><code>/lean-and-mean debt</code></td><td>List every <code>// lean:</code> shortcut marker and its upgrade path.</td></tr>
+  <tr><td><code>/endsession</code></td><td>Commit, save Rules, Next and Todo, then stop.</td></tr>
+</table></div>
+<p>A session-start hook stays silent unless the rules are missing, a cleanup is due (plugin updated, file over 250 lines, review flagged, or <code>CLAUDE.md</code> is more than the stub), or no <code>/advisor</code> is set. Codex uses <code>$lean-and-mean</code> and <code>$endsession</code>; Claude Code plugin installs spell them <code>/lean-and-mean:lean-and-mean</code> and <code>/lean-and-mean:endsession</code>.</p>
 
+<h2>Why it pays off</h2>
 <div class="stats">
   <div class="stat"><b>−20 to −40%</b><span>per long session by restarting at task boundaries (Fable 5.1 to Opus 5)</span></div>
   <div class="stat"><b>~$8 vs ~$0.60</b><span>to resume a 400K Fable session after an hour away, versus starting fresh</span></div>
   <div class="stat"><b>~$1</b><span>for <code>/endsession</code> at 400K: a deliberate handoff instead of lossy compaction</span></div>
 </div>
-
-<div class="table-wrap"><table>
-  <thead><tr><th>30K → 500K over ~300 requests</th><th class="num">One session</th><th class="num">Three, restarted</th></tr></thead>
-  <tbody>
-    <tr class="hl"><td>Fable 5.1</td><td class="num">~$60</td><td class="num">~$49</td></tr>
-    <tr class="hl"><td>Opus 5</td><td class="num">~$60</td><td class="num">~$37</td></tr>
-  </tbody>
-</table></div>
-
-<p><b>Unrequested code is paid three times:</b> as output (~3K tokens for a speculative helper with tests, ~$0.15 on Fable), as context on every later turn (~$0.15 more), and in review and maintenance, the real cost. The YAGNI ladder stops it at the source.</p>
-
-<p class="note">Modeled from API list prices (September 2026: output $50 / $25 per million on Fable 5.1 / Opus 5, cache reads $0.25 / $0.50, 1-hour cache writes at 2× input), not measured. These estimates are not a subscription billing model or a Codex pricing claim; actual costs depend on the host, model, caching, and context policy. Concise prose saves only a few percent; it's for readability.</p>
-
-<h2>Project instructions that maintain themselves</h2>
-<p>Claude Code uses <code>CLAUDE.md</code>; Codex uses <code>AGENTS.md</code> (or a nonempty root <code>AGENTS.override.md</code>). Each host maintains its own file; the plugin does not synchronize them.</p>
-<ul>
-  <li><b>Fixed sections, fixed order.</b> Commands, layout, conventions and Rules are always where the assistant expects them.</li>
-  <li><b>Rules.</b> A mistake costs one session, not every session.</li>
-  <li><b><code>## Next</code>.</b> A fresh session starts on the right task from one line; <code>git log</code> is the history.</li>
-  <li><b>250-line cap.</b> Cheap to carry on every request; overflow splits into <code>claude-&lt;category&gt;.md</code> or <code>agents-&lt;category&gt;.md</code>.</li>
-  <li><b>Automatic review.</b> At session start, when the block is out of date, the file is over the cap, or <code>/endsession</code> flagged changed layout or commands, the assistant re-verifies commands and paths and prunes stale entries. Otherwise the hook stays silent.</li>
-</ul>
+<p class="note">Modeled from API list prices (September 2026), not measured. Every tool call resends the whole context, so cost scales with requests × context size. Details in the <a href="https://github.com/spinlockdevelopment/lean-and-mean#why-use-it">README</a>.</p>
 
 <h2 id="install">Install</h2>
-<p>Choose your host. Both use the same operating-mode rules and session-handoff workflow.</p>
-<h3 id="install-codex">Codex</h3>
-<p>From your shell, using a Codex version with plugin support:</p>
-<pre><code>codex plugin marketplace add spinlockdevelopment/lean-and-mean
-codex plugin add lean-and-mean@lean-and-mean</code></pre>
-<p>Or use a local checkout containing Codex support, including changes not yet pushed to GitHub:</p>
-<pre><code>codex plugin marketplace add ~/src/lean-and-mean
-codex plugin add lean-and-mean@lean-and-mean</code></pre>
-<p>Start a new Codex session at your project root. Review and trust the bundled SessionStart hook when prompted; installing the plugin alone does not authorize hooks. The hook requires a POSIX shell (macOS, Linux, or WSL).</p>
-<p>Select the installed skill in the picker and run <code>$lean-and-mean</code> once to create or review <code>AGENTS.md</code>. A nonempty root <code>AGENTS.override.md</code> takes precedence. Existing nested instruction files still apply and are not rewritten.</p>
-<ul>
-  <li><code>$lean-and-mean</code> — set up or review the project context file.</li>
-  <li><code>$lean-and-mean debt</code> — list shortcut markers and their upgrade paths.</li>
-  <li><code>$endsession</code> — offer to commit, save Rules, Next and Todo, then stop.</li>
-</ul>
-<p class="note">Without plugin/hook support, copy <code>skills/lean-and-mean/</code> and <code>skills/endsession/</code> into <code>~/.agents/skills/</code> and invoke <code>$lean-and-mean</code> manually. This provides the persistent mode without automatic session-start review. See <a href="https://developers.openai.com/plugins/build/plugins">OpenAI plugin packaging</a> for discovery and hook trust requirements.</p>
-<h3 id="install-claude">Claude Code</h3>
-<p>In Claude Code:</p>
-<pre><code>/plugin marketplace add spinlockdevelopment/lean-and-mean
-/plugin install lean-and-mean@lean-and-mean</code></pre>
-<p>Or from your shell:</p>
+<h3>Claude Code</h3>
 <pre><code>claude plugin marketplace add spinlockdevelopment/lean-and-mean
 claude plugin install lean-and-mean@lean-and-mean</code></pre>
-<p>Restart Claude Code, then run <code>/lean-and-mean:lean-and-mean</code> once in each project to write the block into its <code>CLAUDE.md</code>. End sessions with <code>/lean-and-mean:endsession</code>.</p>
-<p>No dependencies: a short POSIX shell hook and Markdown skills. MIT licensed.</p>
-<p class="note">Also bundles <code>typesafe-ai</code>, TypeSafe AI's skill for the Jev model, routed through OpenRouter. Full copyright and credit belong to <a href="https://github.com/typesafe-ai/skills">TypeSafe AI</a> (MIT).</p>
+<p>Restart Claude Code. The first session in each project writes <code>AGENTS.md</code> and the <code>CLAUDE.md</code> stub.</p>
+<h3>Codex</h3>
+<pre><code>codex plugin marketplace add spinlockdevelopment/lean-and-mean
+codex plugin add lean-and-mean@lean-and-mean</code></pre>
+<p>Start a new session at the project root, trust the SessionStart hook when prompted, and run <code>$lean-and-mean</code> once.</p>
 
-<footer>
-  <a href="https://github.com/spinlockdevelopment/lean-and-mean">github.com/spinlockdevelopment/lean-and-mean</a> · Spinlock Development
-</footer>
+<h2>Raw instructions</h2>
+<p>The plugin is plain text the model follows:</p>
+<ul>
+  <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/lean-and-mean/operating-mode.md">operating-mode.md</a> — the block written into <code>AGENTS.md</code></li>
+  <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/lean-and-mean/SKILL.md">lean-and-mean/SKILL.md</a> — setup, cleanup and file structure</li>
+  <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/endsession/SKILL.md">endsession/SKILL.md</a> — the session handoff</li>
+</ul>
+<p class="note">Also bundles <code>typesafe-ai</code>, TypeSafe AI's skill for the Jev model, routed through OpenRouter. Copyright and credit: <a href="https://github.com/typesafe-ai/skills">TypeSafe AI</a> (MIT). lean-and-mean is MIT licensed.</p>
+
+<footer>Spinlock Development</footer>
 
 </main>
 <script>
