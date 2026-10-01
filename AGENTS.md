@@ -87,9 +87,11 @@ prose the model follows; nothing else runs.
 - Hand the user a `!` command for pushes of third-party routing text and for `git restore` of their changes. Auto mode blocks both for me; retrying wastes turns. 2026-09-28
 - `source ~/.zshrc` in the same Bash call after the user adds an env var. The tool's shell env is snapshotted at session start. 2026-09-28
 - Plugin agents can't enforce a folder scope: they ignore `hooks` and `permissionMode`, and `tools` takes names only. Scope by instruction plus omitting Bash. 2026-09-28
+- Read x.com posts via `curl -s https://api.fxtwitter.com/<user>/status/<id>`. WebFetch on x.com returns 402. 2026-09-30
+- Give every context-file layout change a hook test that starts from the previous release's project state. 4.0.0 nearly shipped with the 3.x migration unreachable behind the block-missing exit; only the advisor caught it. 2026-10-01
 
 ## Next
-Pull the plugin update to 4.0.0; other projects migrate CLAUDE.md → AGENTS.md at next session start. Then trial dashboard-builder on a long task. Then SubagentStart hook.
+Pull the plugin update to 4.0.0 and open one 3.x project to confirm it migrates CLAUDE.md → AGENTS.md and writes the stub. Then trial dashboard-builder on a long task. Then SubagentStart hook.
 
 ## Todo
 - [ ] P2 — Trial dashboard-builder: does its description trigger delegation unprompted, and does the `STYLE?` round trip work
@@ -97,9 +99,12 @@ Pull the plugin update to 4.0.0; other projects migrate CLAUDE.md → AGENTS.md 
 - [ ] P2 — `/endsession` policy for built-in auto memory (MEMORY.md): promote into Rules and clear, or document disabling
 - [ ] P3 — Replace modeled cost figures in README and docs/index.html with measured ones from `~/.claude/projects` session logs
 - [ ] P3 — Trim `lean-and-mean` skill description to two lines
+- [ ] P3 — Decide whether `docs/explained.md` stays now that the Pages site is one short page
 - [ ] P3 — Resync `skills/typesafe-ai/SKILL.md` after `git submodule update --remote`, keeping the Endpoint section
 - [ ] P3 — `/lean-and-mean` init: over ~500 source files, add a Rule to prefer `graphify query` over cross-module grep
 
 ## Notes & Pointers
 - History: `git log`. SUMMARY.md dropped in v3.
 - graphify: adopt only above ~500 files, AGENTS.md section only, no hook-guard, rebuild from git post-commit not Stop.
+
+<!-- lean-and-mean: review -->
