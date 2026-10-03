@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>lean-and-mean guide</title>
-<meta name="description" content="In-depth guide to lean-and-mean: /endsession, the session-start hook, the cost model, advisor and effort settings, the dashboard-builder agent, and the bundled typesafe-ai skill.">
+<meta name="description" content="In-depth guide to lean-and-mean: /endsession, the session-start hook, the cost model, advisor and effort settings, the dashboard-builder agent, the session band and status line, and the bundled typesafe-ai skill.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,7 +20,7 @@
   <p class="lede">How the session handoff, the hook and the cost model work, and what the bundled extras do.</p>
 </header>
 
-<p>On this page: <a href="#endsession">/endsession</a> · <a href="#hook">The session-start hook</a> · <a href="#cost">Why sessions should be short</a> · <a href="#advisor">Advisor and effort</a> · <a href="#dashboard">dashboard-builder</a> · <a href="#typesafe">typesafe-ai</a> · <a href="#manual">Manual install</a></p>
+<p>On this page: <a href="#endsession">/endsession</a> · <a href="#hook">The session-start hook</a> · <a href="#cost">Why sessions should be short</a> · <a href="#advisor">Advisor and effort</a> · <a href="#dashboard">dashboard-builder</a> · <a href="#band">Session band</a> · <a href="#typesafe">typesafe-ai</a> · <a href="#manual">Manual install</a></p>
 
 <h2 id="endsession">/endsession</h2>
 <p>The last message of a session. It turns this session's mistakes and failed approaches into Rules, rewrites <code>## Next</code> and <code>## Todo</code>, flags a full review for the next session if the project's layout or commands changed, then commits and pushes, opening a PR when the branch is a feature branch or the default branch is protected. It never force-pushes. Then it prints a short summary of what was done, what was updated and what comes next. Then it stops.</p>
@@ -29,6 +29,7 @@
   <li><b>One question round.</b> It asks once, up front, about at most three deletes that would remove a Rule or P1 Todo it can't judge. Clearly stale entries are dropped without asking. It never asks whether to commit or push: running it is the yes.</li>
   <li><b>One memory.</b> In Claude Code, project <code>feedback</code> and <code>project</code> entries from built-in auto memory are moved into Rules, Next or Todo, then deleted, so the committed <code>AGENTS.md</code> is the single place lessons live. <code>user</code> and <code>reference</code> memories are left alone.</li>
   <li><b>Light on purpose.</b> Context is largest at the end of a session, so the full <code>AGENTS.md</code> review waits for the next session's fresh, cheap context. <code>/endsession</code> only leaves a <code>&lt;!-- lean-and-mean: review --&gt;</code> flag.</li>
+  <li><b>Safe push.</b> Files that look like secrets (<code>.env</code>, keys, credentials) are never staged; they are named in the summary. A push behind the remote stops without rebasing. Any other push failure gets one attempt, then <code>Unpushed: &lt;branch&gt; — &lt;reason&gt;</code> becomes the first line of <code>## Next</code>.</li>
 </ul>
 
 <h2 id="hook">The session-start hook</h2>
@@ -66,11 +67,11 @@
 <ul>
   <li><b>Main session on high effort:</b> <code>"effortLevel": "high"</code> in <code>~/.claude/settings.json</code>.</li>
   <li><b>Routine subagent work on Sonnet at medium effort:</b> <code>model: sonnet</code>, <code>effort: medium</code>. <code>CLAUDE_CODE_EFFORT_LEVEL</code> overrides subagent effort.</li>
-  <li><b>Turning the advisor off:</b> <code>CLAUDE_CODE_DISABLE_ADVISOR_TOOL</code> or <code>DISABLE_TELEMETRY</code>. Either also silences the hook's suggestion.</li>
+  <li><b>Turning the advisor off:</b> <code>CLAUDE_CODE_DISABLE_ADVISOR_TOOL</code> or <code>DISABLE_TELEMETRY</code>. Only <code>CLAUDE_CODE_DISABLE_ADVISOR_TOOL</code> also silences the hook's suggestion.</li>
 </ul>
 
 <h2 id="dashboard">dashboard-builder</h2>
-<p>A subagent, Claude Code only, that builds <code>.dashboard/index.html</code>: one self-contained page you open by double-click to follow a long task without reading the transcript. Claude delegates to it on its own before any task over about five steps or 30 minutes; you can also call it with <code>@agent-lean-and-mean:dashboard-builder</code>.</p>
+<p>A subagent, Claude Code only, that builds <code>.dashboard/index.html</code>: one self-contained page you open by double-click to follow a long task without reading the transcript. Its description tells Claude to use it before any task over about five steps or 30 minutes; if Claude doesn't, call it with <code>@agent-lean-and-mean:dashboard-builder</code>.</p>
 <ul>
   <li><b>Style, asked once.</b> On first use the agent replies <code>STYLE?</code>; Claude asks you for dark or light, dense or airy, and one accent colour. The agent saves the answer in its user memory and reuses it in every project.</li>
   <li><b>Panels fit the task.</b> Tasks with text status (todo, doing, done, blocked), open questions, deliverables with paths, and anything stuck. Questions and stuck items go on top when present; empty panels are dropped; the plan can imply extra ones.</li>

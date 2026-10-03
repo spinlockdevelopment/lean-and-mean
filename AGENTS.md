@@ -102,4 +102,3 @@ After 5.2.0 is published, update and restart, then confirm the band shows (if no
 - Subagents load AGENTS.md (checked 2026-10-03), so no SubagentStart hook is needed.
 - dashboard-builder trial 2026-10-03: the `STYLE?` round trip works; it was not delegated unprompted during a 10-step task.
 - graphify: adopt only above ~500 files, AGENTS.md section only, no hook-guard, rebuild from git post-commit not Stop.
-<!-- lean-and-mean: review -->

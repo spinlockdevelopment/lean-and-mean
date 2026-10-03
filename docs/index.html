@@ -80,7 +80,7 @@
 <h2>Extras</h2>
 <p>Each extra is covered in full in the <a href="guide.html">guide</a>.</p>
 <ul>
-  <li><b>dashboard-builder</b> (Claude Code). A subagent Claude calls before any task over about five steps or 30 minutes. It builds <code>.dashboard/index.html</code>, a self-refreshing page with tasks, open questions, deliverables and anything stuck. Claude updates it after every step, and a question that needs you is listed with the default Claude is proceeding on. Style is asked once and remembered. <a href="guide.html#dashboard">How the dashboard works</a>.</li>
+  <li><b>dashboard-builder</b> (Claude Code). A subagent for any task over about five steps or 30 minutes; its description tells Claude to use it, and you can ask for it by name. It builds <code>.dashboard/index.html</code>, a self-refreshing page with tasks, open questions, deliverables and anything stuck. Claude updates it after every step, and a question that needs you is listed with the default Claude is proceeding on. Style is asked once and remembered. <a href="guide.html#dashboard">How the dashboard works</a>.</li>
   <li><b>Session band</b> (Claude Code). A row above the prompt: a task checklist Haiku keeps after each turn (hide or show it with a button) and an End session button. When every task is done it nudges you to <code>/endsession</code>; with 5 minutes left on the 1-hour prompt cache it runs <code>/endsession</code> itself. Turn it off in <code>/config</code>. Want the cache countdown in your status line? Copy <code>extras/statusline.sh</code>. <a href="guide.html#band">Band and status line setup</a>.</li>
   <li><b>Advisor.</b> Claude Code can consult a stronger model before a plan, on a recurring error, and before declaring done. Enable once with <code>/advisor fable</code> or <code>/advisor opus</code>. Its cost grows with session length, one more reason to use <code>/endsession</code>. <a href="guide.html#advisor">Advisor and effort settings</a>.</li>
   <li><b>Effort.</b> Run the main session at high effort and hand routine subagent work to Sonnet at medium effort.</li>
@@ -99,7 +99,7 @@
 <h3>Claude Code</h3>
 <pre><code>claude plugin marketplace add spinlockdevelopment/lean-and-mean
 claude plugin install lean-and-mean@lean-and-mean</code></pre>
-<p>Restart Claude Code. The first session in each project writes <code>AGENTS.md</code> and the <code>CLAUDE.md</code> stub.</p>
+<p>Restart Claude Code and run <code>/lean-and-mean:lean-and-mean</code> once in each project to write <code>AGENTS.md</code> and the <code>CLAUDE.md</code> stub. Until then the hook loads the instructions each session and reminds you.</p>
 <h3>Codex</h3>
 <pre><code>codex plugin marketplace add spinlockdevelopment/lean-and-mean
 codex plugin add lean-and-mean@lean-and-mean</code></pre>

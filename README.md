@@ -4,8 +4,8 @@
 
 A Claude Code and Codex plugin: concise prose and YAGNI code, written into your project's
 `AGENTS.md` once so it runs every session, on both hosts, with nothing else in the loop. Plus
-`/endsession`, which closes a session by offering to commit and writing what
-was learned back into that file, then stops.
+`/endsession`, which closes a session by writing what was learned back into
+that file, committing and pushing, then stops.
 
 Three axes:
 
@@ -178,9 +178,8 @@ gives the bare `/endsession` and `/lean-and-mean`.
 
 `/endsession` is a hard stop. Anything you pass as an argument that looks like
 a task is written under `## Next`, not done. The model never invokes it on its
-own. It asks once, up front, at most three items: whether to commit (when the
-tree is dirty), and any delete that would destroy a Rule or P1 Todo it cannot
-judge. Clearly stale entries are dropped without asking. It is kept light on
+own. It asks once, up front, about at most three deletes that would destroy a
+Rule or P1 Todo it cannot judge; it never asks whether to commit or push. Clearly stale entries are dropped without asking. It is kept light on
 purpose: the context is largest at the end of a session, so the full review
 waits for the next session's fresh context.
 
