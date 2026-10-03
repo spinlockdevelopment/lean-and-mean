@@ -1,6 +1,6 @@
 # lean-and-mean
 
-**How it works → [spinlockdevelopment.github.io/lean-and-mean](https://spinlockdevelopment.github.io/lean-and-mean/) · [docs/explained.md](docs/explained.md)**
+**How it works → [spinlockdevelopment.github.io/lean-and-mean](https://spinlockdevelopment.github.io/lean-and-mean/) · [in-depth guide](https://spinlockdevelopment.github.io/lean-and-mean/guide.html)**
 
 A Claude Code and Codex plugin: concise prose and YAGNI code, written into your project's
 `AGENTS.md` once so it runs every session, on both hosts, with nothing else in the loop. Plus
@@ -23,33 +23,35 @@ Three axes:
 
 ## Why use it
 
-Figures are modeled from API list prices (September 2026), not measured.
-These illustrative estimates are not a subscription billing model or a Codex
-pricing claim; actual costs depend on the host, model, caching, and context policy.
+Figures are measured from the maintainer's own session logs (63 Claude Code sessions, 5,197 requests, 2026-09-03 to 2026-10-03, mostly Opus 5, Opus 5.5 and Fable 5.1, priced at API list rates);
+the unrequested-code example is modeled. Most requests ran on Opus 5, whose cache reads cost $0.50; on Opus 5.5 at $0.20 the absolute figures are lower. Advisor calls may be undercounted. They are not a subscription billing model or a Codex pricing claim; actual
+costs depend on the host, model, caching, and context policy.
 
-| Per million tokens | Fable 5.1 | Opus 5 |
+| Per million tokens | Fable 5.1 | Opus 5.5 |
 |---|---|---|
-| Output | $50 | $25 |
-| Cache write, 1-hour (2× input) | $20 | $10 |
-| Cache read | $0.25 | $0.50 |
+| Output | $50 | $20 |
+| Cache write, 1-hour (2× input) | $20 | $8 |
+| Cache read | $0.25 | $0.20 |
 
 **Long sessions cost more per turn.** Every tool call resends the whole
-context as cache reads, so cost scales with requests × context size. A session
-growing from 30K to 500K over ~300 requests:
+context as cache reads, so cost scales with requests × context size. Mean cost
+per request by context size:
 
-| | One 500K session | Three, restarted between tasks |
-|---|---|---|
-| Fable 5.1 | ~$60 | ~$49 (−20%) |
-| Opus 5 | ~$60 | ~$37 (−40%) |
+| Context | Under 50K | 50–100K | 100–200K | 200–400K | Over 400K |
+|---|---|---|---|---|---|
+| Per request | $0.07 | $0.08 | $0.12 | $0.19 | $0.33 |
 
-A restart costs under $1 to re-cache the system prompt and `AGENTS.md`.
+A request over 400K costs four times one under 100K. Restarting at task
+boundaries keeps requests in the cheap rows; a fresh session's first request
+costs a median $0.27.
 
 **Walking away is the expensive part.** The cache lasts an hour. After that,
-the next turn re-writes the whole context at 2× input: ~$8 for 400K on Fable,
-versus ~$0.60 for a fresh session. Compaction doesn't help: it fires late,
-after the large-context turns are paid for, and its summary is lossy.
-`/endsession` writes a deliberate handoff (Rules, Next, Todo, a commit) for
-about $1, so end at task boundaries and before any break.
+the next turn re-writes the whole context at 2× input. Across 29 measured
+cold resumes the median cost $1.21 (4.5× a fresh start) and the worst, at
+455K, cost $8.79. Compaction doesn't help: it fires late, after the
+large-context turns are paid for, and its summary is lossy. `/endsession`
+writes a deliberate handoff (Rules, Next, Todo, a commit) for a median $0.27
+(max $2.19), so end at task boundaries and before any break.
 
 **Unrequested code is paid three times:** as output (a 150-line speculative
 helper with tests is ~3K tokens, ~$0.15 on Fable), as context on every later
@@ -67,8 +69,9 @@ boundaries. Delegate routine subagent work to `model: sonnet`, `effort: medium`.
 `CLAUDE_CODE_EFFORT_LEVEL` overrides subagent effort; `DISABLE_TELEMETRY` and
 `CLAUDE_CODE_DISABLE_ADVISOR_TOOL` turn the advisor off.
 
-**Concise prose is for readability, not cost.** Chat prose is a small share of
-output; trimming it saves a few percent.
+**Concise prose is for readability, not cost.** Output, code and thinking
+included, is 18% of measured spend; cache reads are 56% and cache writes 26%.
+Trimming chat prose saves a few percent.
 
 **A structured `AGENTS.md` keeps every session consistent.** It is loaded on
 every request, so it stays small and predictable:

@@ -1,14 +1,8 @@
 ---
 name: lean-and-mean
 description: >
-  Concise prose + YAGNI code, installed into the project's context file so it runs
-  without help. Owns the context file (structure, 250-line cap, Rules, Next, Todo).
-  `/lean-and-mean` creates or reviews the context file, idempotent; runs on its own
-  when the SessionStart hook asks. `/lean-and-mean debt` lists `// lean:` markers.
-  Trigger: "lean and mean", "lean mode", "yagni", "be terse", "set up
-  claude.md", "review claude.md", "clean up claude.md", "set up agents.md",
-  "review agents.md", "context files".
-  Do NOT compress requests needing full prose (reports, readable docs).
+  Creates or reviews AGENTS.md/CLAUDE.md with the concise-prose + YAGNI block; `debt` lists `// lean:` markers.
+  Trigger: "lean and mean", "yagni", "set up/review claude.md or agents.md", or when the SessionStart hook asks.
 argument-hint: "[debt]"
 license: MIT
 ---
@@ -52,8 +46,9 @@ then without asking, report the one line, and carry on with the user's request.
    (create it if absent), rename `claude-<category>.md` to
    `agents-<category>.md` and fix pointers, then write the stub. No context
    file → create from the structure below. Fill Project & Stack, Commands,
-   Architecture & Layout from the repo. Leave Rules empty. Either way, write
-   the stub.
+   Architecture & Layout from the repo. Leave Rules empty, except: over ~500
+   source files with `graphify` installed → one Rule to prefer `graphify query`
+   over cross-module grep. Either way, write the stub.
 2. Paste `operating-mode.md` verbatim under `## Operating Mode`; replace any
    older version.
 3. Reorder to the structure below; merge stray headings into nearest section.

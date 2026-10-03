@@ -48,19 +48,24 @@ More undecidable items than slots → keep them, list them under Todo as
    line under `## Rules`: `- <imperative>. <why — the cost>. <YYYY-MM-DD>`.
    Same area as an existing rule → tighten it. Over 15 → merge the two weakest.
    Nothing learned → add nothing.
-3. **Next and Todo** — rewrite `## Next` to the real next action. Delete
+3. **Auto memory** — Claude Code only. Built-in memory files for this project
+   (`~/.claude/projects/<project>/memory/`) of type `feedback` or `project`
+   → promote each into a Rule or Next/Todo line, then delete the file and its
+   `MEMORY.md` line: the committed context file is the one memory. Leave
+   `user` and `reference` memories alone.
+4. **Next and Todo** — rewrite `## Next` to the real next action. Delete
    finished Todo items, add newly required ones.
-4. **Review flag** — this session changed something the context file describes
+5. **Review flag** — this session changed something the context file describes
    outside Rules/Next/Todo (layout, commands, stack, conventions) → add
    `<!-- lean-and-mean: review -->` as the last line of the context file, once
    (skip if already there). The next session start runs the full pass and
    removes it. Do not do that pass now.
-5. **Commit** — not a git repo or nothing changed → skip. Otherwise stage the
+6. **Commit** — not a git repo or nothing changed → skip. Otherwise stage the
    session's changes plus the context file and commit, after the edits above.
    Full-English message in the project's commit format. Never stage files that
    look like secrets (`.env`, keys, credentials); leave them out and name them
    in the summary.
-6. **Push** — no remote → skip. Use the push command the context file names,
+7. **Push** — no remote → skip. Use the push command the context file names,
    if any, else `git push` (`-u origin <branch>` when no upstream).
    - On a non-default branch: push, then open a PR with `gh pr create --fill`
      unless one is already open for the branch.

@@ -1,7 +1,7 @@
 {
   "name": "lean-and-mean",
   "description": "Concise prose, YAGNI code, and session handoffs in AGENTS.md.",
-  "version": "5.0.0",
+  "version": "5.1.0",
   "author": {
     "name": "Spinlock Development",
     "url": "https://github.com/spinlockdevelopment"

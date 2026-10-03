@@ -26,7 +26,8 @@
 <p>The last message of a session. It turns this session's mistakes and failed approaches into Rules, rewrites <code>## Next</code> and <code>## Todo</code>, flags a full review for the next session if the project's layout or commands changed, then commits and pushes, opening a PR when the branch is a feature branch or the default branch is protected. It never force-pushes. Then it prints a short summary of what was done, what was updated and what comes next. Then it stops.</p>
 <ul>
   <li><b>Hard stop.</b> Anything you pass that looks like a task is written under <code>## Next</code>, not done. The model never invokes it on its own.</li>
-  <li><b>One question round.</b> It asks once, up front, about at most three things: whether to commit (when the tree is dirty), and any delete that would remove a Rule or P1 Todo it can't judge. Clearly stale entries are dropped without asking.</li>
+  <li><b>One question round.</b> It asks once, up front, about at most three deletes that would remove a Rule or P1 Todo it can't judge. Clearly stale entries are dropped without asking. It never asks whether to commit or push: running it is the yes.</li>
+  <li><b>One memory.</b> In Claude Code, project <code>feedback</code> and <code>project</code> entries from built-in auto memory are moved into Rules, Next or Todo, then deleted, so the committed <code>AGENTS.md</code> is the single place lessons live. <code>user</code> and <code>reference</code> memories are left alone.</li>
   <li><b>Light on purpose.</b> Context is largest at the end of a session, so the full <code>AGENTS.md</code> review waits for the next session's fresh, cheap context. <code>/endsession</code> only leaves a <code>&lt;!-- lean-and-mean: review --&gt;</code> flag.</li>
 </ul>
 
@@ -45,19 +46,18 @@
 <p>The <code>CLAUDE.md</code> check is also the upgrade path: a 3.x project kept its block in <code>CLAUDE.md</code>, so the pass merges that file into <code>AGENTS.md</code> and writes the one-line stub. Anything added to <code>CLAUDE.md</code> later moves over the same way. A <code>CLAUDE.local.md</code> keeps working alongside the stub.</p>
 
 <h2 id="cost">Why sessions should be short</h2>
-<p>Every tool call resends the whole context as cache reads, so cost scales with requests × context size. A session growing from 30K to 500K tokens over ~300 requests:</p>
+<p>Every tool call resends the whole context as cache reads, so cost scales with requests × context size. Mean cost per request by context size:</p>
 <div class="table-wrap"><table>
-  <thead><tr><th></th><th class="num">One 500K session</th><th class="num">Three, restarted between tasks</th></tr></thead>
+  <thead><tr><th>Context</th><th class="num">Under 50K</th><th class="num">50–100K</th><th class="num">100–200K</th><th class="num">200–400K</th><th class="num">Over 400K</th></tr></thead>
   <tbody>
-    <tr class="hl"><td>Fable 5.1</td><td class="num">~$60</td><td class="num">~$49 (−20%)</td></tr>
-    <tr class="hl"><td>Opus 5</td><td class="num">~$60</td><td class="num">~$37 (−40%)</td></tr>
+    <tr class="hl"><td>Per request</td><td class="num">$0.07</td><td class="num">$0.08</td><td class="num">$0.12</td><td class="num">$0.19</td><td class="num">$0.33</td></tr>
   </tbody>
 </table></div>
-<p>A restart costs under $1 to re-cache the system prompt and <code>AGENTS.md</code>.</p>
-<p><b>Walking away is the expensive part.</b> The cache lasts an hour. After that, the next turn re-writes the whole context at 2× input: ~$8 for 400K on Fable, versus ~$0.60 for a fresh session. Compaction doesn't help: it fires late, after the large-context turns are paid for, and its summary is lossy. <code>/endsession</code> writes a deliberate handoff for about $1, so end at task boundaries and before any break.</p>
+<p>A request over 400K costs four times one under 100K. Restarting at task boundaries keeps requests in the cheap columns; a fresh session's first request costs a median $0.27.</p>
+<p><b>Walking away is the expensive part.</b> The cache lasts an hour. After that, the next turn re-writes the whole context at 2× input. Across 29 measured cold resumes the median cost $1.21, 4.5× a fresh start, and the worst, at 455K, cost $8.79. Compaction doesn't help: it fires late, after the large-context turns are paid for, and its summary is lossy. <code>/endsession</code> writes a deliberate handoff for a median $0.27 (max $2.19), so end at task boundaries and before any break.</p>
 <p><b>Unrequested code is paid three times:</b> as output (a 150-line speculative helper with tests is ~3K tokens, ~$0.15 on Fable), as context on every later turn (~$0.15 more over 200 requests), and in review and maintenance, which is the real cost.</p>
-<p><b>Concise prose is for readability, not cost.</b> Chat prose is a small share of output; trimming it saves a few percent.</p>
-<p class="note">Modeled from API list prices (September 2026), not measured: output $50 / $25 per million on Fable 5.1 / Opus 5, cache reads $0.25 / $0.50, 1-hour cache writes at 2× input. Not a subscription billing model or a Codex pricing claim; actual costs depend on host, model, caching and context policy.</p>
+<p><b>Concise prose is for readability, not cost.</b> Output, code and thinking included, is 18% of measured spend; cache reads are 56% and cache writes 26%. Trimming chat prose saves a few percent.</p>
+<p class="note">Measured from the maintainer's session logs: 63 Claude Code sessions, 5,197 requests, 2026-09-03 to 2026-10-03, mostly Opus 5, Opus 5.5 and Fable 5.1, priced at API list rates (output $50 / $20 per million on Fable 5.1 / Opus 5.5, cache reads $0.25 / $0.20, 1-hour cache writes at 2× input). The code-cost example above is modeled. Most requests ran on Opus 5, whose cache reads cost $0.50; on Opus 5.5 at $0.20 the absolute figures are lower. Advisor calls may be undercounted. Not a subscription billing model or a Codex pricing claim; actual costs depend on host, model, caching and context policy.</p>
 
 <h2 id="advisor">Advisor and effort</h2>
 <p>Claude Code can pair the main model with an advisor: a stronger reviewer it consults before committing to a plan, when the same error keeps coming back, and before declaring a task done. Set it once:</p>
