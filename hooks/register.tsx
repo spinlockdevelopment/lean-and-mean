@@ -2,9 +2,10 @@ import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 import type { Task } from '../types'
-import { JUDGE_SYSTEM, allDone, cacheLabel, judgePrompt, parseTasks } from './judge'
+import { JUDGE_SYSTEM, allDone, bandLabel, judgePrompt, parseTasks } from './judge'
 
 const cacheAt = atom({ plugin: 'lean-and-mean', key: 'cacheAt' } as const, null)
+const ctx = atom({ plugin: 'lean-and-mean', key: 'ctx' } as const, null as number | null)
 const now = atom({ plugin: 'lean-and-mean', key: 'now' } as const, 0)
 const tasks = atom({ plugin: 'lean-and-mean', key: 'tasks' } as const, [] as Task[])
 const nudged = atom({ plugin: 'lean-and-mean', key: 'nudged' } as const, false)
@@ -34,6 +35,7 @@ export const register: Register = (on, options) => {
     if (e.reason === 'clear') {
       await update($, tasks, () => [])
       await update($, nudged, () => false)
+      await update($, ctx, () => null)
     }
     return next(e)
   })
@@ -56,6 +58,8 @@ export const register: Register = (on, options) => {
       const t = await $.clock.now()
       await update($, cacheAt, () => t)
       await update($, now, () => t)
+      const pct = (await $.session.usage()).context.percent
+      if (pct !== undefined) await update($, ctx, () => pct)
     }
     const prompt = await read($, lastPrompt)
     if (e.reason !== 'answer' || prompt === '') return next(e)
@@ -89,7 +93,7 @@ export const register: Register = (on, options) => {
     if (at === null && list.length === 0) return next(e)
 
     const { Box, Text, Button } = $.ui.resolve(e)
-    const cache = cacheLabel(at, await read($, now))
+    const cache = bandLabel(await read($, ctx), at, await read($, now))
     const done = list.filter(t => t.done).length
     const finished = allDone(list)
     const command = await read($, endCommand)
@@ -105,7 +109,6 @@ export const register: Register = (on, options) => {
       <Box flexDirection="column">
         <Box>
           <Text key="cache" color={cache.isLow ? 'yellow' : undefined} dimColor={!cache.isLow}>
-            {cache.bar ? `${cache.bar} ` : ''}
             {cache.text}
           </Text>
           <Text key="tasks" dimColor={!finished} color={finished ? 'green' : undefined}>

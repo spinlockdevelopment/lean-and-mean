@@ -56,3 +56,15 @@ export function cacheLabel(
   const minutes = Math.ceil(left / 60_000)
   return { text: `cache ${minutes}m`, bar, isLow: minutes <= 10 }
 }
+
+/** Band's first segment: `ctx 15% exp. [████░░] 22m` once a response reported context, else the cache label alone. */
+export function bandLabel(
+  ctx: number | null,
+  cacheAt: number | null,
+  now: number,
+): { text: string; isLow: boolean } {
+  const c = cacheLabel(cacheAt, now)
+  if (ctx === null) return { text: `${c.bar ? `${c.bar} ` : ''}${c.text}`, isLow: c.isLow }
+  const exp = cacheAt === null ? '' : ` exp. [${c.bar}] ${c.text.replace(/^cache /, '')}`
+  return { text: `ctx ${Math.round(ctx)}%${exp}`, isLow: c.isLow }
+}

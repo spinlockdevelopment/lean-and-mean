@@ -28,10 +28,10 @@ History is `git log`.
 ## Project & Stack
 Claude Code and Codex plugin. Puts a concise-prose + YAGNI operating-mode
 block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
-CLAUDE.md) so it runs natively; `/endsession` offers to commit, promotes
-session mistakes into Rules, rewrites Next/Todo, then hard-stops. Full
+CLAUDE.md) so it runs natively; `/endsession` promotes session mistakes
+into Rules, rewrites Next/Todo, commits, pushes (PR if needed), then hard-stops. Full
 AGENTS.md review runs at next session start when the hook says it is due.
-v4.2.0, published via the spinlockdevelopment/lean-and-mean marketplace.
+v5.0.0, published via the spinlockdevelopment/lean-and-mean marketplace.
 - POSIX sh (one hook), Markdown skills, JSON manifests, one TSX function-hooks module (Claude only). Python stdlib tests for the hook; `claude plugin test` for the module.
 
 ## Commands
@@ -53,11 +53,12 @@ prose the model follows. The session band module is the only code that runs per 
 |------|---------|
 | `skills/lean-and-mean/operating-mode.md` | The block, source of truth; pasted verbatim into AGENTS.md |
 | `skills/lean-and-mean/SKILL.md` | `/lean-and-mean` create-or-review pass, AGENTS.md structure and CLAUDE.md migration, `debt` |
-| `skills/endsession/SKILL.md` | `/endsession` light hard-stop wrap-up: commit, Rules, Next, Todo, review flag; `disable-model-invocation: true` |
+| `skills/endsession/SKILL.md` | `/endsession` light hard-stop wrap-up: Rules, Next, Todo, review flag, then commit and push/PR; `disable-model-invocation: true` |
 | `skills/endsession/agents/openai.yaml` | Codex metadata for `$endsession` |
 | `skills/typesafe-ai/` | Copy of TypeSafe AI's skill (MIT, their credit), Jev routed via OpenRouter; disabled (`disable-model-invocation: true`); resync from `vendor/typesafe-ai-skills` submodule |
 | `hooks/session-start.sh` | Only hook; silent unless block missing, full pass due, or no `advisorModel` (Claude only) |
 | `hooks/register.tsx`, `hooks/judge.ts`, `types/index.d.ts` | Session band mod (Claude only): cache bar, Haiku-judged checklist, End session button; `userConfig.sessionBand` toggles it |
+| `extras/statusline.sh` | Optional bash+jq status line (user copies it; plugins can't set `statusLine`): ctx + cache expiry bar from `prompt_cache.expires_at` |
 | `tests/session-band.test.ts` | Band parser and countdown tests (`claude plugin test .`) |
 | `tests/test_session_start.py` | Hook tests: both hosts, stub check, advisor note; fake HOME |
 | `agents/dashboard-builder.md` | Progress-dashboard subagent; its description carries the trigger rule |
@@ -90,12 +91,15 @@ prose the model follows. The session band module is the only code that runs per 
 - Plugin agents can't enforce a folder scope: they ignore `hooks` and `permissionMode`, and `tools` takes names only. Scope by instruction plus omitting Bash. 2026-09-28
 - Read x.com posts via `curl -s https://api.fxtwitter.com/<user>/status/<id>`. WebFetch on x.com returns 402. 2026-09-30
 - Give every context-file layout change a hook test that starts from the previous release's project state. 4.0.0 nearly shipped with the 3.x migration unreachable behind the block-missing exit; only the advisor caught it. 2026-10-01
-- In mods, write `atom({ plugin: '<literal>', key: '<literal>' })` inline. A shared `const P` failed `claude plugin validate`. 2026-10-02
+- In mods, write `atom({ plugin: '<literal>', key: '<literal>' })` inline, the literal being the owning plugin's name; rename it when porting a mod into this plugin. A shared `const P` and a leftover `session-band` owner both failed `claude plugin validate`. 2026-10-02
+- Plugins can't set the main `statusLine` (plugin settings honor only `agent`, `subagentStatusLine`); ship status line scripts in `extras/` for the user to copy. It ticks while idle only with `refreshInterval`; cache expiry is `prompt_cache.expires_at` (epoch s). 2026-10-03
 
 ## Next
-Pull 4.2.0, delete `~/.claude/dev-mods/7a03199d-4121-43ba-b5ab-a314a090002e/session-band`, and confirm the installed band draws, the End session button runs `/lean-and-mean:endsession`, and the toggle hides it. Open one 3.x project to confirm the CLAUDE.md → AGENTS.md migration. Then trial dashboard-builder on a long task. Then SubagentStart hook.
+Update the installed plugin (cache still runs 3.1.0) to 5.0.0, restart, and confirm the band shows `ctx N% exp. [bar] Nm`, the End session button runs `/lean-and-mean:endsession`, and the toggle hides it. Copy `extras/statusline.sh` over `~/.claude/statusline-command.sh` and add `"refreshInterval": 60`. Watch the first auto-commit/push `/endsession` run in another repo. Then the 3.x migration check, dashboard-builder trial, SubagentStart hook.
 
 ## Todo
+- [ ] P2 — Session band: test that `sessionBand: false` hides it, and a stubbed `model.complete` test of the Haiku judge
+- [ ] P3 — Mention the session band in `docs/index.html` and `docs/explained.md`
 - [ ] P2 — Trial dashboard-builder: does its description trigger delegation unprompted, and does the `STYLE?` round trip work
 - [ ] P2 — SubagentStart hook: same script, subagents don't load AGENTS.md
 - [ ] P2 — `/endsession` policy for built-in auto memory (MEMORY.md): promote into Rules and clear, or document disabling

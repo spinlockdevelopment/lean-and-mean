@@ -29,7 +29,7 @@
 <div class="grid">
   <div class="card"><h3>Minimal code</h3><p>A YAGNI ladder picks the smallest change that works. New code comes last.</p></div>
   <div class="card"><h3>Rules that stick</h3><p>Every correction becomes one dated line under <code>## Rules</code>. The file loads every session, so the mistake doesn't repeat.</p></div>
-  <div class="card"><h3>Clean handoffs</h3><p><code>/endsession</code> offers to commit, records Rules, the next task and the Todo list, then stops. The next session starts small and on the right task.</p></div>
+  <div class="card"><h3>Clean handoffs</h3><p><code>/endsession</code> records Rules, the next task and the Todo list, commits and pushes, then stops. The next session starts small and on the right task.</p></div>
   <div class="card"><h3>Short answers</h3><p>The answer comes first. Full sentences for explanations, short lines for status. No filler, no hedging.</p></div>
 </div>
 
@@ -65,7 +65,7 @@
   <tr><th>Command</th><th>Effect</th></tr>
   <tr><td><code>/lean-and-mean</code></td><td>Create or clean up <code>AGENTS.md</code>: refresh the instructions, reorder sections, verify commands and paths, prune stale lines. Safe to rerun; usually runs on its own.</td></tr>
   <tr><td><code>/lean-and-mean debt</code></td><td>List every <code>// lean:</code> shortcut and its upgrade path. Changes nothing.</td></tr>
-  <tr><td><code>/endsession</code></td><td>Offer to commit, save Rules, Next and Todo, then stop. Ending at natural break points keeps sessions cheap and focused. <a href="guide.html#endsession">Details</a>.</td></tr>
+  <tr><td><code>/endsession</code></td><td>Save Rules, Next and Todo, commit and push, then stop. Ending at natural break points keeps sessions cheap and focused. <a href="guide.html#endsession">Details</a>.</td></tr>
 </table></div>
 <p>Claude Code plugin installs spell them <code>/lean-and-mean:lean-and-mean</code> and <code>/lean-and-mean:endsession</code>; Codex uses <code>$lean-and-mean</code> and <code>$endsession</code>.</p>
 

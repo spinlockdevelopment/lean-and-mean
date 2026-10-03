@@ -92,7 +92,7 @@ re-reads it on every step.
 |---|---|
 | `/lean-and-mean` | Sets up `AGENTS.md` the first time, or cleans up an existing one: updates the instructions, reorders sections, checks that listed commands and paths are real, deletes stale lines. Safe to run repeatedly. You rarely need to type it. |
 | `/lean-and-mean debt` | Lists every `// lean:` shortcut in the project. Changes nothing. |
-| `/endsession` | Wraps up a work session: offers to commit your work, saves lessons as Rules, updates Next and Todo, then stops. Ending sessions at natural break points keeps them cheap and focused. |
+| `/endsession` | Wraps up a work session: saves lessons as Rules, updates Next and Todo, commits and pushes your work, then stops. Ending sessions at natural break points keeps them cheap and focused. |
 
 In Claude Code the plugin versions are spelled `/lean-and-mean:lean-and-mean`
 and `/lean-and-mean:endsession`.

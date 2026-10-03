@@ -1,8 +1,8 @@
 ---
 name: endsession
 description: >
-  Close the session. Offers to commit, writes Rules, Next and Todo into
-  the context file, flags a full review if needed, prints a plain summary, stops.
+  Close the session. Writes Rules, Next and Todo into the context file, then
+  commits, pushes (PR if needed), prints a plain summary, stops.
   Hard stop — final message, no follow-ups. User-invoked only.
 disable-model-invocation: true
 license: MIT
@@ -31,18 +31,13 @@ arguments; `$ARGUMENTS` is Claude's notation, not a required environment variabl
 
 ## Questions
 
-All questions in one batch, before any file is written, max 3.
-
-1. **Commit** — always ask when there is something to commit. Run
-   `git status --short`; if it lists changes, ask: "Uncommitted changes in
-   <files>. Commit them before closing?" Skip when clean or not a git repo.
-2. **Destructive prunes** — ask only when dropping or merging a Rule or a P1
-   Todo would destroy information you cannot recover from the code, git, or
-   this session, and you cannot tell whether it still matters. Clearly stale →
-   drop without asking. More undecidable items than slots → keep them, list
-   them under Todo as `P3 — confirm: <item>`.
-
-Nothing about the project itself.
+Ask only about destructive prunes, max 3, in one batch before any file is
+written: dropping or merging a Rule or a P1 Todo that would destroy
+information you cannot recover from the code, git, or this session, when you
+cannot tell whether it still matters. Clearly stale → drop without asking.
+More undecidable items than slots → keep them, list them under Todo as
+`P3 — confirm: <item>`. Never ask whether to commit or push: invoking
+`/endsession` is the yes.
 
 ## Pass
 
@@ -54,16 +49,28 @@ Nothing about the project itself.
    Same area as an existing rule → tighten it. Over 15 → merge the two weakest.
    Nothing learned → add nothing.
 3. **Next and Todo** — rewrite `## Next` to the real next action. Delete
-   finished Todo items, add newly required ones. Commit declined → first line
-   of Next: `Uncommitted: <files> — commit or discard.`
+   finished Todo items, add newly required ones.
 4. **Review flag** — this session changed something the context file describes
    outside Rules/Next/Todo (layout, commands, stack, conventions) → add
-   `<!-- lean-and-mean: review -->` as the last line of the context file, once. The
-   next session start runs the full pass and removes it. Do not do that pass
-   now.
-5. **Commit** — if the user said yes, commit now, after the edits above, so a
-   tracked context file goes in too. Full-English message in the project's commit
-   format. Don't push.
+   `<!-- lean-and-mean: review -->` as the last line of the context file, once
+   (skip if already there). The next session start runs the full pass and
+   removes it. Do not do that pass now.
+5. **Commit** — not a git repo or nothing changed → skip. Otherwise stage the
+   session's changes plus the context file and commit, after the edits above.
+   Full-English message in the project's commit format. Never stage files that
+   look like secrets (`.env`, keys, credentials); leave them out and name them
+   in the summary.
+6. **Push** — no remote → skip. Use the push command the context file names,
+   if any, else `git push` (`-u origin <branch>` when no upstream).
+   - On a non-default branch: push, then open a PR with `gh pr create --fill`
+     unless one is already open for the branch.
+   - On the default branch: push. Rejected as protected or requiring a PR →
+     create `session/<YYYY-MM-DD>-<short-topic>`, push it, open a PR.
+   - Rejected as behind the remote → stop and report; never force-push or
+     rebase.
+   - Any other failure (auth, network) → one attempt only; report it and put
+     `Unpushed: <branch> — <reason>` as the first line of `## Next`, amending
+     the commit.
 
 No session log: history is `git log`. Do not write SUMMARY.md.
 
@@ -80,7 +87,8 @@ Done this session:
 
 Updated:
 - <selected filename>: <rules added or tightened, Next/Todo changes, review flagged>
-- Committed: <short hash and subject>, or "Not committed: <files>"
+- Committed: <short hash and subject>
+- Pushed: <branch>, PR <url>, or "Not pushed: <reason>"
 
 Next time:
 - <the first thing to do, from ## Next>

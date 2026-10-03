@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { allDone, cacheLabel, parseTasks } from '../hooks/judge'
+import { allDone, bandLabel, cacheLabel, parseTasks } from '../hooks/judge'
 
 describe('parseTasks', () => {
   test('reads fenced JSON', async () => {
@@ -23,4 +23,11 @@ test('cache countdown', async () => {
   expect(cacheLabel(0, 15 * 60_000)).toEqual({ text: 'cache 45m', bar: '████████░░', isLow: false })
   expect(cacheLabel(0, 55 * 60_000)).toEqual({ text: 'cache 5m', bar: '█░░░░░░░░░', isLow: true })
   expect(cacheLabel(0, 61 * 60_000)).toEqual({ text: 'cache cold', bar: '░░░░░░░░░░', isLow: true })
+})
+
+test('bandLabel', () => {
+  expect(bandLabel(null, 0, 15 * 60_000)).toEqual({ text: '████████░░ cache 45m', isLow: false })
+  expect(bandLabel(15, 0, 15 * 60_000)).toEqual({ text: 'ctx 15% exp. [████████░░] 45m', isLow: false })
+  expect(bandLabel(15, 0, 61 * 60_000)).toEqual({ text: 'ctx 15% exp. [░░░░░░░░░░] cold', isLow: true })
+  expect(bandLabel(15, null, 0)).toEqual({ text: 'ctx 15%', isLow: false })
 })
