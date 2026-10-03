@@ -160,6 +160,7 @@ which works on every Claude Code version and alongside a `CLAUDE.local.md`.
 | `/lean-and-mean` | `$lean-and-mean` | Create the context file from the template, or review an existing one: refresh the Operating Mode block, restructure, prune, split anything over 250 lines. Idempotent. After setup it runs on its own when due, so you rarely type it |
 | `/lean-and-mean debt` | `$lean-and-mean debt` | List every `// lean:` shortcut marker with its ceiling and upgrade path |
 | `/endsession` | `$endsession` | Final message of the session. Offers to commit uncommitted work, turns this session's mistakes into Rules, rewrites Next and Todo, flags a full review for next session if the project's layout or commands changed, then prints a plain-language summary of what was done, what was updated, and what is next. Then stops |
+| Session band | — | Row above the prompt: 1-hour prompt-cache countdown with a bar, a task checklist Haiku keeps after each turn, and an End session button. When every task is done it nudges you to `/endsession` before new work. Claude Code only; turn off with `/config` → Session band |
 | `@agent-lean-and-mean:dashboard-builder` | — | Builds a self-refreshing `.dashboard/index.html` progress page for long tasks. Claude Code only |
 
 Also bundled: `typesafe-ai`, a copy of TypeSafe AI's skill for building with
@@ -204,6 +205,10 @@ In Claude Code it also asks Claude to suggest `/advisor` once per session until
 `advisorModel` is set in user or project settings, or
 `CLAUDE_CODE_DISABLE_ADVISOR_TOOL` is set.
 
+The session band is a function-hooks module (`hooks/register.tsx`, named
+under `modules` in `hooks/hooks.json`). It costs one low-effort Haiku call
+per answered turn, bounded at 8 seconds; Codex ignores it.
+
 There is no session log: `git log` is the history, which is why `/endsession`
 offers to commit first.
 
@@ -229,7 +234,9 @@ routing Jev calls through OpenRouter.
 
 ## Development checks
 
-Run `python3 -m unittest discover -s tests -v` for the shared hook regression tests.
+Run `python3 -m unittest discover -s tests -v` for the shared hook regression tests,
+and `claude plugin validate .claude-plugin/plugin.json` plus `claude plugin test .`
+for the session band.
 
 Compatibility validation: the Codex skill loader accepts both skills. The bundled
 plugin/skill authoring validators currently reject Claude's `argument-hint`

@@ -1,7 +1,7 @@
 {
   "name": "lean-and-mean",
   "description": "Concise prose and YAGNI code, installed into the project AGENTS.md. /endsession offers to commit, writes Rules, Next and Todo, then stops.",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "author": {
     "name": "Spinlock Development",
     "url": "https://github.com/spinlockdevelopment"
@@ -9,5 +9,14 @@
   "homepage": "https://github.com/spinlockdevelopment/lean-and-mean",
   "repository": "https://github.com/spinlockdevelopment/lean-and-mean",
   "license": "MIT",
-  "keywords": ["yagni", "terse", "claude-md", "context-files", "operating-mode", "hooks"]
+  "keywords": ["yagni", "terse", "claude-md", "context-files", "operating-mode", "hooks"],
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "sessionBand": {
+      "type": "boolean",
+      "title": "Session band",
+      "description": "Band above the prompt: 1h prompt-cache countdown, Haiku-judged task checklist (one Haiku call per turn), End session button.",
+      "default": true
+    }
+  }
 }

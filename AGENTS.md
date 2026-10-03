@@ -31,11 +31,12 @@ block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
 CLAUDE.md) so it runs natively; `/endsession` offers to commit, promotes
 session mistakes into Rules, rewrites Next/Todo, then hard-stops. Full
 AGENTS.md review runs at next session start when the hook says it is due.
-v4.1.0, published via the spinlockdevelopment/lean-and-mean marketplace.
-- POSIX sh (one hook), Markdown skills, JSON manifests. Python stdlib tests only.
+v4.2.0, published via the spinlockdevelopment/lean-and-mean marketplace.
+- POSIX sh (one hook), Markdown skills, JSON manifests, one TSX function-hooks module (Claude only). Python stdlib tests for the hook; `claude plugin test` for the module.
 
 ## Commands
 sh -n hooks/session-start.sh
+claude plugin validate .claude-plugin/plugin.json && claude plugin test .
 python3 -m unittest discover tests
 CLAUDE_PROJECT_DIR=/path/to/project sh hooks/session-start.sh
 node -e 'for (const f of ["hooks/hooks.json",".claude-plugin/plugin.json",".claude-plugin/marketplace.json",".codex-plugin/plugin.json"]) JSON.parse(require("fs").readFileSync(f))'
@@ -46,7 +47,7 @@ SessionStart hook prints the block when AGENTS.md lacks it, or asks for the
 full pass when the block is stale, AGENTS.md is over 250 lines,
 `/endsession` left `<!-- lean-and-mean: review -->`, or (Claude) CLAUDE.md
 is not the `@AGENTS.md` stub. Skills are
-prose the model follows; nothing else runs.
+prose the model follows. The session band module is the only code that runs per turn.
 
 | Path | Purpose |
 |------|---------|
@@ -56,11 +57,13 @@ prose the model follows; nothing else runs.
 | `skills/endsession/agents/openai.yaml` | Codex metadata for `$endsession` |
 | `skills/typesafe-ai/` | Copy of TypeSafe AI's skill (MIT, their credit), Jev routed via OpenRouter; disabled (`disable-model-invocation: true`); resync from `vendor/typesafe-ai-skills` submodule |
 | `hooks/session-start.sh` | Only hook; silent unless block missing, full pass due, or no `advisorModel` (Claude only) |
+| `hooks/register.tsx`, `hooks/judge.ts`, `types/index.d.ts` | Session band mod (Claude only): cache bar, Haiku-judged checklist, End session button; `userConfig.sessionBand` toggles it |
+| `tests/session-band.test.ts` | Band parser and countdown tests (`claude plugin test .`) |
 | `tests/test_session_start.py` | Hook tests: both hosts, stub check, advisor note; fake HOME |
 | `agents/dashboard-builder.md` | Progress-dashboard subagent; its description carries the trigger rule |
-| `hooks/hooks.json` | Wires the hook via `${CLAUDE_PLUGIN_ROOT}` |
+| `hooks/hooks.json` | Wires the hook via `${CLAUDE_PLUGIN_ROOT}` and the band under `modules` |
 | `docs/index.html` | GitHub Pages overview; GitHub link in top bar, raw SKILL.md links, inline links into `guide.html` |
-| `docs/guide.html` | Pages deep dive: /endsession, hook, cost model, advisor, dashboard-builder, typesafe-ai, manual install; keep figures in sync with README "Why use it" |
+| `docs/guide.html` | Pages deep dive: /endsession, hook, cost model, advisor, dashboard-builder, session band, typesafe-ai, manual install; keep figures in sync with README "Why use it" |
 | `docs/style.css` | Shared Pages styles |
 | `docs/explained.md` | Long-form walkthrough, linked atop README; update when features change |
 | `.claude-plugin/`, `.codex-plugin/` | Claude plugin.json + marketplace.json, Codex plugin.json; versions must match |
@@ -87,9 +90,10 @@ prose the model follows; nothing else runs.
 - Plugin agents can't enforce a folder scope: they ignore `hooks` and `permissionMode`, and `tools` takes names only. Scope by instruction plus omitting Bash. 2026-09-28
 - Read x.com posts via `curl -s https://api.fxtwitter.com/<user>/status/<id>`. WebFetch on x.com returns 402. 2026-09-30
 - Give every context-file layout change a hook test that starts from the previous release's project state. 4.0.0 nearly shipped with the 3.x migration unreachable behind the block-missing exit; only the advisor caught it. 2026-10-01
+- In mods, write `atom({ plugin: '<literal>', key: '<literal>' })` inline. A shared `const P` failed `claude plugin validate`. 2026-10-02
 
 ## Next
-Pull the plugin update to 4.1.0 and open one 3.x project to confirm it migrates CLAUDE.md → AGENTS.md and writes the stub. Then trial dashboard-builder on a long task. Then SubagentStart hook.
+Pull 4.2.0, delete `~/.claude/dev-mods/7a03199d-4121-43ba-b5ab-a314a090002e/session-band`, and confirm the installed band draws, the End session button runs `/lean-and-mean:endsession`, and the toggle hides it. Open one 3.x project to confirm the CLAUDE.md → AGENTS.md migration. Then trial dashboard-builder on a long task. Then SubagentStart hook.
 
 ## Todo
 - [ ] P2 — Trial dashboard-builder: does its description trigger delegation unprompted, and does the `STYLE?` round trip work

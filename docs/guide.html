@@ -79,6 +79,14 @@
   <li><b>Contained.</b> No network requests. It writes <code>.dashboard/.gitignore</code> so the page is never committed, and the agent reads and writes nothing outside <code>.dashboard/</code> and its memory. It has no shell access.</li>
 </ul>
 
+<h2 id="band">Session band</h2>
+<p>A row above the prompt, Claude Code only, on by default; turn it off in <code>/config</code> under Session band.</p>
+<ul>
+  <li><b>Cache countdown.</b> A 10-cell bar and minutes left on the 1-hour prompt cache, restarted by every main-loop request. Yellow at 10 minutes, <code>cache cold</code> after an hour: past that, the next turn re-reads the whole context at full price.</li>
+  <li><b>Task checklist.</b> After each answered turn, Haiku (low effort, 8-second cap) adds the tasks you asked for and ticks the ones the reply shows finished. A malformed reply keeps the old list.</li>
+  <li><b>Nudge.</b> When every task is done you get a toast, the End session button turns primary, and your next prompt tells Claude to suggest <code>/endsession</code> before new work, once per finished list.</li>
+</ul>
+
 <h2 id="typesafe">typesafe-ai</h2>
 <p>A bundled copy of <a href="https://github.com/typesafe-ai/skills">TypeSafe AI's skill</a> for building app features on Jev, their System One model. Jev doesn't generate text: it takes natural language plus application state and returns typed answers and probabilities, such as yes/no or pick-one, that ordinary code can combine. It fits routing, ranking, extraction, verification, or anywhere a prompt-and-parse step could become a structured decision.</p>
 <p>The skill reads TypeSafe's live docs and cookbooks as part of each task. The only change from the original is the endpoint: Jev is called through OpenRouter.</p>
