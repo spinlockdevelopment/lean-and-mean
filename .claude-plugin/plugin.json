@@ -1,7 +1,7 @@
 {
   "name": "lean-and-mean",
   "description": "Concise prose and YAGNI code, installed into the project AGENTS.md. /endsession writes Rules, Next and Todo, commits, pushes, then stops.",
-  "version": "5.1.0",
+  "version": "5.2.0",
   "author": {
     "name": "Spinlock Development",
     "url": "https://github.com/spinlockdevelopment"
@@ -15,7 +15,7 @@
     "sessionBand": {
       "type": "boolean",
       "title": "Session band",
-      "description": "Band above the prompt: 1h prompt-cache countdown, Haiku-judged task checklist (one Haiku call per turn), End session button.",
+      "description": "Band above the prompt: Haiku-judged task checklist (one Haiku call per turn) with hide toggle, End session button, auto /endsession at 5 minutes of prompt cache left.",
       "default": true
     }
   }

@@ -1,4 +1,4 @@
-import { expect, test } from 'claude-code/testing'
+import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 import type { On } from 'claude-code'
 
@@ -41,6 +41,18 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await ui.unmount()
   })
 
+  test(`hide tasks toggles the checklist (${surface})`, async ($, on) => {
+    world(on, '{"tasks":[{"text":"Bump version","done":false}]}')
+    await turn($, 'bump the version', 'Working on it.')
+    const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...BAND })
+    await ui.press({ key: 'toggle' })
+    expect(await ui.find({ type: 'Text', text: /Bump version/ })).toBeUndefined()
+    expect(await ui.find({ type: 'Text', text: /tasks 0\/1/ })).toBeDefined()
+    await ui.press({ key: 'toggle' })
+    expect(await ui.find({ type: 'Text', text: /Bump version/ })).toBeDefined()
+    await ui.unmount()
+  })
+
   test(`malformed judge reply keeps the band empty (${surface})`, async ($, on) => {
     world(on, 'sorry, no JSON')
     await turn($, 'do a thing', 'Done.')
@@ -58,3 +70,33 @@ for (const surface of ['terminal', 'desktop'] as const) {
     await ui.unmount()
   })
 }
+
+test('endsession runs once when the cache has 5 minutes left', async ($, on) => {
+  world(on, '{"tasks":[]}')
+  const clock = mock.clock(on)
+  const runs: string[] = []
+  on('session.start', async (_$, e) => ({ cwd: e.cwd }))
+  on('command.list', async () => ({ value: [{ name: 'lean-and-mean:endsession' }] }))
+  on('command.run', async (_$, e) => {
+    runs.push(e.command)
+    return { text: '' }
+  })
+  on('turn.start', async (_$, e) => ({ turnId: e.turnId }))
+  await $.session.start({ cwd: '/p', surface: 'terminal', isInteractive: true } as never)
+  await $.prompt.submit({ text: 'do a thing', wait: false, origin: { kind: 'composer' } })
+  await $.turn.complete({
+    answer: 'Done.', durationMs: 1, isAborted: false, turnId: 't', reason: 'answer',
+    usage: { input_tokens: 1, output_tokens: 1 },
+  } as never)
+  await clock.advance(54 * 60_000)
+  expect(runs).toEqual([])
+  await clock.advance(60_000)
+  expect(runs).toEqual(['lean-and-mean:endsession'])
+  await clock.advance(60 * 60_000)
+  expect(runs.length).toBe(1)
+  // A turn still running at 55m doesn't trigger it.
+  await $.prompt.submit({ text: 'long task', wait: false, origin: { kind: 'composer' } })
+  await $.turn.start({ text: 'long task', turnId: 'long' })
+  await clock.advance(120 * 60_000)
+  expect(runs.length).toBe(1)
+})
