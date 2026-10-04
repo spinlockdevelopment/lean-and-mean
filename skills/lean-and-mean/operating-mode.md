@@ -20,5 +20,6 @@ After code: ≤3 lines — what was skipped, when to add it.
 
 Rules below are binding: read them before acting in their area, never
 re-litigate. A correction or failed approach this session becomes one new
-Rule line. `/endsession` closes the session: commit, Rules, Next, Todo.
+Rule line. `/endsession` closes the session: Rules, Next, Todo, commit, push, then
+ships per `## Done` when the work is complete.
 History is `git log`.

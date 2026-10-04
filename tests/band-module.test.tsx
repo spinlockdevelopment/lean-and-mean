@@ -78,7 +78,7 @@ test('endsession runs once when the cache has 5 minutes left', async ($, on) => 
   on('session.start', async (_$, e) => ({ cwd: e.cwd }))
   on('command.list', async () => ({ value: [{ name: 'lean-and-mean:endsession' }] }))
   on('command.run', async (_$, e) => {
-    runs.push(e.command)
+    runs.push(`${e.command} ${e.args}`)
     return { text: '' }
   })
   on('turn.start', async (_$, e) => ({ turnId: e.turnId }))
@@ -91,7 +91,7 @@ test('endsession runs once when the cache has 5 minutes left', async ($, on) => 
   await clock.advance(54 * 60_000)
   expect(runs).toEqual([])
   await clock.advance(60_000)
-  expect(runs).toEqual(['lean-and-mean:endsession'])
+  expect(runs).toEqual(['lean-and-mean:endsession auto'])
   await clock.advance(60 * 60_000)
   expect(runs.length).toBe(1)
   // A turn still running at 55m doesn't trigger it.

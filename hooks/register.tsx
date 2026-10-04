@@ -32,7 +32,7 @@ export const register: Register = (on, options) => {
       await update($, armed, () => false)
       $.ui.toast('Prompt cache expires in 5m: running /endsession')
       // Queued until the session is idle; not awaited so the timer isn't held for the whole wrap-up.
-      $.command.run({ command: await read($, endCommand) }).catch(() => $.ui.toast('Auto /endsession failed: run it by hand'))
+      $.command.run({ command: await read($, endCommand), args: 'auto' }).catch(() => $.ui.toast('Auto /endsession failed: run it by hand'))
     }
     await tick()
     $.clock.every(30_000, tick)

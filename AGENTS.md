@@ -22,7 +22,8 @@ After code: ≤3 lines — what was skipped, when to add it.
 
 Rules below are binding: read them before acting in their area, never
 re-litigate. A correction or failed approach this session becomes one new
-Rule line. `/endsession` closes the session: commit, Rules, Next, Todo.
+Rule line. `/endsession` closes the session: Rules, Next, Todo, commit, push, then
+ships per `## Done` when the work is complete.
 History is `git log`.
 
 ## Project & Stack
@@ -31,7 +32,7 @@ block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
 CLAUDE.md) so it runs natively; `/endsession` promotes session mistakes
 into Rules, rewrites Next/Todo, commits, pushes (PR if needed), then hard-stops. Full
 AGENTS.md review runs at next session start when the hook says it is due.
-v5.2.0, published via the spinlockdevelopment/lean-and-mean marketplace.
+v5.3.0, published via the spinlockdevelopment/lean-and-mean marketplace.
 - POSIX sh (one hook), Markdown skills, JSON manifests, one TSX function-hooks module (Claude only). Python stdlib tests for the hook; `claude plugin test` for the module.
 
 ## Commands
@@ -53,11 +54,11 @@ prose the model follows. The session band module is the only code that runs per 
 |------|---------|
 | `skills/lean-and-mean/operating-mode.md` | The block, source of truth; pasted verbatim into AGENTS.md |
 | `skills/lean-and-mean/SKILL.md` | `/lean-and-mean` create-or-review pass, AGENTS.md structure and CLAUDE.md migration, `debt` |
-| `skills/endsession/SKILL.md` | `/endsession` light hard-stop wrap-up: Rules, auto-memory promotion, Next, Todo, review flag, then commit and push/PR; `disable-model-invocation: true` |
+| `skills/endsession/SKILL.md` | `/endsession` light hard-stop wrap-up: Rules, auto-memory promotion, Done check, Next, Todo, review flag, commit, push/PR, then ship per `## Done`; `disable-model-invocation: true` |
 | `skills/endsession/agents/openai.yaml` | Codex metadata for `$endsession` |
 | `skills/typesafe-ai/` | Copy of TypeSafe AI's skill (MIT, their credit), Jev routed via OpenRouter; disabled (`disable-model-invocation: true`); resync from `vendor/typesafe-ai-skills` submodule |
 | `hooks/session-start.sh` | Only hook; silent unless block missing, full pass due, or no `advisorModel` (Claude only) |
-| `hooks/register.tsx`, `hooks/judge.ts`, `types/index.d.ts` | Session band mod (Claude only): Haiku-judged checklist with hide toggle, End session button, auto `/endsession` at 5m cache left; `userConfig.sessionBand` toggles it |
+| `hooks/register.tsx`, `hooks/judge.ts`, `types/index.d.ts` | Session band mod (Claude only): Haiku-judged checklist with hide toggle, End session button, auto `/endsession auto` (never ships) at 5m cache left; `userConfig.sessionBand` toggles it |
 | `extras/statusline.sh` | Optional bash+jq status line (user copies it; plugins can't set `statusLine`): ctx + cache expiry bar from `prompt_cache.expires_at` |
 | `tests/session-band.test.ts`, `tests/band-module.test.tsx` | Band parser and auto-end threshold tests; module tests with a stubbed Haiku judge, hide toggle, mocked-clock auto-end, and the `sessionBand: false` toggle (`claude plugin test .`) |
 | `tests/test_session_start.py` | Hook tests: both hosts, stub check, advisor note; fake HOME |
@@ -74,6 +75,9 @@ prose the model follows. The session band module is the only code that runs per 
 - Hook stays POSIX sh, under 35 lines, zero output in the common case.
 - Skill descriptions short: every installed skill's description costs context each turn.
 - Commit messages full English, end with `Co-Authored-By: <running model> <noreply@anthropic.com>`, e.g. `Claude Opus 5`.
+
+## Done
+- Tests and validate pass; committed and pushed to main (the marketplace serves main). No merge or deploy step.
 
 ## Rules
 - Push with the `gh` credential command in Commands; plain `git push` uses a stale keychain token (403'd three times). A fine-grained PAT needs resource owner `spinlockdevelopment` plus Contents write, and Pages write to enable Pages via API; reading a public repo proves nothing about push rights. 2026-09-17
@@ -93,7 +97,7 @@ prose the model follows. The session band module is the only code that runs per 
 - Default to a minor version bump; major only when the user agrees the change is breaking. 5.0.0 was called too aggressive for an additive release. 2026-10-03
 
 ## Next
-After 5.2.0 is published, update and restart, then confirm the band shows (if not, try Terminal.app: Warp may hide it), hide tasks folds the list, the End session button runs `/lean-and-mean:endsession`, an idle session auto-runs it at 55m, and the `/config` toggle hides the band. Check the installed status line ticks with `refreshInterval: 60`. Watch the first auto-commit/push `/endsession` run in another repo, including its auto-memory step.
+After 5.3.0 is published, update and restart, then confirm the band shows (if not, try Terminal.app: Warp may hide it), hide tasks folds the list, the End session button runs `/lean-and-mean:endsession`, an idle session auto-runs it at 55m, and the `/config` toggle hides the band. Check the installed status line ticks with `refreshInterval: 60`. Watch the first auto-commit/push `/endsession` run in another repo, including its auto-memory step.
 
 ## Todo
 - P3 — confirm: append `rate_limits.five_hour.used_percentage` with a timestamp to a log in `extras/statusline.sh`, so plan-limit questions get measured numbers. Only usage-scan candidate worth adding.

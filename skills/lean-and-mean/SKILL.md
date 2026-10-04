@@ -46,14 +46,16 @@ then without asking, report the one line, and carry on with the user's request.
    (create it if absent), rename `claude-<category>.md` to
    `agents-<category>.md` and fix pointers, then write the stub. No context
    file → create from the structure below. Fill Project & Stack, Commands,
-   Architecture & Layout from the repo. Leave Rules empty, except: over ~500
+   Architecture & Layout from the repo. Done gets the default line plus Todo
+   `P3 — confirm: define ## Done`; never infer a deploy step. Leave Rules empty, except: over ~500
    source files with `graphify` installed → one Rule to prefer `graphify query`
    over cross-module grep. Either way, write the stub.
 2. Paste `operating-mode.md` verbatim under `## Operating Mode`; replace any
    older version.
 3. Reorder to the structure below; merge stray headings into nearest section.
 4. Verify Architecture & Layout against the tree: add modules, drop dead
-   paths, fix wrong purposes. Verify Commands run.
+   paths, fix wrong purposes. Verify Commands run, and that every command
+   `## Done` names exists in Commands or the repo.
 5. Prune — cut, never rewrite longer: restates the code; stale paths or
    commands (verify first); narrative history → delete, `git log` has it;
    legacy SUMMARY.md (old `/endsession`) → delete it and its pointer; `[x]` Todo →
@@ -61,7 +63,7 @@ then without asking, report the one line, and carry on with the user's request.
 6. Next must name the real next action. Empty Next on a live project is a defect.
 7. Over 250 lines → move largest non-core sections to `agents-<category>.md`
    (H1 + one-line purpose at top), leave a pointer in Notes & Pointers.
-   Operating Mode, Commands, Rules, Next, Todo never move.
+   Operating Mode, Commands, Done, Rules, Next, Todo never move.
 8. Remove the `<!-- lean-and-mean: review -->` flag if present.
 9. Report one line: `<n> → <m> lines. cut: <X>. moved: <Y>. rules +<k>.`
 
@@ -90,6 +92,12 @@ Modules and entry points only. Skip what the name already says.
 
 ## Conventions
 Naming, formatting, imports, error handling, commit format.
+
+## Done
+- Committed and pushed; PR open if the branch needs one.
+What finished means here, in order, with the exact commands, e.g.
+`gh pr merge --squash --delete-branch`, `make deploy-staging`. `/endsession`
+runs these when the session's work is complete; otherwise Next says what remains.
 
 ## Rules
 - <imperative>. <why — the mistake it cost>. <YYYY-MM-DD>
