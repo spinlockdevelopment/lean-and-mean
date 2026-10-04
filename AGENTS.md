@@ -96,9 +96,11 @@ prose the model follows. The session band module is the only code that runs per 
 After 5.2.0 is published, update and restart, then confirm the band shows (if not, try Terminal.app: Warp may hide it), hide tasks folds the list, the End session button runs `/lean-and-mean:endsession`, an idle session auto-runs it at 55m, and the `/config` toggle hides the band. Check the installed status line ticks with `refreshInterval: 60`. Watch the first auto-commit/push `/endsession` run in another repo, including its auto-memory step.
 
 ## Todo
+- P3 — confirm: append `rate_limits.five_hour.used_percentage` with a timestamp to a log in `extras/statusline.sh`, so plan-limit questions get measured numbers. Only usage-scan candidate worth adding.
 
 ## Notes & Pointers
 - History: `git log`. SUMMARY.md dropped in v3.
 - Subagents load AGENTS.md (checked 2026-10-03), so no SubagentStart hook is needed.
 - dashboard-builder trial 2026-10-03: the `STYLE?` round trip works; it was not delegated unprompted during a 10-step task.
+- Usage scan 2026-10-03: logs from 2026-09-03 only, no rate-limit % recorded anywhere. On Max 5x, ≤10 of 39 5h windows and ≤1 week (all Sep 4–9) would have capped; none since Sep 10. Feature scan of 2,672 prompts: nothing else clears the bar.
 - graphify: adopt only above ~500 files, AGENTS.md section only, no hook-guard, rebuild from git post-commit not Stop.
