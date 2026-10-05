@@ -90,8 +90,8 @@ prose the model follows. The session band module is the only code that runs per 
 - On Fable, spawn subagents as fresh agents with `model: opus` or `sonnet` (Sonnet 5.5 via the alias, `effort: medium` in agent files; planner's pick), never `fork`: forks inherit Fable and ignore the override. Fable only when the user asks. Fable output costs 2× Opus, 5× Sonnet. 2026-09-17
 - Jev is OpenRouter-only: no `OPENROUTER_JEV_API_KEY` means don't use Jev, never fall back to `TYPESAFE_API_KEY` or `api.typesafe.ai`. typesafe-ai stays disabled (out of the Operating Mode block, `disable-model-invocation: true`) until the user asks to check it again. Jev is on OpenRouter at `/api/alpha/decisions`, absent from `/api/v1/models`: check provider docs before calling a model unavailable. 2026-10-01
 - Size card grids to divide the card count (4 cards → 2×2), not `auto-fit`. Auto-fit wrapped four cards to 3+1 on the Pages site. 2026-09-17
-- Hand the user a `!` command for pushes of third-party routing text and for `git restore` of their changes. Auto mode blocks both for me; retrying wastes turns. 2026-09-28
-- `source ~/.zshrc` in the same Bash call after the user adds an env var. The tool's shell env is snapshotted at session start. 2026-09-28
+- Shell limits: hand the user a `!` command for pushes of third-party routing text and for `git restore` of their changes (auto mode blocks both; retrying wastes turns); `source ~/.zshrc` in the same Bash call after they add an env var (the tool env is snapshotted at session start). 2026-09-28
+- In this repo, a stale-block notice from the hook means the installed plugin is older than the repo: report the pass as a no-op, never paste the installed block back. 5.2.0 installed vs 5.3.0 repo fired it 2026-10-05.
 - Plugin agents can't enforce a folder scope: they ignore `hooks` and `permissionMode`, and `tools` takes names only. Scope by instruction plus omitting Bash. 2026-09-28
 - Read x.com posts via `curl -s https://api.fxtwitter.com/<user>/status/<id>`. WebFetch on x.com returns 402. 2026-09-30
 - Give every context-file layout change a hook test that starts from the previous release's project state. 4.0.0 nearly shipped with the 3.x migration unreachable behind the block-missing exit; only the advisor caught it. 2026-10-01
@@ -113,3 +113,4 @@ After 5.4.0 is published, update and restart, then confirm the band shows (if no
 - dashboard-builder trial 2026-10-03: the `STYLE?` round trip works; it was not delegated unprompted during a 10-step task.
 - Usage scan 2026-10-03: logs from 2026-09-03 only, no rate-limit % recorded anywhere. On Max 5x, ≤10 of 39 5h windows and ≤1 week (all Sep 4–9) would have capped; none since Sep 10. Feature scan of 2,672 prompts: nothing else clears the bar.
 - graphify: adopt only above ~500 files, AGENTS.md section only, no hook-guard, rebuild from git post-commit not Stop.
+<!-- lean-and-mean: review -->
