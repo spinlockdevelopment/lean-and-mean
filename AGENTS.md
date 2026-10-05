@@ -3,8 +3,11 @@
 ## Operating Mode
 Lean and mean. Active every response.
 
-Prose: concise. Lead with the answer; no filler, hedging, or pleasantries.
-Full sentences for explanations and trade-offs; fragments fine for status.
+Prose: ~80% ASD-STE100 — one idea per sentence, ≤20 words, active voice,
+common words, one term per thing. Lead with the answer; no filler, hedging,
+or pleasantries. Full sentences for explanations; fragments fine for status.
+Explain in the cheapest form that lands: a sentence; a diagram for a
+mechanism, flow, or structure; an HTML page for long or revisited material.
 No meta: never state the audience, level, or style ("plain language", "from
 scratch", "assumes you know"). Write that way; don't announce it.
 
@@ -32,7 +35,7 @@ block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
 CLAUDE.md) so it runs natively; `/endsession` promotes session mistakes
 into Rules, rewrites Next/Todo, commits, pushes (PR if needed), then hard-stops. Full
 AGENTS.md review runs at next session start when the hook says it is due.
-v5.3.0, published via the spinlockdevelopment/lean-and-mean marketplace.
+v5.4.0, published via the spinlockdevelopment/lean-and-mean marketplace.
 - POSIX sh (one hook), Markdown skills, JSON manifests, one TSX function-hooks module (Claude only). Python stdlib tests for the hook; `claude plugin test` for the module.
 
 ## Commands
@@ -63,9 +66,10 @@ prose the model follows. The session band module is the only code that runs per 
 | `tests/session-band.test.ts`, `tests/band-module.test.tsx` | Band parser and auto-end threshold tests; module tests with a stubbed Haiku judge, hide toggle, mocked-clock auto-end, and the `sessionBand: false` toggle (`claude plugin test .`) |
 | `tests/test_session_start.py` | Hook tests: both hosts, stub check, advisor note; fake HOME |
 | `agents/dashboard-builder.md` | Progress-dashboard subagent; its description carries the trigger rule |
+| `agents/explainer.md` | Local explainer-page subagent (`.pages/`, STE prose, inline SVG); same `STYLE?` round trip |
 | `hooks/hooks.json` | Wires the hook via `${CLAUDE_PLUGIN_ROOT}` and the band under `modules` |
 | `docs/index.html` | GitHub Pages overview; GitHub link in top bar, raw SKILL.md links, inline links into `guide.html` |
-| `docs/guide.html` | Pages deep dive: /endsession, hook, cost model, advisor, dashboard-builder, session band, typesafe-ai, manual install; keep figures in sync with README "Why use it" |
+| `docs/guide.html` | Pages deep dive: /endsession, hook, cost model, advisor, dashboard-builder, explainer, session band, typesafe-ai, manual install; keep figures in sync with README "Why use it" |
 | `docs/style.css` | Shared Pages styles |
 | `.claude-plugin/`, `.codex-plugin/` | Claude plugin.json + marketplace.json, Codex plugin.json; versions must match |
 | `AGENTS.md`, `CLAUDE.md` | This file, committed; CLAUDE.md is the `@AGENTS.md` stub |
@@ -97,7 +101,7 @@ prose the model follows. The session band module is the only code that runs per 
 - Default to a minor version bump; major only when the user agrees the change is breaking. 5.0.0 was called too aggressive for an additive release. 2026-10-03
 
 ## Next
-After 5.3.0 is published, update and restart, then confirm the band shows (if not, try Terminal.app: Warp may hide it), hide tasks folds the list, the End session button runs `/lean-and-mean:endsession`, an idle session auto-runs it at 55m, and the `/config` toggle hides the band. Check the installed status line ticks with `refreshInterval: 60`. Watch the first auto-commit/push `/endsession` run in another repo, including its auto-memory step.
+After 5.4.0 is published, update and restart, then confirm the band shows (if not, try Terminal.app: Warp may hide it), hide tasks folds the list, the End session button runs `/lean-and-mean:endsession`, an idle session auto-runs it at 55m, and the `/config` toggle hides the band. Check the installed status line ticks with `refreshInterval: 60`. Watch the first auto-commit/push `/endsession` run in another repo, including its auto-memory step. Call `@agent-lean-and-mean:explainer` for real: check its trigger, the `STYLE?` round trip (or reuse of dashboard-builder's style), and that the reply is only path + diagrams; then delete its agent memory.
 
 ## Todo
 - P3 — confirm: append `rate_limits.five_hour.used_percentage` with a timestamp to a log in `extras/statusline.sh`, so plan-limit questions get measured numbers. Only usage-scan candidate worth adding.
@@ -105,6 +109,7 @@ After 5.3.0 is published, update and restart, then confirm the band shows (if no
 ## Notes & Pointers
 - History: `git log`. SUMMARY.md dropped in v3.
 - Subagents load AGENTS.md (checked 2026-10-03), so no SubagentStart hook is needed.
+- explainer stand-in trial 2026-10-05 (session band page): good page, facts checked against code; its reply added an off-topic false claim, so the reply is now path + diagrams only.
 - dashboard-builder trial 2026-10-03: the `STYLE?` round trip works; it was not delegated unprompted during a 10-step task.
 - Usage scan 2026-10-03: logs from 2026-09-03 only, no rate-limit % recorded anywhere. On Max 5x, ≤10 of 39 5h windows and ≤1 week (all Sep 4–9) would have capped; none since Sep 10. Feature scan of 2,672 prompts: nothing else clears the bar.
 - graphify: adopt only above ~500 files, AGENTS.md section only, no hook-guard, rebuild from git post-commit not Stop.

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>lean-and-mean guide</title>
-<meta name="description" content="In-depth guide to lean-and-mean: /endsession, the session-start hook, the cost model, advisor and effort settings, the dashboard-builder agent, the session band and status line, and the bundled typesafe-ai skill.">
+<meta name="description" content="In-depth guide to lean-and-mean: /endsession, the session-start hook, the cost model, advisor and effort settings, the dashboard-builder and explainer agents, the session band and status line, and the bundled typesafe-ai skill.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,7 +20,7 @@
   <p class="lede">How the session handoff, the hook and the cost model work, and what the bundled extras do.</p>
 </header>
 
-<p>On this page: <a href="#endsession">/endsession</a> · <a href="#hook">The session-start hook</a> · <a href="#cost">Why sessions should be short</a> · <a href="#advisor">Advisor and effort</a> · <a href="#dashboard">dashboard-builder</a> · <a href="#band">Session band mod</a> · <a href="#typesafe">typesafe-ai</a> · <a href="#manual">Manual install</a></p>
+<p>On this page: <a href="#endsession">/endsession</a> · <a href="#hook">The session-start hook</a> · <a href="#cost">Why sessions should be short</a> · <a href="#advisor">Advisor and effort</a> · <a href="#dashboard">dashboard-builder</a> · <a href="#explainer">explainer</a> · <a href="#band">Session band mod</a> · <a href="#typesafe">typesafe-ai</a> · <a href="#manual">Manual install</a></p>
 
 <h2 id="endsession">/endsession</h2>
 <p>The last message of a session. It turns this session's mistakes and failed approaches into Rules, rewrites <code>## Next</code> and <code>## Todo</code>, flags a full review for the next session if the project's layout or commands changed, then commits and pushes, opening a PR when the branch is a feature branch or the default branch is protected. It never force-pushes. Then it prints a short summary of what was done, what was updated and what comes next. Then it stops.</p>
@@ -79,6 +79,15 @@
   <li><b>Claude keeps it current.</b> After every step Claude edits the page's <code>dashboard-data</code> JSON block, never the markup. A decision it needs from you goes into questions with its default, and it carries on with that default rather than waiting.</li>
   <li><b>Honest times.</b> The page refreshes every 10 seconds, shows each time with its age ("4 min ago"), and marks itself stale when nothing has updated for 10 minutes. Timestamps come from the shell clock, never invented.</li>
   <li><b>Contained.</b> No network requests. It writes <code>.dashboard/.gitignore</code> so the page is never committed, and the agent reads and writes nothing outside <code>.dashboard/</code> and its memory. It has no shell access.</li>
+</ul>
+
+<h2 id="explainer">explainer</h2>
+<p>A subagent, Claude Code only, that writes <code>.pages/&lt;slug&gt;.html</code>: one self-contained page for an answer too long or too structural for the terminal. The Operating Mode block tells Claude to explain in the cheapest form that works: a sentence, then a diagram, then a page. Call it directly with <code>@agent-lean-and-mean:explainer</code>.</p>
+<ul>
+  <li><b>Answer first.</b> A short summary on top, then sections. Prose follows about 80% of ASD-STE100: one idea per sentence, 20 words at most, active voice, one term per thing.</li>
+  <li><b>Diagrams replace paragraphs.</b> Flows, structures and comparisons are inline SVG with a text label. Tables carry options and trade-offs.</li>
+  <li><b>Style, asked once.</b> The same <code>STYLE?</code> round trip as dashboard-builder, saved in its own user memory; it reuses a style already given to dashboard-builder, so you answer once.</li>
+  <li><b>Contained.</b> No network requests; it can read the project but writes only <code>.pages/</code>, which it gitignores. It states only facts it was given or read, with paths. It has no shell access.</li>
 </ul>
 
 <h2 id="band">Session band mod</h2>

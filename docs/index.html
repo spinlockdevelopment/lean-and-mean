@@ -30,7 +30,7 @@
   <div class="card"><h3>Minimal code</h3><p>A YAGNI ladder picks the smallest change that works. New code comes last.</p></div>
   <div class="card"><h3>Rules that stick</h3><p>Every correction becomes one dated line under <code>## Rules</code>. The file loads every session, so the mistake doesn't repeat.</p></div>
   <div class="card"><h3>Clean handoffs</h3><p><code>/endsession</code> records Rules, the next task and the Todo list, commits and pushes, then stops. The next session starts small and on the right task.</p></div>
-  <div class="card"><h3>Short answers</h3><p>The answer comes first. Full sentences for explanations, short lines for status. No filler, no hedging.</p></div>
+  <div class="card"><h3>Short answers</h3><p>The answer comes first. Full sentences for explanations, short lines for status. No filler, no hedging. Short sentences in active voice, about 80% of the ASD-STE100 controlled language. A diagram or an HTML page when that explains it better.</p></div>
 </div>
 
 <h3>The YAGNI ladder</h3>
@@ -95,6 +95,7 @@
 <p>Each extra is covered in full in the <a href="guide.html">guide</a>.</p>
 <ul>
   <li><b>dashboard-builder</b> (Claude Code). A subagent for any task over about five steps or 30 minutes; its description tells Claude to use it, and you can ask for it by name. It builds <code>.dashboard/index.html</code>, a self-refreshing page with tasks, open questions, deliverables and anything stuck. Claude updates it after every step, and a question that needs you is listed with the default Claude is proceeding on. Style is asked once and remembered. <a href="guide.html#dashboard">How the dashboard works</a>.</li>
+  <li><b>explainer</b> (Claude Code). A subagent that writes <code>.pages/&lt;slug&gt;.html</code>, a self-contained page with inline SVG diagrams, when an answer runs past a screen, compares options, or will be revisited. <a href="guide.html#explainer">How the explainer works</a>.</li>
   <li><b>Status line</b> (Claude Code). <code>extras/statusline.sh</code> adds context use and a prompt-cache countdown to your status line; you copy it in yourself. <a href="guide.html#band">Setup</a>.</li>
   <li><b>Advisor.</b> Claude Code can consult a stronger model before a plan, on a recurring error, and before declaring done. Enable once with <code>/advisor fable</code> or <code>/advisor opus</code>. Its cost grows with session length, one more reason to use <code>/endsession</code>. <a href="guide.html#advisor">Advisor and effort settings</a>.</li>
   <li><b>Effort.</b> Run the main session at high effort and hand routine subagent work to Sonnet at medium effort.</li>

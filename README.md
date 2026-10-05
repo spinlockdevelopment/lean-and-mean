@@ -9,8 +9,10 @@ that file, committing and pushing, then stops.
 
 Three axes:
 
-- **Prose** — lead with the answer; no filler, hedging, or pleasantries. Full
-  sentences for explanations and trade-offs, fragments only for status.
+- **Prose** — lead with the answer; no filler, hedging, or pleasantries. About
+  80% of ASD-STE100, the controlled English of aerospace manuals: one idea per
+  sentence, 20 words at most, active voice, one term per thing. A diagram
+  when it explains a mechanism or flow; an HTML page when the answer is long.
 - **Code** — a YAGNI ladder. Skip speculative work, reuse what is already in the
   repo, then stdlib, then the native platform feature, then an installed
   dependency, then one line, and only then new code. Never cut input validation
@@ -166,6 +168,7 @@ which works on every Claude Code version and alongside a `CLAUDE.local.md`.
 | Session band mod | — | A plugin mod (function-hooks module) that draws a row above the prompt: a task checklist Haiku keeps after each turn, a hide/show tasks button, and an End session button. When every task is done it nudges you to `/endsession` before new work; with 5 minutes left on the 1-hour prompt cache it runs `/endsession` itself (commit and push included), once per stretch of work. The automatic run passes `auto`, so it never merges or deploys. Claude Code only; turn off with `/config` → Session band |
 | `extras/statusline.sh` | — | Optional status line: dir, branch, model, context use with the cache countdown, 5-hour limit. Plugins can't set `statusLine`, so add it yourself (below). Needs `jq` |
 | `@agent-lean-and-mean:dashboard-builder` | — | Builds a self-refreshing `.dashboard/index.html` progress page for long tasks. Claude Code only |
+| `@agent-lean-and-mean:explainer` | — | Writes `.pages/<slug>.html`, a local explainer page with inline SVG diagrams, for answers that run long or will be revisited. Shares the dashboard's style questions. Claude Code only |
 
 Also bundled: `typesafe-ai`, a copy of TypeSafe AI's skill for building with
 the Jev model, routed through OpenRouter (`OPENROUTER_JEV_API_KEY`, model
