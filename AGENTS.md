@@ -69,7 +69,7 @@ prose the model follows. The session band module is the only code that runs per 
 | `agents/explainer.md` | Local explainer-page subagent (`.pages/`, STE prose, inline SVG); same `STYLE?` round trip |
 | `hooks/hooks.json` | Wires the hook via `${CLAUDE_PLUGIN_ROOT}` and the band under `modules` |
 | `docs/index.html` | GitHub Pages overview; GitHub link in top bar, raw SKILL.md links, inline links into `guide.html` |
-| `docs/guide.html` | Pages deep dive: /endsession, hook, cost model, advisor, dashboard-builder, explainer, session band, typesafe-ai, manual install; keep figures in sync with README "Why use it" |
+| `docs/guide.html` | Pages deep dive: /endsession, hook, cost model, advisor, dashboard-builder, explainer, session band, typesafe-ai, install details; keep figures in sync with README "Why use it" headlines and `docs/index.html` stats |
 | `docs/style.css` | Shared Pages styles |
 | `.claude-plugin/`, `.codex-plugin/` | Claude plugin.json + marketplace.json, Codex plugin.json; versions must match |
 | `AGENTS.md`, `CLAUDE.md` | This file, committed; CLAUDE.md is the `@AGENTS.md` stub |
@@ -107,7 +107,7 @@ After 5.4.0 is published, update and restart, then confirm the band shows (if no
 - P3 — confirm: append `rate_limits.five_hour.used_percentage` with a timestamp to a log in `extras/statusline.sh`, so plan-limit questions get measured numbers. Only usage-scan candidate worth adding.
 
 ## Notes & Pointers
-- History: `git log`. SUMMARY.md dropped in v3.
+- History: `git log`.
 - Subagents load AGENTS.md (checked 2026-10-03), so no SubagentStart hook is needed.
 - explainer stand-in trial 2026-10-05 (session band page): good page, facts checked against code; its reply added an off-topic false claim, so the reply is now path + diagrams only.
 - dashboard-builder trial 2026-10-03: the `STYLE?` round trip works; it was not delegated unprompted during a 10-step task.

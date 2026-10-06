@@ -56,7 +56,7 @@
 <ul>
   <li><b>Rules.</b> Each correction becomes one dated line, capped at 15 so the list stays readable.</li>
   <li><b>Next and Todo.</b> <code>## Next</code> names the very next task; <code>## Todo</code> is a short prioritized backlog. History stays in <code>git log</code>.</li>
-  <li><b>Fixed layout.</b> Operating Mode, Project &amp; Stack, Commands, Architecture &amp; Layout, Conventions, Rules, Next, Todo, Notes &amp; Pointers, always in that order.</li>
+  <li><b>Fixed layout.</b> Operating Mode, Project &amp; Stack, Commands, Architecture &amp; Layout, Conventions, Done, Rules, Next, Todo, Notes &amp; Pointers, always in that order.</li>
   <li><b>250-line cap.</b> The file is resent on every request, so overflow moves to linked <code>agents-&lt;category&gt;.md</code> files.</li>
 </ul>
 
@@ -78,27 +78,24 @@
 </ul>
 
 <h2 id="band">The session band mod</h2>
-<p>Claude Code only. The plugin ships a mod: a small function-hooks module (<code>hooks/register.tsx</code>) that Claude Code loads with the plugin and runs inside the session. It draws a row above the prompt:</p>
+<p>Claude Code only. A small plugin module that draws a row above the prompt:</p>
 <pre class="mock" aria-label="Session band example"><code>tasks 2/3   [ hide tasks ]  [ end session ]
   ✓ Fix the login redirect
   ✓ Add a test for it
   ☐ Update the changelog</code></pre>
 <ul>
-  <li><b>Task checklist.</b> After each answered turn, Haiku adds the tasks you asked for and ticks the ones the reply shows finished. <b>hide tasks</b> folds the list to its count.</li>
-  <li><b>End session button.</b> Runs <code>/lean-and-mean:endsession</code>. When every task is done it turns primary, a toast appears, and your next prompt tells Claude to suggest wrapping up first.</li>
-  <li><b>Auto end.</b> The 1-hour prompt cache restarts with every request. With 5 minutes left after real work, the mod runs <code>/endsession</code> itself (commit and push included), so the handoff is written before the next turn has to re-read the whole context at full price.</li>
-  <li><b>Cost and off switch.</b> One low-effort Haiku call per answered turn, capped at 8 seconds. Turn it off in <code>/config</code> → Session band. Codex ignores the mod.</li>
+  <li><b>Task checklist.</b> Haiku keeps it after each turn. The End session button runs <code>/lean-and-mean:endsession</code>.</li>
+  <li><b>Auto end.</b> With 5 minutes left on the 1-hour prompt cache, it runs <code>/endsession</code> itself, so the handoff is written before the cache goes cold. Off in <code>/config</code> → Session band.</li>
 </ul>
 <p><a href="guide.html#band">How the mod works</a>, including the optional status line with a cache countdown.</p>
 
 <h2>Extras</h2>
 <p>Each extra is covered in full in the <a href="guide.html">guide</a>.</p>
 <ul>
-  <li><b>dashboard-builder</b> (Claude Code). A subagent for any task over about five steps or 30 minutes; its description tells Claude to use it, and you can ask for it by name. It builds <code>.dashboard/index.html</code>, a self-refreshing page with tasks, open questions, deliverables and anything stuck. Claude updates it after every step, and a question that needs you is listed with the default Claude is proceeding on. Style is asked once and remembered. <a href="guide.html#dashboard">How the dashboard works</a>.</li>
+  <li><b>dashboard-builder</b> (Claude Code). A subagent for any task over about five steps or 30 minutes; its description tells Claude to use it, and you can ask for it by name. It builds <code>.dashboard/index.html</code>, a self-refreshing page with tasks, open questions and deliverables. Claude updates it after every step. <a href="guide.html#dashboard">How the dashboard works</a>.</li>
   <li><b>explainer</b> (Claude Code). A subagent that writes <code>.pages/&lt;slug&gt;.html</code>, a self-contained page with inline SVG diagrams, when an answer runs past a screen, compares options, or will be revisited. <a href="guide.html#explainer">How the explainer works</a>.</li>
   <li><b>Status line</b> (Claude Code). <code>extras/statusline.sh</code> adds context use and a prompt-cache countdown to your status line; you copy it in yourself. <a href="guide.html#band">Setup</a>.</li>
-  <li><b>Advisor.</b> Claude Code can consult a stronger model before a plan, on a recurring error, and before declaring done. Enable once with <code>/advisor fable</code> or <code>/advisor opus</code>. Its cost grows with session length, one more reason to use <code>/endsession</code>. <a href="guide.html#advisor">Advisor and effort settings</a>.</li>
-  <li><b>Effort.</b> Run the main session at high effort and hand routine subagent work to Sonnet at medium effort.</li>
+  <li><b>Advisor.</b> Claude Code can consult a stronger model before a plan, on a recurring error, and before declaring done. Enable once with <code>/advisor fable</code> or <code>/advisor opus</code>. Run the main session at high effort and routine subagent work on Sonnet at medium. <a href="guide.html#advisor">Advisor and effort settings</a>.</li>
   <li><b>typesafe-ai.</b> TypeSafe AI's skill for building features on their Jev model, which turns text and app state into typed yes/no and pick-one answers. Routed through OpenRouter with <code>OPENROUTER_JEV_API_KEY</code>. Disabled for now: the assistant won't load it on its own. <a href="guide.html#typesafe">What Jev is for</a>.</li>
 </ul>
 
