@@ -10,6 +10,7 @@ declare module 'claude-code' {
       endCommand: string
       tasksHidden: boolean
       armed: boolean
+      now: number
     }
   }
 }

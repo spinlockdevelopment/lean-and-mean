@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 import type { Task } from '../types'
-import { JUDGE_SYSTEM, allDone, autoEndDue, judgePrompt, parseTasks } from './judge'
+import { JUDGE_SYSTEM, allDone, autoEndDue, cacheLabel, judgePrompt, parseTasks } from './judge'
 
 const cacheAt = atom({ plugin: 'lean-and-mean', key: 'cacheAt' } as const, null)
 const tasks = atom({ plugin: 'lean-and-mean', key: 'tasks' } as const, [] as Task[])
@@ -12,6 +12,8 @@ const endCommand = atom({ plugin: 'lean-and-mean', key: 'endCommand' } as const,
 const tasksHidden = atom({ plugin: 'lean-and-mean', key: 'tasksHidden' } as const, false)
 // true from a real prompt until an endsession runs, so an idle wrapped-up session isn't ended again every hour.
 const armed = atom({ plugin: 'lean-and-mean', key: 'armed' } as const, false)
+// Timer-written clock the band reads, so the cache countdown redraws while idle. Only written off the terminal, which has the status line.
+const now = atom({ plugin: 'lean-and-mean', key: 'now' } as const, 0)
 
 const isEnd = (name: string) => /(^|:)endsession$/.test(name)
 
@@ -28,6 +30,7 @@ export const register: Register = (on, options) => {
   on('session.start', async ($, e, next) => {
     const tick = async () => {
       const t = await $.clock.now()
+      if ((await $.session.surfaces()).some(s => s !== 'terminal')) await update($, now, () => t)
       if (inTurn !== null || !(await read($, armed)) || !autoEndDue(await read($, cacheAt), t)) return
       await update($, armed, () => false)
       $.ui.toast('Prompt cache expires in 5m: running /endsession')
@@ -80,6 +83,7 @@ export const register: Register = (on, options) => {
     if (e.usage) {
       const t = await $.clock.now()
       await update($, cacheAt, () => t)
+      await update($, now, () => t)
     }
     const prompt = await read($, lastPrompt)
     if (e.reason !== 'answer' || prompt === '') return next(e)
@@ -113,6 +117,7 @@ export const register: Register = (on, options) => {
     if (at === null && list.length === 0) return next(e)
 
     const { Box, Text, Button } = $.ui.resolve(e)
+    const cache = e.surface === 'terminal' ? null : cacheLabel(at, await read($, now))
     const hidden = await read($, tasksHidden)
     const done = list.filter(t => t.done).length
     const finished = allDone(list)
@@ -130,6 +135,11 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column">
         <Box>
+          {cache && (
+            <Text key="cache" dimColor={!cache.warn} color={cache.warn ? 'yellow' : undefined}>
+              {`${cache.text}  `}
+            </Text>
+          )}
           <Text key="tasks" dimColor={!finished} color={finished ? 'green' : undefined}>
             {list.length ? `tasks ${done}/${list.length}${finished ? ' done' : ''}  ` : ''}
           </Text>

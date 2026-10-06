@@ -1,7 +1,7 @@
 {
   "name": "lean-and-mean",
   "description": "Concise prose and YAGNI code, installed into the project AGENTS.md. /endsession writes Rules, Next and Todo, commits, pushes, then stops.",
-  "version": "5.4.0",
+  "version": "5.5.0",
   "author": {
     "name": "Spinlock Development",
     "url": "https://github.com/spinlockdevelopment"

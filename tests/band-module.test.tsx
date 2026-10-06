@@ -77,6 +77,7 @@ test('endsession runs once when the cache has 5 minutes left', async ($, on) => 
   const runs: string[] = []
   on('session.start', async (_$, e) => ({ cwd: e.cwd }))
   on('command.list', async () => ({ value: [{ name: 'lean-and-mean:endsession' }] }))
+  on('session.surfaces', async () => ({ value: ['terminal'] }))
   on('command.run', async (_$, e) => {
     runs.push(`${e.command} ${e.args}`)
     return { text: '' }
@@ -99,4 +100,29 @@ test('endsession runs once when the cache has 5 minutes left', async ($, on) => 
   await $.turn.start({ text: 'long task', turnId: 'long' })
   await clock.advance(120 * 60_000)
   expect(runs.length).toBe(1)
+})
+
+test('cache countdown shows off the terminal only and ticks while idle', async ($, on) => {
+  world(on, '{"tasks":[]}')
+  const clock = mock.clock(on)
+  on('session.start', async (_$, e) => ({ cwd: e.cwd }))
+  on('command.list', async () => ({ value: [] }))
+  on('session.surfaces', async () => ({ value: ['desktop'] }))
+  on('turn.start', async (_$, e) => ({ turnId: e.turnId }))
+  await $.session.start({ cwd: '/p', surface: 'desktop', isInteractive: true } as never)
+  await $.prompt.submit({ text: 'do a thing', wait: false, origin: { kind: 'composer' } })
+  await $.turn.complete({
+    answer: 'Done.', durationMs: 1, isAborted: false, turnId: 't', reason: 'answer',
+    usage: { input_tokens: 1, output_tokens: 1 },
+  } as never)
+  const term = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'terminal', ...BAND })
+  expect(await term.find({ key: 'cache' })).toBeUndefined()
+  await term.unmount()
+  const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'desktop', ...BAND })
+  expect(await ui.find({ type: 'Text', text: /exp\. 60m/ })).toBeDefined()
+  await clock.advance(20 * 60_000)
+  expect(await ui.find({ type: 'Text', text: /exp\. 40m/ })).toBeDefined()
+  await clock.advance(31 * 60_000)
+  expect(await ui.find({ type: 'Text', text: /exp\. 9m/ })).toBeDefined()
+  await ui.unmount()
 })

@@ -60,7 +60,7 @@ Local checkouts, manual installs, and Codex notes:
 | `/lean-and-mean:lean-and-mean` | `$lean-and-mean` | Create or review `AGENTS.md`: refresh the block, reorder, verify commands and paths, prune, split past 250 lines. Usually runs on its own |
 | `/lean-and-mean:lean-and-mean debt` | `$lean-and-mean debt` | List every `// lean:` shortcut with its upgrade path |
 | `/lean-and-mean:endsession` | `$endsession` | Save Rules, Next and Todo, commit, push, and run `## Done` steps when the work is complete. Then stop. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#endsession) |
-| Session band mod | — | Task checklist above the prompt, End session button, auto `/endsession` with 5 minutes of cache left. Off in `/config`. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#band) |
+| Session band mod | — | Task checklist above the prompt, End session button, auto `/endsession` with 5 minutes of cache left, cache countdown in the desktop app. Off in `/config`. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#band) |
 | `extras/statusline.sh` | — | Optional status line with context use and a cache countdown. You copy it in. Needs `jq` |
 | `@agent-lean-and-mean:dashboard-builder` | — | Self-refreshing `.dashboard/index.html` progress page for long tasks |
 | `@agent-lean-and-mean:explainer` | — | Local `.pages/<slug>.html` explainer page with inline SVG diagrams |

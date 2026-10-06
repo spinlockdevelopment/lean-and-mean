@@ -100,20 +100,20 @@
 
 <h2 id="band">Session band mod</h2>
 <p>A mod is a plugin module of function hooks that Claude Code loads and runs inside the session. This one is <code>hooks/register.tsx</code> (helpers in <code>hooks/judge.ts</code>), listed under <code>modules</code> in <code>hooks/hooks.json</code>. It is the only plugin code that runs on every turn. Claude Code only, on by default; turn it off in <code>/config</code> under Session band. Codex ignores it.</p>
-<pre class="mock" aria-label="Session band example"><code>tasks 2/3   [ hide tasks ]  [ end session ]
+<pre class="mock" aria-label="Session band example"><code>exp. 42m  tasks 2/3   [ hide tasks ]  [ end session ]
   ✓ Fix the login redirect
   ✓ Add a test for it
   ☐ Update the changelog</code></pre>
 <p>It hooks session start and end, prompt submit, turn start and completion, command runs, and the area above the prompt. Nothing is written to your project; its state lives in Claude Code's plugin storage.</p>
 <ul>
-  <li><b>Auto end.</b> The band tracks the 1-hour prompt cache, restarted by every main-loop request. With 5 minutes left after you have worked since the last <code>/endsession</code>, it runs <code>/endsession</code> itself (commit and push included) so Rules and Next are written before the cache goes cold and the next turn re-reads the whole context at full price. The countdown itself is in the status line extra below.</li>
+  <li><b>Auto end.</b> The band tracks the 1-hour prompt cache, restarted by every main-loop request. With 5 minutes left after you have worked since the last <code>/endsession</code>, it runs <code>/endsession</code> itself (commit and push included) so Rules and Next are written before the cache goes cold and the next turn re-reads the whole context at full price. In the desktop app, which has no status line, the band also shows the countdown as <code>exp. 42m</code>, yellow under 10 minutes; in a terminal that lives in the status line extra below.</li>
   <li><b>Task checklist.</b> After each answered turn, Haiku (low effort, 8-second cap) adds the tasks you asked for and ticks the ones the reply shows finished. A malformed reply keeps the old list. The hide tasks button folds the list to its <code>tasks 2/3</code> count.</li>
   <li><b>End session button.</b> Runs <code>/lean-and-mean:endsession</code>. If the command can't run, it fills the prompt with it instead.</li>
   <li><b>Reset.</b> <code>/clear</code> empties the checklist and the cache timer. Auto end fires once per stretch of work: running <code>/endsession</code>, by hand or automatically, disarms it until your next real prompt.</li>
   <li><b>Nudge.</b> When every task is done you get a toast, the End session button turns primary, and your next prompt tells Claude to suggest <code>/endsession</code> before new work, once per finished list.</li>
 </ul>
 
-<p><b>Status line extra.</b> <code>extras/statusline.sh</code> draws dir, branch, model, a <code>ctx … exp.</code> segment from <code>prompt_cache.expires_at</code>, and the 5-hour limit. <code>prompt_cache.expires_at</code> needs Claude Code 2.1.251+. Plugins can't set <code>statusLine</code>: copy the script out of the plugin cache (its path changes per version) to <code>~/.claude/statusline.sh</code> and add <code>"statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh", "refreshInterval": 60 }</code> to <code>~/.claude/settings.json</code>. Needs <code>jq</code>.</p>
+<p><b>Status line extra.</b> <code>extras/statusline.sh</code> draws dir, branch, model, a <code>ctx … exp.</code> segment from <code>prompt_cache.expires_at</code>, and the 5-hour limit. <code>prompt_cache.expires_at</code> needs Claude Code 2.1.251+. Plugins can't set <code>statusLine</code>, and the desktop app draws no status line at all (the band carries the countdown there): copy the script out of the plugin cache (its path changes per version) to <code>~/.claude/statusline.sh</code> and add <code>"statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh", "refreshInterval": 60 }</code> to <code>~/.claude/settings.json</code>. Needs <code>jq</code>.</p>
 
 <h2 id="typesafe">typesafe-ai</h2>
 <p>A bundled copy of <a href="https://github.com/typesafe-ai/skills">TypeSafe AI's skill</a> for building app features on Jev, their System One model. Jev doesn't generate text: it takes natural language plus application state and returns typed answers and probabilities, such as yes/no or pick-one, that ordinary code can combine. It fits routing, ranking, extraction, verification, or anywhere a prompt-and-parse step could become a structured decision.</p>

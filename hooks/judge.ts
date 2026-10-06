@@ -47,3 +47,10 @@ export const AUTO_END_MS = 5 * 60 * 1000
 /** True once the 1h prompt cache has 5 minutes or less left. */
 export const autoEndDue = (cacheAt: number | null, now: number) =>
   cacheAt !== null && now >= cacheAt + CACHE_TTL_MS - AUTO_END_MS
+
+/** Band label for the 1h cache: "exp. 42m", "exp. cold"; null before the first request. */
+export function cacheLabel(cacheAt: number | null, now: number): { text: string; warn: boolean } | null {
+  if (cacheAt === null) return null
+  const left = Math.max(0, cacheAt + CACHE_TTL_MS - now)
+  return { text: left === 0 ? 'exp. cold' : `exp. ${Math.ceil(left / 60_000)}m`, warn: left <= 10 * 60_000 }
+}
