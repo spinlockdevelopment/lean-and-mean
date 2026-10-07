@@ -18,19 +18,59 @@
   <div class="eyebrow">Claude Code &amp; Codex plugin</div>
   <h1>lean-and-mean</h1>
   <p class="lede">Short answers, minimal code, and an <code>AGENTS.md</code> that remembers every correction. Shorter sessions, less code nobody asked for, no repeat mistakes.</p>
-  <div class="cta"><a class="btn primary" href="#install">Install</a></div>
+  <div class="cta"><a class="btn primary" href="#install">Install</a> <a class="btn ghost" href="guide.html">Guide and extras</a></div>
 </header>
 
 <h2>The problem</h2>
-<p>Coding assistants say and build too much: padded answers, plus helpers, options and abstractions nobody asked for, all of which must be read, reviewed and maintained. And they forget: every session starts blank, so yesterday's corrected mistake can happen again today.</p>
-<p>lean-and-mean fixes both by writing a short set of instructions into root <code>AGENTS.md</code>. Codex loads it directly; Claude Code loads it through a one-line <code>CLAUDE.md</code> containing <code>@AGENTS.md</code>. The instructions are then present every session with no plugin code running.</p>
+<p>Coding assistants say too much and build too much. Padded answers and unrequested helpers all need reading, review and upkeep. Every session also starts blank, so a mistake you fixed yesterday can come back today.</p>
+<p>lean-and-mean writes a short instruction block into the project's root <code>AGENTS.md</code>. Codex loads that file directly. Claude Code loads it through a one-line <code>CLAUDE.md</code> that holds only <code>@AGENTS.md</code>. The block is then active every session, with no plugin code running.</p>
+
+<h2>How a session runs</h2>
+<figure class="fig">
+  <svg viewBox="0 0 760 260" role="img" aria-labelledby="loop-t loop-d">
+    <title id="loop-t">One session with lean-and-mean</title>
+    <desc id="loop-d">The session starts and the host loads AGENTS.md. The hook checks it and stays silent unless a pass is due. You work, and each correction becomes one Rule line. /endsession writes Rules, Next and Todo. It commits, pushes, and ships per the Done section when the work is complete. The session stops, and the next session starts from Next.</desc>
+    <defs><marker id="loop-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+    <g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#loop-a)">
+      <line x1="150" y1="62" x2="207" y2="62"/>
+      <line x1="350" y1="62" x2="407" y2="62"/>
+      <line x1="550" y1="62" x2="607" y2="62"/>
+      <line x1="680" y1="94" x2="680" y2="177"/>
+      <line x1="610" y1="212" x2="553" y2="212"/>
+      <polyline points="410,212 80,212 80,97"/>
+    </g>
+    <rect class="box" x="10" y="30" width="140" height="64" rx="8"/>
+    <rect class="box" x="210" y="30" width="140" height="64" rx="8"/>
+    <rect class="box" x="410" y="30" width="140" height="64" rx="8"/>
+    <rect class="key" x="610" y="30" width="140" height="64" rx="8"/>
+    <rect class="box" x="610" y="180" width="140" height="64" rx="8"/>
+    <rect class="box" x="410" y="180" width="140" height="64" rx="8"/>
+    <g text-anchor="middle" fill="currentColor">
+      <text x="80" y="57" font-weight="600" font-size="14">Session starts</text>
+      <text x="80" y="76" class="mut" font-size="12">host loads AGENTS.md</text>
+      <text x="280" y="57" font-weight="600" font-size="14">Hook checks</text>
+      <text x="280" y="76" class="mut" font-size="12">silent unless due</text>
+      <text x="480" y="57" font-weight="600" font-size="14">You work</text>
+      <text x="480" y="76" class="mut" font-size="12">correction → 1 Rule</text>
+      <text x="680" y="57" font-weight="600" font-size="14">/endsession</text>
+      <text x="680" y="76" class="mut" font-size="12">Rules, Next, Todo</text>
+      <text x="680" y="207" font-weight="600" font-size="14">Commit, push</text>
+      <text x="680" y="226" class="mut" font-size="12">ship per ## Done</text>
+      <text x="480" y="207" font-weight="600" font-size="14">Session stops</text>
+      <text x="480" y="226" class="mut" font-size="12">Next is saved</text>
+      <text x="280" y="122" class="mut" font-size="12">due → full pass first</text>
+      <text x="245" y="203" font-size="12">next session starts on ## Next</text>
+    </g>
+  </svg>
+  <figcaption>One session. The loop closes through <code>AGENTS.md</code>: <code>/endsession</code> writes it, and the next session loads it.</figcaption>
+</figure>
 
 <h2>What it does</h2>
 <div class="grid">
   <div class="card"><h3>Minimal code</h3><p>A YAGNI ladder picks the smallest change that works. New code comes last.</p></div>
-  <div class="card"><h3>Rules that stick</h3><p>Every correction becomes one dated line under <code>## Rules</code>. The file loads every session, so the mistake doesn't repeat.</p></div>
-  <div class="card"><h3>Clean handoffs</h3><p><code>/endsession</code> records Rules, the next task and the Todo list, commits and pushes, then stops. The next session starts small and on the right task.</p></div>
-  <div class="card"><h3>Short answers</h3><p>The answer comes first. Full sentences for explanations, short lines for status. No filler, no hedging. Short sentences in active voice, about 80% of the ASD-STE100 controlled language. A diagram or an HTML page when that explains it better.</p></div>
+  <div class="card"><h3>Rules that stick</h3><p>Every correction becomes one dated line under <code>## Rules</code>. The file loads every session, so the mistake does not repeat.</p></div>
+  <div class="card"><h3>Clean handoffs</h3><p><code>/endsession</code> saves Rules, the next task and the Todo list. Then it commits, pushes and stops.</p></div>
+  <div class="card"><h3>Short answers</h3><p>The answer comes first, with no filler. Sentences are short and active, about 80% ASD-STE100. A diagram or a page when that explains better.</p></div>
 </div>
 
 <h3>The YAGNI ladder</h3>
@@ -44,60 +84,49 @@
   <li>Fits in one line? One line.</li>
   <li>Otherwise, the smallest new code that works.</li>
 </ol>
-<p>Minimal never means careless. It never cuts input validation at trust boundaries, error handling that prevents data loss, security, accessibility, or anything you asked for. Also:</p>
+<p>Minimal never means careless. It never cuts input validation at trust boundaries, error handling against data loss, security, accessibility, or anything you asked for. Also:</p>
 <ul>
-  <li><b>Root cause.</b> Bugs are fixed at the shared place they come from, not in every caller.</li>
-  <li><b>Labeled shortcuts.</b> A deliberate shortcut gets a comment such as <code>// lean: up to 1,000 rows, stream if larger</code>; <code>/lean-and-mean debt</code> lists them all.</li>
+  <li><b>Root cause.</b> A bug is fixed at the shared place it comes from, not in every caller.</li>
+  <li><b>Labeled shortcuts.</b> A deliberate shortcut gets a comment such as <code>// lean: up to 1,000 rows, stream if larger</code>.</li>
   <li><b>One runnable check</b> for logic with branches, loops, parsing, money or security.</li>
-  <li><b>A skipped note.</b> After code, at most three lines on what was left out and when to add it.</li>
+  <li><b>A skipped note.</b> After code, at most three lines say what was left out and when to add it.</li>
 </ul>
 
 <h3>An AGENTS.md that maintains itself</h3>
 <ul>
-  <li><b>Rules.</b> Each correction becomes one dated line, capped at 15 so the list stays readable.</li>
-  <li><b>Next and Todo.</b> <code>## Next</code> names the very next task; <code>## Todo</code> is a short prioritized backlog. History stays in <code>git log</code>.</li>
-  <li><b>Fixed layout.</b> Operating Mode, Project &amp; Stack, Commands, Architecture &amp; Layout, Conventions, Done, Rules, Next, Todo, Notes &amp; Pointers, always in that order.</li>
-  <li><b>250-line cap.</b> The file is resent on every request, so overflow moves to linked <code>agents-&lt;category&gt;.md</code> files.</li>
+  <li><b>Rules.</b> Each correction becomes one dated line. The cap is 15, so the list stays readable.</li>
+  <li><b>Next and Todo.</b> <code>## Next</code> names the next task. <code>## Todo</code> is a short, prioritized backlog. History stays in <code>git log</code>.</li>
+  <li><b>Fixed layout.</b> Operating Mode, Project &amp; Stack, Commands, Architecture &amp; Layout, Conventions, Done, Rules, Next, Todo, Notes &amp; Pointers. Always in that order.</li>
+  <li><b>250-line cap.</b> The file is resent on every request. Overflow moves to linked <code>agents-&lt;category&gt;.md</code> files.</li>
 </ul>
 
 <h2>Commands</h2>
 <div class="table-wrap"><table>
   <tr><th>Command</th><th>Effect</th></tr>
-  <tr><td><code>/lean-and-mean</code></td><td>Create or clean up <code>AGENTS.md</code>: refresh the instructions, reorder sections, verify commands and paths, prune stale lines. Safe to rerun; usually runs on its own.</td></tr>
-  <tr><td><code>/lean-and-mean debt</code></td><td>List every <code>// lean:</code> shortcut and its upgrade path. Changes nothing.</td></tr>
-  <tr><td><code>/endsession</code></td><td>Save Rules, Next and Todo, commit and push, then stop. When the work meets the project's <code>## Done</code>, it also merges, prunes merged branches and deploys as that section says; when it doesn't, Next says what remains. Ending at natural break points keeps sessions cheap and focused. <a href="guide.html#endsession">Details</a>.</td></tr>
+  <tr><td><code>/lean-and-mean:lean-and-mean</code></td><td>Create or review <code>AGENTS.md</code>. It refreshes the block, reorders sections, checks commands and paths, and prunes stale lines. Safe to rerun. The hook usually asks for it.</td></tr>
+  <tr><td><code>/lean-and-mean:lean-and-mean debt</code></td><td>List every <code>// lean:</code> shortcut and its upgrade path. Changes nothing.</td></tr>
+  <tr><td><code>/lean-and-mean:endsession</code></td><td>Save Rules, Next and Todo, commit, push, then stop. When the work meets <code>## Done</code>, it also runs those steps, such as a merge or a deploy. When it does not, Next says what remains. <a href="guide.html#endsession">Details</a>.</td></tr>
 </table></div>
-<p>Claude Code plugin installs spell them <code>/lean-and-mean:lean-and-mean</code> and <code>/lean-and-mean:endsession</code>; Codex uses <code>$lean-and-mean</code> and <code>$endsession</code>.</p>
+<p>Codex uses <code>$lean-and-mean</code> and <code>$endsession</code>. A manual install gives the bare <code>/lean-and-mean</code> and <code>/endsession</code>.</p>
 
-<h2>What happens automatically</h2>
-<p>A <a href="guide.html#hook">session-start hook</a> stays silent unless:</p>
+<h2>The session-start hook</h2>
+<p>One short shell script runs when a session starts. It stays silent unless one of these is true:</p>
 <ul>
-  <li><b>The instructions aren't in <code>AGENTS.md</code>.</b> It loads them for this session and suggests <code>/lean-and-mean</code> to make them permanent.</li>
-  <li><b>A cleanup is due:</b> the plugin was updated, the file passed 250 lines, the last <code>/endsession</code> flagged a review, or <code>CLAUDE.md</code> holds more than the stub (the cleanup moves it into <code>AGENTS.md</code>). The assistant runs the cleanup before your first task.</li>
-  <li><b>No advisor is set</b> (Claude Code only).</li>
+  <li><b>The block is not in <code>AGENTS.md</code>.</b> It prints the block for this session and suggests the create pass.</li>
+  <li><b>A review is due.</b> The block is out of date, the file is over 250 lines, <code>/endsession</code> left a review flag, or <code>CLAUDE.md</code> is not the <code>@AGENTS.md</code> stub. The assistant then runs the full pass before your first task.</li>
 </ul>
+<p><a href="guide.html#hook">Every hook condition</a>.</p>
 
-<h2 id="band">The session band mod</h2>
-<p>Claude Code only. A small plugin module that draws a row above the prompt:</p>
-<pre class="mock" aria-label="Session band example"><code>tasks 2/3   [ hide tasks ]  [ end session ]
-  ✓ Fix the login redirect
-  ✓ Add a test for it
-  ☐ Update the changelog</code></pre>
-<ul>
-  <li><b>Task checklist.</b> Haiku keeps it after each turn. The End session button runs <code>/lean-and-mean:endsession</code>.</li>
-  <li><b>Auto end.</b> With 5 minutes left on the 1-hour prompt cache, it runs <code>/endsession</code> itself, so the handoff is written before the cache goes cold. Off in <code>/config</code> → Session band. In the desktop app the band shows the countdown too.</li>
-</ul>
-<p><a href="guide.html#band">How the mod works</a>, including the optional status line with a cache countdown.</p>
-
-<h2>Extras</h2>
-<p>Each extra is covered in full in the <a href="guide.html">guide</a>.</p>
-<ul>
-  <li><b>dashboard-builder</b> (Claude Code). A subagent for any task over about five steps or 30 minutes; its description tells Claude to use it, and you can ask for it by name. It builds <code>.dashboard/index.html</code>, a self-refreshing page with tasks, open questions and deliverables. Claude updates it after every step. <a href="guide.html#dashboard">How the dashboard works</a>.</li>
-  <li><b>explainer</b> (Claude Code). A subagent that writes <code>.pages/&lt;slug&gt;.html</code>, a self-contained page with inline SVG diagrams, when an answer runs past a screen, compares options, or will be revisited. <a href="guide.html#explainer">How the explainer works</a>.</li>
-  <li><b>Status line</b> (Claude Code). <code>extras/statusline.sh</code> adds context use and a prompt-cache countdown to your status line; you copy it in yourself. <a href="guide.html#band">Setup</a>.</li>
-  <li><b>Advisor.</b> Claude Code can consult a stronger model before a plan, on a recurring error, and before declaring done. Enable once with <code>/advisor fable</code> or <code>/advisor opus</code>. Run the main session at high effort and routine subagent work on Sonnet at medium. <a href="guide.html#advisor">Advisor and effort settings</a>.</li>
-  <li><b>typesafe-ai.</b> TypeSafe AI's skill for building features on their Jev model, which turns text and app state into typed yes/no and pick-one answers. Routed through OpenRouter with <code>OPENROUTER_JEV_API_KEY</code>. Disabled for now: the assistant won't load it on its own. <a href="guide.html#typesafe">What Jev is for</a>.</li>
-</ul>
+<h2 id="extras">Extras</h2>
+<p>Optional parts, each covered in the <a href="guide.html">guide</a>.</p>
+<div class="grid">
+  <div class="card"><h3><a href="guide.html#band">Session band</a></h3><p>A row above the Claude Code prompt: task checklist, End session button, auto <code>/endsession</code> at 5 minutes cache left, desktop countdown, cold-cache question.</p></div>
+  <div class="card"><h3><a href="guide.html#statusline">Status line</a></h3><p><code>extras/statusline.sh</code> shows context use and a prompt-cache countdown in your terminal; you copy it in.</p></div>
+  <div class="card"><h3><a href="guide.html#advisor">Advisor and effort</a></h3><p>Settings that add a stronger reviewer model and set effort per session and subagent.</p></div>
+  <div class="card"><h3><a href="guide.html#dashboard">dashboard-builder</a></h3><p>A subagent that keeps a self-refreshing progress page for long tasks.</p></div>
+  <div class="card"><h3><a href="guide.html#explainer">explainer</a></h3><p>A subagent that writes a local page with diagrams when an answer is too long for the terminal.</p></div>
+  <div class="card"><h3><a href="guide.html#typesafe">typesafe-ai</a></h3><p>TypeSafe AI's skill for their Jev model, routed through OpenRouter; disabled for now.</p></div>
+</div>
 
 <h2>Why it pays off</h2>
 <div class="stats">
@@ -111,26 +140,26 @@
 <h3>Claude Code</h3>
 <pre><code>claude plugin marketplace add spinlockdevelopment/lean-and-mean
 claude plugin install lean-and-mean@lean-and-mean</code></pre>
-<p>Restart Claude Code and run <code>/lean-and-mean:lean-and-mean</code> once in each project to write <code>AGENTS.md</code> and the <code>CLAUDE.md</code> stub. Until then the hook loads the instructions each session and reminds you.</p>
+<p>Restart Claude Code. Then run <code>/lean-and-mean:lean-and-mean</code> once in each project. It writes <code>AGENTS.md</code> and the <code>CLAUDE.md</code> stub. Until then, the hook loads the block each session and reminds you.</p>
 <h3>Codex</h3>
 <pre><code>codex plugin marketplace add spinlockdevelopment/lean-and-mean
 codex plugin add lean-and-mean@lean-and-mean</code></pre>
-<p>Start a new session at the project root, trust the SessionStart hook when prompted, and run <code>$lean-and-mean</code> once.</p>
+<p>Start a new session at the project root. Trust the SessionStart hook when prompted. Then run <code>$lean-and-mean</code> once.</p>
 <p>No plugin support, or want bare command names? See <a href="guide.html#manual">manual install</a>.</p>
 
 <h3>Turning it off</h3>
-<p>Disable the plugin <b>and</b> delete the <code>## Operating Mode</code> section from <code>AGENTS.md</code>. The instructions live in the file, so disabling alone isn't enough.</p>
+<p>Disable the plugin <b>and</b> delete the <code>## Operating Mode</code> section from <code>AGENTS.md</code>. The block lives in the file, so disabling alone is not enough.</p>
 
 <h2>Raw instructions</h2>
 <p>The plugin is plain text the model follows:</p>
 <ul>
   <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/lean-and-mean/operating-mode.md">operating-mode.md</a> — the block written into <code>AGENTS.md</code></li>
-  <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/lean-and-mean/SKILL.md">lean-and-mean/SKILL.md</a> — setup, cleanup and file structure</li>
+  <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/lean-and-mean/SKILL.md">lean-and-mean/SKILL.md</a> — setup, review and file structure</li>
   <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/endsession/SKILL.md">endsession/SKILL.md</a> — the session handoff</li>
 </ul>
-<p class="note">Also bundles <code>typesafe-ai</code>, TypeSafe AI's skill for the Jev model, routed through OpenRouter. Copyright and credit: <a href="https://github.com/typesafe-ai/skills">TypeSafe AI</a> (MIT). lean-and-mean is MIT licensed.</p>
+<p class="note">The bundled <code>typesafe-ai</code> skill is TypeSafe AI's work. Copyright and credit: <a href="https://github.com/typesafe-ai/skills">TypeSafe AI</a> (MIT). lean-and-mean is MIT licensed.</p>
 
-<footer>Spinlock Development</footer>
+<footer><a href="guide.html">Guide and extras →</a> · Spinlock Development</footer>
 
 </main>
 <script>

@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { Register } from 'claude-code'
 
 import type { Task } from '../types'
-import { JUDGE_SYSTEM, allDone, autoEndDue, cacheLabel, judgePrompt, parseTasks } from './judge'
+import { JUDGE_SYSTEM, allDone, autoEndDue, cacheCold, cacheLabel, judgePrompt, parseTasks } from './judge'
 
 const cacheAt = atom({ plugin: 'lean-and-mean', key: 'cacheAt' } as const, null)
 const tasks = atom({ plugin: 'lean-and-mean', key: 'tasks' } as const, [] as Task[])
@@ -61,6 +61,33 @@ export const register: Register = (on, options) => {
 
   on('prompt.submit', async ($, e, next) => {
     if (e.origin.kind === 'plugin' || e.text.trimStart().startsWith('/')) return next(e)
+    const at = await read($, cacheAt)
+    if (e.turnId === undefined && inTurn === null && at !== null && cacheCold(at, await $.clock.now())) {
+      // armed false = an endsession (auto, button or typed) ran after the last real prompt.
+      const ended = !(await read($, armed))
+      const command = await read($, endCommand)
+      let answer: string
+      try {
+        answer = await $.ui.ask(
+          ended
+            ? 'Prompt cache is cold; /endsession already wrapped up. Resend the full context to rehydrate it?'
+            : 'Prompt cache is cold and /endsession has not run. Resend the full context to rehydrate it?',
+          { header: 'Cold cache', options: ['Rehydrate', 'Clear first'] },
+        )
+      } catch {
+        // Dismissed, or nobody to ask (-p): send; a cache miss beats a lost prompt.
+        return next(e)
+      }
+      if (answer !== 'Clear first') return next(e)
+      // lean: the typed prompt is not kept; stash it and refill after /clear if retyping bites.
+      // Guarded: a rejected fill would skip this hook and send the prompt the user held back.
+      await $.prompt.fill({ text: ended ? '/clear' : `/${command}` }).catch(() => undefined)
+      return {
+        drop: ended
+          ? 'Not sent. /endsession saved Next in AGENTS.md. Run /clear, then resend your prompt.'
+          : `Not sent. Run /${command} to save Rules and Next (one cold resend), then /clear and resend your prompt.`,
+      }
+    }
     await update($, lastPrompt, () => e.text)
     await update($, armed, () => true)
     if (allDone(await read($, tasks)) && !(await read($, nudged))) {

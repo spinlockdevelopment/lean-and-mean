@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>lean-and-mean guide</title>
-<meta name="description" content="In-depth guide to lean-and-mean: /endsession, the session-start hook, the cost model, advisor and effort settings, the dashboard-builder and explainer agents, the session band and status line, the bundled typesafe-ai skill, and install details.">
+<meta name="description" content="lean-and-mean guide and extras: /endsession, the session-start hook, the cost model, the session band mod and its cold-cache question, the status line, advisor and effort settings, the dashboard-builder and explainer agents, the bundled typesafe-ai skill, and install details.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,11 +16,11 @@
 
 <header>
   <div class="eyebrow"><a href="./">lean-and-mean</a> · Guide</div>
-  <h1>In depth</h1>
-  <p class="lede">How the session handoff, the hook and the cost model work, and what the bundled extras do.</p>
+  <h1>Guide and extras</h1>
+  <p class="lede">How the session handoff, the hook and the cost model work. Then each optional extra: the session band, the status line, the advisor, two subagents and a bundled skill.</p>
 </header>
 
-<p>On this page: <a href="#endsession">/endsession</a> · <a href="#hook">The session-start hook</a> · <a href="#cost">Why sessions should be short</a> · <a href="#advisor">Advisor and effort</a> · <a href="#dashboard">dashboard-builder</a> · <a href="#explainer">explainer</a> · <a href="#band">Session band mod</a> · <a href="#typesafe">typesafe-ai</a> · <a href="#manual">Install details</a></p>
+<p>On this page: <a href="#endsession">/endsession</a> · <a href="#hook">The session-start hook</a> · <a href="#cost">Why sessions should be short</a> · Extras: <a href="#band">Session band mod</a> · <a href="#statusline">Status line</a> · <a href="#advisor">Advisor and effort</a> · <a href="#dashboard">dashboard-builder</a> · <a href="#explainer">explainer</a> · <a href="#typesafe">typesafe-ai</a> · <a href="#manual">Install details</a></p>
 
 <h2 id="endsession">/endsession</h2>
 <p>The last message of a session. It turns this session's mistakes and failed approaches into Rules, rewrites <code>## Next</code> and <code>## Todo</code>, flags a full review for the next session if the project's layout or commands changed, then commits and pushes, opening a PR when the branch is a feature branch or the default branch is protected. It never force-pushes. Then it prints a short summary of what was done, what was updated and what comes next. Then it stops.</p>
@@ -49,6 +49,46 @@
 
 <h2 id="cost">Why sessions should be short</h2>
 <p>Every tool call resends the whole context as cache reads, so cost scales with requests × context size. Mean cost per request by context size:</p>
+<figure class="fig">
+  <svg viewBox="0 0 620 245" role="img" aria-labelledby="cost-t cost-d">
+    <title id="cost-t">Mean cost per request by context size</title>
+    <desc id="cost-d">Bar chart. Under 50K: $0.07. 50 to 100K: $0.08. 100 to 200K: $0.12. 200 to 400K: $0.19. Over 400K: $0.33. The table below holds the same numbers.</desc>
+    <g class="ln" stroke-width="1">
+      <line x1="60" y1="158.6" x2="610" y2="158.6"/>
+      <line x1="60" y1="107.1" x2="610" y2="107.1"/>
+      <line x1="60" y1="55.7" x2="610" y2="55.7"/>
+    </g>
+    <line x1="60" y1="210" x2="610" y2="210" stroke="currentColor" stroke-width="1"/>
+    <g class="mut" font-size="12" text-anchor="end">
+      <text x="52" y="214">$0</text>
+      <text x="52" y="162.6">$0.10</text>
+      <text x="52" y="111.1">$0.20</text>
+      <text x="52" y="59.7">$0.30</text>
+    </g>
+    <g class="acc">
+      <path class="bar" d="M84 210V178Q84 174 88 174H144Q148 174 148 178V210Z"><title>Under 50K: $0.07 per request</title></path>
+      <path class="bar" d="M196 210V173Q196 169 200 169H256Q260 169 260 173V210Z"><title>50–100K: $0.08 per request</title></path>
+      <path class="bar" d="M308 210V152Q308 148 312 148H368Q372 148 372 152V210Z"><title>100–200K: $0.12 per request</title></path>
+      <path class="bar" d="M420 210V116Q420 112 424 112H480Q484 112 484 116V210Z"><title>200–400K: $0.19 per request</title></path>
+      <path class="bar" d="M532 210V44Q532 40 536 40H592Q596 40 596 44V210Z"><title>Over 400K: $0.33 per request</title></path>
+    </g>
+    <g fill="currentColor" font-size="13" font-weight="600" text-anchor="middle">
+      <text x="116" y="168">$0.07</text>
+      <text x="228" y="163">$0.08</text>
+      <text x="340" y="142">$0.12</text>
+      <text x="452" y="106">$0.19</text>
+      <text x="564" y="34">$0.33</text>
+    </g>
+    <g class="mut" font-size="12" text-anchor="middle">
+      <text x="116" y="230">Under 50K</text>
+      <text x="228" y="230">50–100K</text>
+      <text x="340" y="230">100–200K</text>
+      <text x="452" y="230">200–400K</text>
+      <text x="564" y="230">Over 400K</text>
+    </g>
+  </svg>
+  <figcaption>Cost per request rises with context size. Over 400K, one request costs four times one under 100K.</figcaption>
+</figure>
 <div class="table-wrap"><table>
   <thead><tr><th>Context</th><th class="num">Under 50K</th><th class="num">50–100K</th><th class="num">100–200K</th><th class="num">200–400K</th><th class="num">Over 400K</th></tr></thead>
   <tbody>
@@ -68,6 +108,116 @@
   </tbody>
 </table></div>
 <p class="note">Measured from the maintainer's session logs: 63 Claude Code sessions, 5,197 requests, 2026-09-03 to 2026-10-03, mostly Opus 5, Opus 5.5 and Fable 5.1, priced at the API list rates above. The code-cost example above is modeled. Most requests ran on Opus 5, whose cache reads cost $0.50; on Opus 5.5 at $0.20 the absolute figures are lower. Advisor calls may be undercounted. Not a subscription billing model or a Codex pricing claim; actual costs depend on host, model, caching and context policy.</p>
+
+<h2 id="band">Session band mod</h2>
+<p>The session band is a row above the Claude Code prompt. It is a mod: a plugin module of function hooks that runs inside the session. The code is <code>hooks/register.tsx</code>, with helpers in <code>hooks/judge.ts</code>. <code>hooks/hooks.json</code> lists it under <code>modules</code>. It is the only plugin code that runs on every turn.</p>
+<p>It is Claude Code only and on by default. Turn it off in <code>/config</code> under Session band. Codex ignores it. It writes nothing to your project; its state lives in Claude Code's plugin storage.</p>
+<pre class="mock" aria-label="Session band example"><code>exp. 42m  tasks 2/3   [ hide tasks ]  [ end session ]
+  ✓ Fix the login redirect
+  ✓ Add a test for it
+  ☐ Update the changelog</code></pre>
+<ul>
+  <li><b>Task checklist.</b> After each answered turn, Haiku updates the list. It adds the tasks you asked for and ticks the ones the reply shows finished. It runs at low effort with an 8-second cap. A malformed reply keeps the old list.</li>
+  <li><b>Hide tasks.</b> This button folds the list to its count, such as <code>tasks 2/3</code>.</li>
+  <li><b>End session button.</b> It runs <code>/lean-and-mean:endsession</code>. If the command cannot run, it fills the prompt box with it instead.</li>
+  <li><b>Nudge.</b> When every task is done, you get a toast and the End session button turns primary. Your next prompt then tells Claude to suggest <code>/endsession</code> first, once per finished list.</li>
+  <li><b>Reset.</b> <code>/clear</code> empties the checklist and the cache timer.</li>
+</ul>
+
+<h3>The cache clock</h3>
+<p>The prompt cache lasts one hour. Each main turn restarts that hour. The band tracks it and acts at two points:</p>
+<figure class="fig">
+  <svg viewBox="0 0 680 130" role="img" aria-labelledby="clock-t clock-d">
+    <title id="clock-t">The one-hour cache clock</title>
+    <desc id="clock-d">At 0 minutes the last turn ends. At 50 minutes the desktop countdown turns yellow. At 55 minutes the band runs /endsession auto. At 60 minutes the cache is cold.</desc>
+    <line class="ln" x1="40" y1="70" x2="523" y2="70" stroke-width="8"/>
+    <line class="acc-s" x1="523" y1="70" x2="620" y2="70" stroke-width="8"/>
+    <g stroke="currentColor" stroke-width="1.5">
+      <line x1="40" y1="58" x2="40" y2="82"/>
+      <line x1="523" y1="58" x2="523" y2="82"/>
+      <line x1="572" y1="58" x2="572" y2="82"/>
+      <line x1="620" y1="58" x2="620" y2="82"/>
+    </g>
+    <g fill="currentColor" font-size="13">
+      <text x="40" y="100" font-weight="600">0m</text>
+      <text x="40" y="116" class="mut" font-size="12">last turn ends</text>
+      <text x="523" y="32" font-weight="600" text-anchor="end">50m</text>
+      <text x="523" y="48" class="mut" font-size="12" text-anchor="end">countdown turns yellow</text>
+      <text x="572" y="100" font-weight="600" text-anchor="middle">55m</text>
+      <text x="572" y="116" class="mut" font-size="12" text-anchor="middle">auto /endsession</text>
+      <text x="620" y="32" font-weight="600" text-anchor="end">60m</text>
+      <text x="620" y="48" class="mut" font-size="12" text-anchor="end">cache cold</text>
+    </g>
+  </svg>
+  <figcaption>Five minutes before the cache goes cold, the band runs <code>/endsession</code> itself. Rules and Next are saved while the context is still cheap to read.</figcaption>
+</figure>
+<ul>
+  <li><b>Auto end.</b> At 55 minutes, the band runs <code>/lean-and-mean:endsession auto</code>. It commits and pushes, but <code>auto</code> means it never ships. It fires only if no turn is running and you sent a real prompt since the last <code>/endsession</code>. Any <code>/endsession</code>, typed, button or auto, disarms it until your next real prompt.</li>
+  <li><b>Countdown.</b> The desktop app has no status line, so the band shows the time left, such as <code>exp. 42m</code>. It turns yellow at 10 minutes left. A terminal does not show it in the band; use the <a href="#statusline">status line</a> there.</li>
+</ul>
+
+<h3>The cold-cache question</h3>
+<p>After the hour, the next request resends the whole context at full price. So the band asks before it sends a prompt into a cold cache:</p>
+<figure class="fig">
+  <svg viewBox="0 0 700 420" role="img" aria-labelledby="cold-t cold-d">
+    <title id="cold-t">What happens to a prompt sent into a cold cache</title>
+    <desc id="cold-d">You type a prompt that is not a slash command. If the cache is not over one hour old, or a turn is running, the prompt is sent. Otherwise a Cold cache question opens. Rehydrate or dismiss sends the prompt. Clear first holds it back. If an /endsession ran since your last prompt, the prompt box gets /clear. If not, the prompt box gets /lean-and-mean:endsession.</desc>
+    <defs><marker id="cold-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
+    <g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#cold-a)">
+      <line x1="190" y1="48" x2="237" y2="48"/>
+      <line x1="450" y1="48" x2="507" y2="48"/>
+      <line x1="345" y1="76" x2="345" y2="137"/>
+      <polyline points="450,168 595,168 595,79"/>
+      <line x1="345" y1="196" x2="345" y2="247"/>
+      <polyline points="345,306 345,326 155,326 155,347"/>
+      <polyline points="345,326 545,326 545,347"/>
+    </g>
+    <rect class="box" x="10" y="20" width="180" height="56" rx="8"/>
+    <rect class="box" x="240" y="20" width="210" height="56" rx="8"/>
+    <rect class="box" x="510" y="20" width="170" height="56" rx="8"/>
+    <rect class="key" x="240" y="140" width="210" height="56" rx="8"/>
+    <rect class="box" x="240" y="250" width="210" height="56" rx="8"/>
+    <rect class="box" x="40" y="350" width="230" height="56" rx="8"/>
+    <rect class="box" x="410" y="350" width="270" height="56" rx="8"/>
+    <g fill="currentColor" text-anchor="middle" font-size="14">
+      <text x="100" y="44" font-weight="600">You type a prompt</text>
+      <text x="100" y="62" class="mut" font-size="12">not a /command</text>
+      <text x="345" y="44" font-weight="600">Cache over 1h old</text>
+      <text x="345" y="62" font-weight="600">and no turn running?</text>
+      <text x="595" y="53" font-weight="600">Prompt is sent</text>
+      <text x="345" y="164" font-weight="600">Cold cache question</text>
+      <text x="345" y="182" class="mut" font-size="12">Rehydrate · Clear first</text>
+      <text x="345" y="274" font-weight="600">/endsession ran since</text>
+      <text x="345" y="292" font-weight="600">your last prompt?</text>
+      <text x="155" y="374" font-weight="600">Box gets /clear</text>
+      <text x="155" y="392" class="mut" font-size="12">Next is already saved</text>
+      <text x="545" y="374" font-weight="600">Box gets the end command</text>
+      <text x="545" y="392" class="mut" font-size="12">/lean-and-mean:endsession</text>
+    </g>
+    <g fill="currentColor" font-size="12">
+      <text x="479" y="40" text-anchor="middle">no</text>
+      <text x="353" y="112">yes</text>
+      <text x="460" y="160">Rehydrate or dismiss</text>
+      <text x="353" y="226">Clear first</text>
+      <text x="245" y="320" text-anchor="middle">yes</text>
+      <text x="450" y="320" text-anchor="middle">no</text>
+    </g>
+  </svg>
+  <figcaption>Rehydrate pays one full resend and keeps working. Clear first holds the prompt back and fills the next command for you.</figcaption>
+</figure>
+<ul>
+  <li><b>Rehydrate</b> sends the prompt. The whole context is resent once at full price.</li>
+  <li><b>Clear first</b> does not send the prompt. After any <code>/endsession</code>, auto, button or typed, it fills <code>/clear</code>: Next is already in <code>AGENTS.md</code>. Otherwise it fills <code>/lean-and-mean:endsession</code>, so Rules and Next are saved before you clear.</li>
+  <li><b>Your prompt is not kept</b> after Clear first. Retype it after <code>/clear</code>.</li>
+  <li><b>Dismissing</b> the question sends the prompt. A cache miss is better than a lost prompt.</li>
+</ul>
+
+<h2 id="statusline">Status line</h2>
+<p><code>extras/statusline.sh</code> is a status line for the terminal. It shows the folder, branch, model, context use, a prompt-cache countdown and the 5-hour limit. The countdown reads <code>prompt_cache.expires_at</code>, which needs Claude Code 2.1.251 or later. Under 10 minutes left, it turns yellow.</p>
+<pre class="mock" aria-label="Status line example"><code>my-app | main | (Opus 5.5) | ctx 34% exp. [███████░░░] 42m | 5h 18% · resets in 2h10m</code></pre>
+<p>Plugins cannot set the status line, so you copy it in. Copy the script out of the plugin cache to <code>~/.claude/statusline.sh</code>; the cache path changes per version. Then add this to <code>~/.claude/settings.json</code>:</p>
+<pre><code>"statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh", "refreshInterval": 60 }</code></pre>
+<p>The <code>refreshInterval</code> keeps the countdown moving while you are idle. The script needs <code>jq</code>. The desktop app draws no status line; the session band shows the countdown there.</p>
 
 <h2 id="advisor">Advisor and effort</h2>
 <p>Claude Code can pair the main model with an advisor: a stronger reviewer it consults before committing to a plan, when the same error keeps coming back, and before declaring a task done. Set it once:</p>
@@ -97,23 +247,6 @@
   <li><b>Style, asked once.</b> The same <code>STYLE?</code> round trip as dashboard-builder, saved in its own user memory; it reuses a style already given to dashboard-builder, so you answer once.</li>
   <li><b>Contained.</b> No network requests; it can read the project but writes only <code>.pages/</code>, which it gitignores. It states only facts it was given or read, with paths. It has no shell access.</li>
 </ul>
-
-<h2 id="band">Session band mod</h2>
-<p>A mod is a plugin module of function hooks that Claude Code loads and runs inside the session. This one is <code>hooks/register.tsx</code> (helpers in <code>hooks/judge.ts</code>), listed under <code>modules</code> in <code>hooks/hooks.json</code>. It is the only plugin code that runs on every turn. Claude Code only, on by default; turn it off in <code>/config</code> under Session band. Codex ignores it.</p>
-<pre class="mock" aria-label="Session band example"><code>exp. 42m  tasks 2/3   [ hide tasks ]  [ end session ]
-  ✓ Fix the login redirect
-  ✓ Add a test for it
-  ☐ Update the changelog</code></pre>
-<p>It hooks session start and end, prompt submit, turn start and completion, command runs, and the area above the prompt. Nothing is written to your project; its state lives in Claude Code's plugin storage.</p>
-<ul>
-  <li><b>Auto end.</b> The band tracks the 1-hour prompt cache, restarted by every main-loop request. With 5 minutes left after you have worked since the last <code>/endsession</code>, it runs <code>/endsession</code> itself (commit and push included) so Rules and Next are written before the cache goes cold and the next turn re-reads the whole context at full price. In the desktop app, which has no status line, the band also shows the countdown as <code>exp. 42m</code>, yellow under 10 minutes; in a terminal that lives in the status line extra below.</li>
-  <li><b>Task checklist.</b> After each answered turn, Haiku (low effort, 8-second cap) adds the tasks you asked for and ticks the ones the reply shows finished. A malformed reply keeps the old list. The hide tasks button folds the list to its <code>tasks 2/3</code> count.</li>
-  <li><b>End session button.</b> Runs <code>/lean-and-mean:endsession</code>. If the command can't run, it fills the prompt with it instead.</li>
-  <li><b>Reset.</b> <code>/clear</code> empties the checklist and the cache timer. Auto end fires once per stretch of work: running <code>/endsession</code>, by hand or automatically, disarms it until your next real prompt.</li>
-  <li><b>Nudge.</b> When every task is done you get a toast, the End session button turns primary, and your next prompt tells Claude to suggest <code>/endsession</code> before new work, once per finished list.</li>
-</ul>
-
-<p><b>Status line extra.</b> <code>extras/statusline.sh</code> draws dir, branch, model, a <code>ctx … exp.</code> segment from <code>prompt_cache.expires_at</code>, and the 5-hour limit. <code>prompt_cache.expires_at</code> needs Claude Code 2.1.251+. Plugins can't set <code>statusLine</code>, and the desktop app draws no status line at all (the band carries the countdown there): copy the script out of the plugin cache (its path changes per version) to <code>~/.claude/statusline.sh</code> and add <code>"statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh", "refreshInterval": 60 }</code> to <code>~/.claude/settings.json</code>. Needs <code>jq</code>.</p>
 
 <h2 id="typesafe">typesafe-ai</h2>
 <p>A bundled copy of <a href="https://github.com/typesafe-ai/skills">TypeSafe AI's skill</a> for building app features on Jev, their System One model. Jev doesn't generate text: it takes natural language plus application state and returns typed answers and probabilities, such as yes/no or pick-one, that ordinary code can combine. It fits routing, ranking, extraction, verification, or anywhere a prompt-and-parse step could become a structured decision.</p>

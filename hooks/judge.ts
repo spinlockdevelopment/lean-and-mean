@@ -54,3 +54,6 @@ export function cacheLabel(cacheAt: number | null, now: number): { text: string;
   const left = Math.max(0, cacheAt + CACHE_TTL_MS - now)
   return { text: left === 0 ? 'exp. cold' : `exp. ${Math.ceil(left / 60_000)}m`, warn: left <= 10 * 60_000 }
 }
+
+/** True once the 1h prompt cache has expired: the next request resends the whole context uncached. */
+export const cacheCold = (cacheAt: number | null, now: number) => cacheAt !== null && now >= cacheAt + CACHE_TTL_MS

@@ -57,4 +57,14 @@ pre code { background: none; padding: 0; }
 .note { color: var(--muted); font-size: 14px; border-left: 3px solid var(--line); padding-left: 12px; }
 ul, ol { padding-left: 22px; } li { margin: 4px 0; }
 footer { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+figure.fig { margin: 24px 0; overflow-x: auto; }
+.fig svg { display: block; width: 100%; min-width: 520px; height: auto; color: var(--fg); font: 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+.fig figcaption { color: var(--muted); font-size: 14px; margin-top: 8px; }
+.fig .box { fill: var(--card); stroke: var(--line); stroke-width: 1.5; }
+.fig .key { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+.fig .acc { fill: var(--accent); }
+.fig .acc-s { stroke: var(--accent); }
+.fig .ln { stroke: var(--line); }
+.fig .mut { fill: var(--muted); }
+.fig .bar:hover { opacity: .8; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
