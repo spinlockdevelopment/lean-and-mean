@@ -3,8 +3,7 @@
 # from AGENTS.md: print it plus a nudge. Block stale, over the 250-line cap,
 # review flag set by /endsession, or (Claude) CLAUDE.md not the `@AGENTS.md`
 # stub: tell the model to run the full pass on this fresh context.
-# Codex sets PLUGIN_ROOT (and the Claude compatibility alias); Claude only
-# sets CLAUDE_PLUGIN_ROOT. Codex runs hooks in the session working directory.
+# Codex sets PLUGIN_ROOT and runs hooks in the session working directory.
 if [ -n "${PLUGIN_ROOT:-}" ]; then
   project=$(git rev-parse --show-toplevel 2>/dev/null) || project=$PWD
   invoke='$lean-and-mean'
@@ -28,7 +27,8 @@ n=$(($(wc -l < "$md"))); [ "$n" -gt 250 ] && why="$why $n lines, over the 250 ca
 grep -qxF '<!-- lean-and-mean: review -->' "$md" && why="$why /endsession flagged a review;"
 [ -n "${PLUGIN_ROOT:-}" ] || [ "$(cat "$project/CLAUDE.md" 2>/dev/null)" = '@AGENTS.md' ] || why="$why CLAUDE.md is not the @AGENTS.md stub;"
 [ -n "$why" ] && printf 'lean-and-mean: %s needs the full pass —%s Run the lean-and-mean skill (%s) before the user task, then continue with it.\n' "$md" "$why" "$invoke"
-# Claude only, silent once advisorModel is set anywhere or the tool is disabled.
-[ -z "${PLUGIN_ROOT:-}${CLAUDE_CODE_DISABLE_ADVISOR_TOOL:-}" ] && ! grep -qs '"advisorModel"' "$HOME/.claude/settings.json" "$project/.claude/settings.json" "$project/.claude/settings.local.json" &&
-  echo 'lean-and-mean: no advisor set. Tell the user once, in one line: /advisor fable (or opus) adds a reviewer before plans, on repeat errors and before done; each call re-reads the transcript uncached, so /endsession at task boundaries keeps it cheap.'
+# Claude only: suggest the extras status line until ~/.claude/statusline.sh has its version line.
+sl="$(cd "$(dirname "$0")/.." && pwd)/extras/statusline.sh"
+[ -n "${PLUGIN_ROOT:-}" ] || [ ! -f "$sl" ] || grep -qxF "$(sed -n 2p "$sl")" "$HOME/.claude/statusline.sh" 2>/dev/null ||
+  printf 'lean-and-mean: ~/.claude/statusline.sh is missing or not the current extras version. Tell the user once, in one line, to install it: cp "%s" ~/.claude/statusline.sh && chmod +x ~/.claude/statusline.sh, plus "statusLine": {"type": "command", "command": "~/.claude/statusline.sh"} in ~/.claude/settings.json.\n' "$sl"
 exit 0

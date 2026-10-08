@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>lean-and-mean guide</title>
-<meta name="description" content="lean-and-mean guide and extras: /endsession, the session-start hook, the cost model, the session band mod and its cold-cache question, the status line, advisor and effort settings, the dashboard-builder and explainer agents, the bundled typesafe-ai skill, and install details.">
+<meta name="description" content="lean-and-mean guide: /endsession, the session-start hook, the cost model, the session band mod and its cold-cache question, the explainer agent, and install details.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -16,18 +16,18 @@
 
 <header>
   <div class="eyebrow"><a href="./">lean-and-mean</a> · Guide</div>
-  <h1>Guide and extras</h1>
-  <p class="lede">How the session handoff, the hook and the cost model work. Then each optional extra: the session band, the status line, the advisor, two subagents and a bundled skill.</p>
+  <h1>Guide</h1>
+  <p class="lede">How the session handoff, the hook and the cost model work. Then the session band and the explainer agent. Utilities are on the <a href="extras.html">extras page</a>.</p>
 </header>
 
-<p>On this page: <a href="#endsession">/endsession</a> · <a href="#hook">The session-start hook</a> · <a href="#cost">Why sessions should be short</a> · Extras: <a href="#band">Session band mod</a> · <a href="#statusline">Status line</a> · <a href="#advisor">Advisor and effort</a> · <a href="#dashboard">dashboard-builder</a> · <a href="#explainer">explainer</a> · <a href="#typesafe">typesafe-ai</a> · <a href="#manual">Install details</a></p>
+<p>On this page: <a href="#endsession">/endsession</a> · <a href="#hook">The session-start hook</a> · <a href="#cost">Why sessions should be short</a> · <a href="#band">Session band mod</a> · <a href="#explainer">explainer</a> · <a href="#manual">Install details</a> · <a href="extras.html">Extras</a></p>
 
 <h2 id="endsession">/endsession</h2>
-<p>The last message of a session. It turns this session's mistakes and failed approaches into Rules, rewrites <code>## Next</code> and <code>## Todo</code>, flags a full review for the next session if the project's layout or commands changed, then commits and pushes, opening a PR when the branch is a feature branch or the default branch is protected. It never force-pushes. Then it prints a short summary of what was done, what was updated and what comes next. Then it stops.</p>
+<p>The last message of a session. It turns this session's mistakes and failed approaches into Rules, rewrites <code>## Next</code> and its backlog, flags a full review for the next session if the project's layout or commands changed, then commits and pushes, opening a PR when the branch is a feature branch or the default branch is protected. It never force-pushes. Then it prints a short summary of what was done, what was updated and what comes next. Then it stops.</p>
 <ul>
   <li><b>Hard stop.</b> Anything you pass that looks like a task is written under <code>## Next</code>, not done. The model never invokes it on its own.</li>
-  <li><b>One question round.</b> It asks once, up front, about at most three deletes that would remove a Rule or P1 Todo it can't judge. Clearly stale entries are dropped without asking. It never asks whether to commit or push: running it is the yes.</li>
-  <li><b>One memory.</b> In Claude Code, project <code>feedback</code> and <code>project</code> entries from built-in auto memory are moved into Rules, Next or Todo, then deleted, so the committed <code>AGENTS.md</code> is the single place lessons live. <code>user</code> and <code>reference</code> memories are left alone.</li>
+  <li><b>One question round.</b> It asks once, up front, about at most three deletes that would remove a Rule or P1 Next item it can't judge. Clearly stale entries are dropped without asking. It never asks whether to commit or push: running it is the yes.</li>
+  <li><b>One memory.</b> In Claude Code, project <code>feedback</code> and <code>project</code> entries from built-in auto memory are moved into Rules or Next, then deleted, so the committed <code>AGENTS.md</code> is the single place lessons live. <code>user</code> and <code>reference</code> memories are left alone.</li>
   <li><b>Light on purpose.</b> Context is largest at the end of a session, so the full <code>AGENTS.md</code> review waits for the next session's fresh, cheap context. <code>/endsession</code> only leaves a <code>&lt;!-- lean-and-mean: review --&gt;</code> flag.</li>
   <li><b>Definition of done.</b> <code>AGENTS.md</code> has a <code>## Done</code> section listing what finished means for this project, with exact commands: say, merge the PR with <code>gh pr merge --squash --delete-branch</code>, then <code>make deploy-staging</code>. It defaults to committed and pushed. When the session's work is complete (what you asked is finished, the project's tests pass, no open question), <code>/endsession</code> runs those steps in order after pushing, then deletes local branches already merged into the default branch with <code>git branch -d</code>. Otherwise, or when a step fails, <code>## Next</code> opens with <code>Not done: &lt;what remains&gt; — &lt;why&gt;</code>, so the next session picks it up. It only runs commands written in <code>## Done</code> or <code>## Commands</code>, never a deploy it guessed. The session band's timed auto end never ships.</li>
   <li><b>Safe push.</b> Files that look like secrets (<code>.env</code>, keys, credentials) are never staged; they are named in the summary. A push behind the remote stops without rebasing. Any other push failure gets one attempt, then <code>Unpushed: &lt;branch&gt; — &lt;reason&gt;</code> becomes the first line of <code>## Next</code>.</li>
@@ -42,8 +42,7 @@
   <tr><td><code>AGENTS.md</code> over 250 lines</td></tr>
   <tr><td><code>/endsession</code> left the review flag</td></tr>
   <tr><td>Claude Code: <code>CLAUDE.md</code> is anything but <code>@AGENTS.md</code></td></tr>
-  <tr><td>Claude Code: no <code>advisorModel</code> in any settings file</td><td>A one-line suggestion to set <a href="#advisor">an advisor</a></td></tr>
-  <tr><td>Anything else</td><td>Nothing</td></tr>
+    <tr><td>Anything else</td><td>Nothing</td></tr>
 </table></div>
 <p>The <code>CLAUDE.md</code> check is also the upgrade path: a 3.x project kept its block in <code>CLAUDE.md</code>, so the pass merges that file into <code>AGENTS.md</code> and writes the one-line stub. Anything added to <code>CLAUDE.md</code> later moves over the same way. A <code>CLAUDE.local.md</code> keeps working alongside the stub.</p>
 
@@ -112,7 +111,8 @@
 <h2 id="band">Session band mod</h2>
 <p>The session band is a row above the Claude Code prompt. It is a mod: a plugin module of function hooks that runs inside the session. The code is <code>hooks/register.tsx</code>, with helpers in <code>hooks/judge.ts</code>. <code>hooks/hooks.json</code> lists it under <code>modules</code>. It is the only plugin code that runs on every turn.</p>
 <p>It is Claude Code only and on by default. Turn it off in <code>/config</code> under Session band. Codex ignores it. It writes nothing to your project; its state lives in Claude Code's plugin storage.</p>
-<pre class="mock" aria-label="Session band example"><code>exp. 42m  tasks 2/3   [ hide tasks ]  [ end session ]
+<pre class="mock" aria-label="Session band example"><code>exp. 42m
+tasks 2/3   [ hide tasks ]  [ end session ]
   ✓ Fix the login redirect
   ✓ Add a test for it
   ☐ Update the changelog</code></pre>
@@ -142,7 +142,7 @@
       <text x="40" y="100" font-weight="600">0m</text>
       <text x="40" y="116" class="mut" font-size="12">last turn ends</text>
       <text x="523" y="32" font-weight="600" text-anchor="end">50m</text>
-      <text x="523" y="48" class="mut" font-size="12" text-anchor="end">countdown turns yellow</text>
+      <text x="523" y="48" class="mut" font-size="12" text-anchor="end">countdown turns red</text>
       <text x="572" y="100" font-weight="600" text-anchor="middle">55m</text>
       <text x="572" y="116" class="mut" font-size="12" text-anchor="middle">auto /endsession</text>
       <text x="620" y="32" font-weight="600" text-anchor="end">60m</text>
@@ -153,7 +153,7 @@
 </figure>
 <ul>
   <li><b>Auto end.</b> At 55 minutes, the band runs <code>/lean-and-mean:endsession auto</code>. It commits and pushes, but <code>auto</code> means it never ships. It fires only if no turn is running and you sent a real prompt since the last <code>/endsession</code>. Any <code>/endsession</code>, typed, button or auto, disarms it until your next real prompt.</li>
-  <li><b>Countdown.</b> The desktop app has no status line, so the band shows the time left, such as <code>exp. 42m</code>. It turns yellow at 10 minutes left. A terminal does not show it in the band; use the <a href="#statusline">status line</a> there.</li>
+  <li><b>Countdown.</b> The top line of the band shows the time left, such as <code>exp. 42m</code>, in the terminal and the desktop app. It is green above 30 minutes, yellow above 15, orange above 10, and red after that.</li>
 </ul>
 
 <h3>The cold-cache question</h3>
@@ -212,49 +212,14 @@
   <li><b>Dismissing</b> the question sends the prompt. A cache miss is better than a lost prompt.</li>
 </ul>
 
-<h2 id="statusline">Status line</h2>
-<p><code>extras/statusline.sh</code> is a status line for the terminal. It shows the folder, branch, model, context use, a prompt-cache countdown and the 5-hour limit. The countdown reads <code>prompt_cache.expires_at</code>, which needs Claude Code 2.1.251 or later. Under 10 minutes left, it turns yellow.</p>
-<pre class="mock" aria-label="Status line example"><code>my-app | main | (Opus 5.5) | ctx 34% exp. [███████░░░] 42m | 5h 18% · resets in 2h10m</code></pre>
-<p>Plugins cannot set the status line, so you copy it in. Copy the script out of the plugin cache to <code>~/.claude/statusline.sh</code>; the cache path changes per version. Then add this to <code>~/.claude/settings.json</code>:</p>
-<pre><code>"statusLine": { "type": "command", "command": "bash ~/.claude/statusline.sh", "refreshInterval": 60 }</code></pre>
-<p>The <code>refreshInterval</code> keeps the countdown moving while you are idle. The script needs <code>jq</code>. The desktop app draws no status line; the session band shows the countdown there.</p>
-
-<h2 id="advisor">Advisor and effort</h2>
-<p>Claude Code can pair the main model with an advisor: a stronger reviewer it consults before committing to a plan, when the same error keeps coming back, and before declaring a task done. Set it once:</p>
-<pre><code>/advisor fable</code></pre>
-<p>(or <code>opus</code>; an Opus 5.5 main model accepts only those two). Each advisor call re-reads the full transcript uncached, and subagents inherit it, so its cost grows with session length. That is another reason to <code>/endsession</code> at task boundaries.</p>
-<ul>
-  <li><b>Main session on high effort:</b> <code>"effortLevel": "high"</code> in <code>~/.claude/settings.json</code>.</li>
-  <li><b>Routine subagent work on Sonnet at medium effort:</b> <code>model: sonnet</code>, <code>effort: medium</code>. <code>CLAUDE_CODE_EFFORT_LEVEL</code> overrides subagent effort.</li>
-  <li><b>Turning the advisor off:</b> <code>CLAUDE_CODE_DISABLE_ADVISOR_TOOL</code> or <code>DISABLE_TELEMETRY</code>. Only <code>CLAUDE_CODE_DISABLE_ADVISOR_TOOL</code> also silences the hook's suggestion.</li>
-</ul>
-
-<h2 id="dashboard">dashboard-builder</h2>
-<p>A subagent, Claude Code only, that builds <code>.dashboard/index.html</code>: one self-contained page you open by double-click to follow a long task without reading the transcript. Its description tells Claude to use it before any task over about five steps or 30 minutes; if Claude doesn't, call it with <code>@agent-lean-and-mean:dashboard-builder</code>.</p>
-<ul>
-  <li><b>Style, asked once.</b> On first use the agent replies <code>STYLE?</code>; Claude asks you for dark or light, dense or airy, and one accent colour. The agent saves the answer in its user memory and reuses it in every project.</li>
-  <li><b>Panels fit the task.</b> Tasks with text status (todo, doing, done, blocked), open questions, deliverables with paths, and anything stuck. Questions and stuck items go on top when present; empty panels are dropped; the plan can imply extra ones.</li>
-  <li><b>Claude keeps it current.</b> After every step Claude edits the page's <code>dashboard-data</code> JSON block, never the markup. A decision it needs from you goes into questions with its default, and it carries on with that default rather than waiting.</li>
-  <li><b>Honest times.</b> The page refreshes every 10 seconds, shows each time with its age ("4 min ago"), and marks itself stale when nothing has updated for 10 minutes. Timestamps come from the shell clock, never invented.</li>
-  <li><b>Contained.</b> No network requests. It writes <code>.dashboard/.gitignore</code> so the page is never committed, and the agent reads and writes nothing outside <code>.dashboard/</code> and its memory. It has no shell access.</li>
-</ul>
-
 <h2 id="explainer">explainer</h2>
 <p>A subagent, Claude Code only, that writes <code>.pages/&lt;slug&gt;.html</code>: one self-contained page for an answer too long or too structural for the terminal. The Operating Mode block tells Claude to explain in the cheapest form that works: a sentence, then a diagram, then a page. Call it directly with <code>@agent-lean-and-mean:explainer</code>.</p>
 <ul>
-  <li><b>Answer first.</b> A short summary on top, then sections. Prose follows about 80% of ASD-STE100: one idea per sentence, 20 words at most, active voice, one term per thing.</li>
+  <li><b>Answer first.</b> A short summary on top, then sections, in concise, active sentences that broadly follow ASD-STE100.</li>
   <li><b>Diagrams replace paragraphs.</b> Flows, structures and comparisons are inline SVG with a text label. Tables carry options and trade-offs.</li>
-  <li><b>Style, asked once.</b> The same <code>STYLE?</code> round trip as dashboard-builder, saved in its own user memory; it reuses a style already given to dashboard-builder, so you answer once.</li>
+  <li><b>Style, asked once.</b> On first use the agent replies <code>STYLE?</code>; Claude asks you for dark or light, dense or airy, and one accent colour. The agent saves it in its user memory.</li>
   <li><b>Contained.</b> No network requests; it can read the project but writes only <code>.pages/</code>, which it gitignores. It states only facts it was given or read, with paths. It has no shell access.</li>
 </ul>
-
-<h2 id="typesafe">typesafe-ai</h2>
-<p>A bundled copy of <a href="https://github.com/typesafe-ai/skills">TypeSafe AI's skill</a> for building app features on Jev, their System One model. Jev doesn't generate text: it takes natural language plus application state and returns typed answers and probabilities, such as yes/no or pick-one, that ordinary code can combine. It fits routing, ranking, extraction, verification, or anywhere a prompt-and-parse step could become a structured decision.</p>
-<p>The skill reads TypeSafe's live docs and cookbooks as part of each task. The only change from the original is the endpoint: Jev is called through OpenRouter.</p>
-<pre><code>export OPENROUTER_JEV_API_KEY=...</code></pre>
-<p>Calls go to <code>POST https://openrouter.ai/api/alpha/decisions</code> with model <code>~typesafe/jev-latest</code>; request and response match TypeSafe's API.</p>
-<p>Without that key, Jev isn't used; there is no fallback to TypeSafe's own endpoint or <code>TYPESAFE_API_KEY</code>.</p>
-<p class="note">Disabled for now: the skill is out of the Operating Mode block and the assistant won't load it on its own. Copyright and credit belong to TypeSafe AI (MIT).</p>
 
 <h2 id="manual">Install details</h2>
 <p><b>Claude Code.</b> In the app, <code>/plugin marketplace add spinlockdevelopment/lean-and-mean</code> then <code>/plugin install lean-and-mean@lean-and-mean</code> does the same as the shell commands. Restart afterwards: the hook loads only at session start.</p>

@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# lean-and-mean statusline 1
+# Status line: dir | branch | (model) | ctx % | 5h usage. Needs jq. Install:
+#   cp statusline.sh ~/.claude/statusline.sh && chmod +x ~/.claude/statusline.sh
+#   ~/.claude/settings.json: "statusLine": {"type": "command", "command": "~/.claude/statusline.sh"}
 input=$(cat)
 
 # Colors (real ESC bytes, not literal backslashes, so plain %s printf works)
@@ -41,25 +45,6 @@ ctx_seg=""
 used=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
 if [ -n "$used" ]; then
   ctx_seg="ctx $(pct_color "$used")$(printf '%.0f' "$used")%${RESET}"
-fi
-
-# Prompt-cache expiry: "exp. [██████░░░░] 22m". Needs refreshInterval to tick while idle.
-expires=$(echo "$input" | jq -r '.prompt_cache.expires_at // empty')
-ttl=$(echo "$input" | jq -r '.prompt_cache.ttl // "1h"')
-if [ -n "$ctx_seg" ] && [ -n "$expires" ]; then
-  [ "$ttl" = "5m" ] && ttl_s=300 || ttl_s=3600
-  left=$(( expires - $(date +%s) ))
-  [ "$left" -lt 0 ] && left=0
-  [ "$left" -gt "$ttl_s" ] && left=$ttl_s
-  cells=$(( (left * 10 + ttl_s - 1) / ttl_s ))
-  bar=""; i=0
-  while [ "$i" -lt 10 ]; do
-    [ "$i" -lt "$cells" ] && bar="${bar}█" || bar="${bar}░"
-    i=$((i + 1))
-  done
-  if [ "$left" -eq 0 ]; then when="cold"; else when="$(( (left + 59) / 60 ))m"; fi
-  exp_color="$DIM"; [ "$left" -le 600 ] && exp_color="$YELLOW"
-  ctx_seg="${ctx_seg} ${exp_color}exp. [${bar}] ${when}${RESET}"
 fi
 
 usage_seg=""

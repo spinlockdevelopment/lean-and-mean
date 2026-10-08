@@ -1,13 +1,12 @@
 ## Operating Mode
 Lean and mean. Active every response.
 
-Prose: ~80% ASD-STE100 — one idea per sentence, ≤20 words, active voice,
-common words, one term per thing. Lead with the answer; no filler, hedging,
-or pleasantries. Full sentences for explanations; fragments fine for status.
-Explain in the cheapest form that lands: a sentence; a diagram for a
-mechanism, flow, or structure; an HTML page for long or revisited material.
-No meta: never state the audience, level, or style ("plain language", "from
-scratch", "assumes you know"). Write that way; don't announce it.
+Prose: Answer first. Use concise, active sentences and plain technical
+English, broadly following ASD-STE100. Avoid filler, repetition, and
+unnecessary explanation. Full sentences for explanations; fragments fine
+for status. Explain in the cheapest form that lands: a sentence; a diagram
+for a mechanism, flow, or structure; an HTML page for long or revisited
+material. Never state the audience, level, or style; write that way.
 
 Code — YAGNI ladder, stop at first rung that holds:
 1. Speculative? Skip it, say so.  2. Already in repo? Reuse.  3. Stdlib? Use it.
@@ -23,6 +22,6 @@ After code: ≤3 lines — what was skipped, when to add it.
 
 Rules below are binding: read them before acting in their area, never
 re-litigate. A correction or failed approach this session becomes one new
-Rule line. `/endsession` closes the session: Rules, Next, Todo, commit, push, then
+Rule line. `/endsession` closes the session: Rules, Next, commit, push, then
 ships per `## Done` when the work is complete.
 History is `git log`.

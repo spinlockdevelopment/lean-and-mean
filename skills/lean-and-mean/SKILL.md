@@ -26,13 +26,14 @@ outside Git), on both hosts. Beside it, `CLAUDE.md` contains exactly
 version, even with a `CLAUDE.local.md` present. Overflow goes to
 `agents-<category>.md`. `AGENTS.override.md` is unsupported (Codex reads it
 instead of `AGENTS.md`). Respect nested instruction files; do not flatten or
-rewrite them. Below, "context file" means root `AGENTS.md`.
+rewrite them. A sub-project's own `AGENTS.md` uses the same structure, scoped
+to it; Notes & Pointers links to it. Below, "context file" means root `AGENTS.md`.
 
 Claude invokes these skills with `/lean-and-mean` and `/endsession`; Codex
 uses `$lean-and-mean` and `$endsession` (select the installed skill if the UI
 shows a qualified name). Slash commands below describe the same workflow
 on either host. In Codex, treat text following the skill invocation as its
-arguments; `$ARGUMENTS` is Claude's notation, not a required environment variable.
+arguments.
 
 ## `/lean-and-mean` — set up or review context file
 
@@ -46,24 +47,26 @@ then without asking, report the one line, and carry on with the user's request.
    (create it if absent), rename `claude-<category>.md` to
    `agents-<category>.md` and fix pointers, then write the stub. No context
    file → create from the structure below. Fill Project & Stack, Commands,
-   Architecture & Layout from the repo. Done gets the default line plus Todo
+   Architecture & Layout from the repo. Done gets the default line plus a Next item
    `P3 — confirm: define ## Done`; never infer a deploy step. Leave Rules empty, except: over ~500
    source files with `graphify` installed → one Rule to prefer `graphify query`
    over cross-module grep. Either way, write the stub.
 2. Paste `operating-mode.md` verbatim under `## Operating Mode`; replace any
    older version.
 3. Reorder to the structure below; merge stray headings into nearest section.
+   Older layouts: `## Todo` items join the Next backlog, sorted P1 → P3;
+   `## Conventions` becomes the last part of Project & Stack.
 4. Verify Architecture & Layout against the tree: add modules, drop dead
    paths, fix wrong purposes. Verify Commands run, and that every command
    `## Done` names exists in Commands or the repo.
 5. Prune — cut, never rewrite longer: restates the code; stale paths or
    commands (verify first); narrative history → delete, `git log` has it;
-   legacy SUMMARY.md (old `/endsession`) → delete it and its pointer; `[x]` Todo →
+   legacy SUMMARY.md (old `/endsession`) → delete it and its pointer; finished Next items →
    delete; Rules the tooling now enforces (lint, type, test) → delete.
 6. Next must name the real next action. Empty Next on a live project is a defect.
 7. Over 250 lines → move largest non-core sections to `agents-<category>.md`
    (H1 + one-line purpose at top), leave a pointer in Notes & Pointers.
-   Operating Mode, Commands, Done, Rules, Next, Todo never move.
+   Operating Mode, Commands, Done, Rules, Next never move.
 8. Remove the `<!-- lean-and-mean: review -->` flag if present.
 9. Report one line: `<n> → <m> lines. cut: <X>. moved: <Y>. rules +<k>.`
 
@@ -79,6 +82,7 @@ Exact order, exact H2 names. Drop a section only if truly empty.
 
 ## Project & Stack
 One paragraph: what, for whom, current state. Then languages/runtimes/key deps, one line each.
+Then conventions: naming, formatting, imports, error handling, commit format.
 
 ## Commands
 Build / run / test / lint / typecheck. Copy-pasteable, one per line.
@@ -89,9 +93,6 @@ Key components and the main flow, then:
 |------|---------|
 | `src/foo/` | <what lives here, why> |
 Modules and entry points only. Skip what the name already says.
-
-## Conventions
-Naming, formatting, imports, error handling, commit format.
 
 ## Done
 - Committed and pushed; PR open if the branch needs one.
@@ -106,14 +107,16 @@ rule → tighten it, don't add. Generalize one step, no further. No rule for a
 one-off typo or anything the tooling already catches.
 
 ## Next
-Immediate next task first. 1–5 lines, no backlog.
-
-## Todo
-- [ ] P1 — <item>
-Priority-ordered. Checked items are deleted at the next pass.
+<the immediate next action, 1–3 lines>
+- P1 — <item>
+- P2 — <item>
+- P3 — <item>
+Backlog under the next action, sorted by priority, P1 first. Finished items
+are deleted at the next pass.
 
 ## Notes & Pointers
 - [agents-<category>.md](agents-<category>.md) — <scope>
+- [<sub>/AGENTS.md](<sub>/AGENTS.md) — <sub-project>; same structure, scoped to it
 - History: `git log`, not this file.
 - <constraint, footgun, "do not touch X">
 ```

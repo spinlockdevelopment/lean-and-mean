@@ -18,18 +18,19 @@ class SessionStart(unittest.TestCase):
         self.plugin = self.root / 'plugin with spaces'
         shutil.copytree(ROOT / 'hooks', self.plugin / 'hooks')
         shutil.copytree(ROOT / 'skills', self.plugin / 'skills')
+        shutil.copytree(ROOT / 'extras', self.plugin / 'extras')
         self.project = self.root / 'project with spaces'
         self.project.mkdir()
-        # An advisor is set in the fake home, so only the tests that clear it see the note.
+        # The current status line is installed in the fake home, so only the tests that change it see the note.
         self.home = self.root / 'home'
         (self.home / '.claude').mkdir(parents=True)
-        (self.home / '.claude/settings.json').write_text('{"advisorModel": "opus"}')
+        shutil.copy(ROOT / 'extras/statusline.sh', self.home / '.claude/statusline.sh')
         self.block = (ROOT / 'skills/lean-and-mean/operating-mode.md').read_text()
         self.command = json.loads((self.plugin / 'hooks/hooks.json').read_text())['hooks']['SessionStart'][0]['hooks'][0]['command']
 
     def run_hook(self, host, cwd=None, **extra):
         env = os.environ.copy()
-        for key in ('PLUGIN_ROOT', 'CLAUDE_PLUGIN_ROOT', 'CLAUDE_PROJECT_DIR', 'CLAUDE_CODE_DISABLE_ADVISOR_TOOL'):
+        for key in ('PLUGIN_ROOT', 'CLAUDE_PLUGIN_ROOT', 'CLAUDE_PROJECT_DIR'):
             env.pop(key, None)
         env['HOME'] = str(self.home)
         env['CLAUDE_PLUGIN_ROOT'] = str(self.plugin)
@@ -105,16 +106,25 @@ class SessionStart(unittest.TestCase):
         (self.project / 'CLAUDE.md').write_text('@AGENTS.md\n')
         self.assertEqual(self.run_hook('claude', self.root), '')
 
-    def test_advisor_note(self):
+    def test_statusline_note(self):
         (self.project / 'AGENTS.md').write_text(self.block)
         (self.project / 'CLAUDE.md').write_text('@AGENTS.md\n')
-        (self.home / '.claude/settings.json').write_text('{}')
-        self.assertIn('no advisor set', self.run_hook('claude'))
-        self.assertEqual(self.run_hook('claude', CLAUDE_CODE_DISABLE_ADVISOR_TOOL='1'), '')
+        installed = self.home / '.claude/statusline.sh'
+        installed.write_text('#!/usr/bin/env bash\n# lean-and-mean statusline 0\n')
+        self.assertIn('not the current extras version', self.run_hook('claude'))
+        installed.unlink()
+        self.assertIn('statusline.sh is missing', self.run_hook('claude'))
         self.assertEqual(self.run_hook('codex'), '')
-        (self.project / '.claude').mkdir()
-        (self.project / '.claude/settings.local.json').write_text('{"advisorModel": "fable"}')
+        shutil.rmtree(self.plugin / 'extras')
         self.assertEqual(self.run_hook('claude'), '')
+
+    def test_previous_release_project_gets_the_pass(self):
+        # 5.6 layout: old prose line, separate Todo and Conventions sections.
+        old = self.block.replace(self.block.split('\n\n')[1], 'Prose: ~80% ASD-STE100 — one idea per sentence.')
+        (self.project / 'AGENTS.md').write_text(old + '\n## Conventions\n- x\n\n## Next\nShip.\n\n## Todo\n- P2 — y\n')
+        (self.project / 'CLAUDE.md').write_text('@AGENTS.md\n')
+        self.assertIn('Operating Mode block is out of date', self.run_hook('claude'))
+        self.assertIn('Operating Mode block is out of date', self.run_hook('codex'))
 
 
 if __name__ == '__main__':

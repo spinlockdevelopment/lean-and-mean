@@ -102,30 +102,38 @@ test('endsession runs once when the cache has 5 minutes left', async ($, on) => 
   expect(runs.length).toBe(1)
 })
 
-test('cache countdown shows off the terminal only and ticks while idle', async ($, on) => {
-  world(on, '{"tasks":[]}')
-  const clock = mock.clock(on)
-  on('session.start', async (_$, e) => ({ cwd: e.cwd }))
-  on('command.list', async () => ({ value: [] }))
-  on('session.surfaces', async () => ({ value: ['desktop'] }))
-  on('turn.start', async (_$, e) => ({ turnId: e.turnId }))
-  await $.session.start({ cwd: '/p', surface: 'desktop', isInteractive: true } as never)
-  await $.prompt.submit({ text: 'do a thing', wait: false, origin: { kind: 'composer' } })
-  await $.turn.complete({
-    answer: 'Done.', durationMs: 1, isAborted: false, turnId: 't', reason: 'answer',
-    usage: { input_tokens: 1, output_tokens: 1 },
-  } as never)
-  const term = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'terminal', ...BAND })
-  expect(await term.find({ key: 'cache' })).toBeUndefined()
-  await term.unmount()
-  const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'desktop', ...BAND })
-  expect(await ui.find({ type: 'Text', text: /exp\. 60m/ })).toBeDefined()
-  await clock.advance(20 * 60_000)
-  expect(await ui.find({ type: 'Text', text: /exp\. 40m/ })).toBeDefined()
-  await clock.advance(31 * 60_000)
-  expect(await ui.find({ type: 'Text', text: /exp\. 9m/ })).toBeDefined()
-  await ui.unmount()
-})
+for (const surface of ['terminal', 'desktop'] as const) {
+  test(`cache countdown tops the band, ticks while idle, changes color (${surface})`, async ($, on) => {
+    world(on, '{"tasks":[{"text":"Bump version","done":false}]}')
+    const clock = mock.clock(on)
+    on('session.start', async (_$, e) => ({ cwd: e.cwd }))
+    on('command.list', async () => ({ value: [] }))
+    on('turn.start', async (_$, e) => ({ turnId: e.turnId }))
+    await $.session.start({ cwd: '/p', surface, isInteractive: true } as never)
+    await $.prompt.submit({ text: 'do a thing', wait: false, origin: { kind: 'composer' } })
+    await $.turn.complete({
+      answer: 'Done.', durationMs: 1, isAborted: false, turnId: 't', reason: 'answer',
+      usage: { input_tokens: 1, output_tokens: 1 },
+    } as never)
+    const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...BAND })
+    const color = async () => (await ui.find({ type: 'Text', text: /^exp\./ }))?.props.color
+    expect(await ui.find({ type: 'Text', text: /exp\. 60m/ })).toBeDefined()
+    expect(await color()).toBe('green')
+    // Hiding the task list never hides the countdown.
+    await ui.press({ key: 'toggle' })
+    expect(await ui.find({ type: 'Text', text: /Bump version/ })).toBeUndefined()
+    expect(await color()).toBe('green')
+    await clock.advance(40 * 60_000)
+    expect(await ui.find({ type: 'Text', text: /exp\. 20m/ })).toBeDefined()
+    expect(await color()).toBe('yellow')
+    await clock.advance(7 * 60_000)
+    expect(await color()).toBe('#ff8700')
+    await clock.advance(4 * 60_000)
+    expect(await ui.find({ type: 'Text', text: /exp\. 9m/ })).toBeDefined()
+    expect(await color()).toBe('red')
+    await ui.unmount()
+  })
+}
 
 // A session idle past the 1h cache (auto-ended, or not when endFirst is false), `answer` picked in the cold-cache question; returns what the stand-ins saw.
 async function cold($: Engine, on: On, answer: string, endFirst: boolean) {

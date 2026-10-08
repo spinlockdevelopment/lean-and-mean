@@ -29,7 +29,7 @@
 <figure class="fig">
   <svg viewBox="0 0 760 260" role="img" aria-labelledby="loop-t loop-d">
     <title id="loop-t">One session with lean-and-mean</title>
-    <desc id="loop-d">The session starts and the host loads AGENTS.md. The hook checks it and stays silent unless a pass is due. You work, and each correction becomes one Rule line. /endsession writes Rules, Next and Todo. It commits, pushes, and ships per the Done section when the work is complete. The session stops, and the next session starts from Next.</desc>
+    <desc id="loop-d">The session starts and the host loads AGENTS.md. The hook checks it and stays silent unless a pass is due. You work, and each correction becomes one Rule line. /endsession writes Rules and Next. It commits, pushes, and ships per the Done section when the work is complete. The session stops, and the next session starts from Next.</desc>
     <defs><marker id="loop-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
     <g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#loop-a)">
       <line x1="150" y1="62" x2="207" y2="62"/>
@@ -53,7 +53,7 @@
       <text x="480" y="57" font-weight="600" font-size="14">You work</text>
       <text x="480" y="76" class="mut" font-size="12">correction → 1 Rule</text>
       <text x="680" y="57" font-weight="600" font-size="14">/endsession</text>
-      <text x="680" y="76" class="mut" font-size="12">Rules, Next, Todo</text>
+      <text x="680" y="76" class="mut" font-size="12">Rules, Next</text>
       <text x="680" y="207" font-weight="600" font-size="14">Commit, push</text>
       <text x="680" y="226" class="mut" font-size="12">ship per ## Done</text>
       <text x="480" y="207" font-weight="600" font-size="14">Session stops</text>
@@ -69,8 +69,8 @@
 <div class="grid">
   <div class="card"><h3>Minimal code</h3><p>A YAGNI ladder picks the smallest change that works. New code comes last.</p></div>
   <div class="card"><h3>Rules that stick</h3><p>Every correction becomes one dated line under <code>## Rules</code>. The file loads every session, so the mistake does not repeat.</p></div>
-  <div class="card"><h3>Clean handoffs</h3><p><code>/endsession</code> saves Rules, the next task and the Todo list. Then it commits, pushes and stops.</p></div>
-  <div class="card"><h3>Short answers</h3><p>The answer comes first, with no filler. Sentences are short and active, about 80% ASD-STE100. A diagram or a page when that explains better.</p></div>
+  <div class="card"><h3>Clean handoffs</h3><p><code>/endsession</code> saves Rules, the next task and the backlog. Then it commits, pushes and stops.</p></div>
+  <div class="card"><h3>Short answers</h3><p>The answer comes first, with no filler. Sentences are concise and active, broadly following ASD-STE100. A diagram or a page when that explains better.</p></div>
 </div>
 
 <h3>The YAGNI ladder</h3>
@@ -95,8 +95,8 @@
 <h3>An AGENTS.md that maintains itself</h3>
 <ul>
   <li><b>Rules.</b> Each correction becomes one dated line. The cap is 15, so the list stays readable.</li>
-  <li><b>Next and Todo.</b> <code>## Next</code> names the next task. <code>## Todo</code> is a short, prioritized backlog. History stays in <code>git log</code>.</li>
-  <li><b>Fixed layout.</b> Operating Mode, Project &amp; Stack, Commands, Architecture &amp; Layout, Conventions, Done, Rules, Next, Todo, Notes &amp; Pointers. Always in that order.</li>
+  <li><b>Next.</b> <code>## Next</code> names the next task, then a backlog sorted P1 to P3. History stays in <code>git log</code>.</li>
+  <li><b>Fixed layout.</b> Operating Mode, Project &amp; Stack, Commands, Architecture &amp; Layout, Done, Rules, Next, Notes &amp; Pointers. Always in that order. A sub-project can keep its own <code>AGENTS.md</code> in the same layout; Notes &amp; Pointers links to it.</li>
   <li><b>250-line cap.</b> The file is resent on every request. Overflow moves to linked <code>agents-&lt;category&gt;.md</code> files.</li>
 </ul>
 
@@ -105,7 +105,7 @@
   <tr><th>Command</th><th>Effect</th></tr>
   <tr><td><code>/lean-and-mean:lean-and-mean</code></td><td>Create or review <code>AGENTS.md</code>. It refreshes the block, reorders sections, checks commands and paths, and prunes stale lines. Safe to rerun. The hook usually asks for it.</td></tr>
   <tr><td><code>/lean-and-mean:lean-and-mean debt</code></td><td>List every <code>// lean:</code> shortcut and its upgrade path. Changes nothing.</td></tr>
-  <tr><td><code>/lean-and-mean:endsession</code></td><td>Save Rules, Next and Todo, commit, push, then stop. When the work meets <code>## Done</code>, it also runs those steps, such as a merge or a deploy. When it does not, Next says what remains. <a href="guide.html#endsession">Details</a>.</td></tr>
+  <tr><td><code>/lean-and-mean:endsession</code></td><td>Save Rules and Next, commit, push, then stop. When the work meets <code>## Done</code>, it also runs those steps, such as a merge or a deploy. When it does not, Next says what remains. <a href="guide.html#endsession">Details</a>.</td></tr>
 </table></div>
 <p>Codex uses <code>$lean-and-mean</code> and <code>$endsession</code>. A manual install gives the bare <code>/lean-and-mean</code> and <code>/endsession</code>.</p>
 
@@ -117,16 +117,12 @@
 </ul>
 <p><a href="guide.html#hook">Every hook condition</a>.</p>
 
-<h2 id="extras">Extras</h2>
-<p>Optional parts, each covered in the <a href="guide.html">guide</a>.</p>
+<h2 id="extras">Optional parts</h2>
 <div class="grid">
-  <div class="card"><h3><a href="guide.html#band">Session band</a></h3><p>A row above the Claude Code prompt: task checklist, End session button, auto <code>/endsession</code> at 5 minutes cache left, desktop countdown, cold-cache question.</p></div>
-  <div class="card"><h3><a href="guide.html#statusline">Status line</a></h3><p><code>extras/statusline.sh</code> shows context use and a prompt-cache countdown in your terminal; you copy it in.</p></div>
-  <div class="card"><h3><a href="guide.html#advisor">Advisor and effort</a></h3><p>Settings that add a stronger reviewer model and set effort per session and subagent.</p></div>
-  <div class="card"><h3><a href="guide.html#dashboard">dashboard-builder</a></h3><p>A subagent that keeps a self-refreshing progress page for long tasks.</p></div>
+  <div class="card"><h3><a href="guide.html#band">Session band</a></h3><p>A row above the Claude Code prompt: a colored cache countdown, task checklist, End session button, auto <code>/endsession</code> at 5 minutes cache left, cold-cache question.</p></div>
   <div class="card"><h3><a href="guide.html#explainer">explainer</a></h3><p>A subagent that writes a local page with diagrams when an answer is too long for the terminal.</p></div>
-  <div class="card"><h3><a href="guide.html#typesafe">typesafe-ai</a></h3><p>TypeSafe AI's skill for their Jev model, routed through OpenRouter; disabled for now.</p></div>
 </div>
+<p>Utilities, such as a status line and the typesafe-ai skill, are on the <a href="extras.html">extras page</a>.</p>
 
 <h2>Why it pays off</h2>
 <div class="stats">
@@ -157,9 +153,9 @@ codex plugin add lean-and-mean@lean-and-mean</code></pre>
   <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/lean-and-mean/SKILL.md">lean-and-mean/SKILL.md</a> — setup, review and file structure</li>
   <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/endsession/SKILL.md">endsession/SKILL.md</a> — the session handoff</li>
 </ul>
-<p class="note">The bundled <code>typesafe-ai</code> skill is TypeSafe AI's work. Copyright and credit: <a href="https://github.com/typesafe-ai/skills">TypeSafe AI</a> (MIT). lean-and-mean is MIT licensed.</p>
+<p class="note">lean-and-mean is MIT licensed.</p>
 
-<footer><a href="guide.html">Guide and extras →</a> · Spinlock Development</footer>
+<footer><a href="guide.html">Guide →</a> · <a href="extras.html">Extras →</a> · Spinlock Development</footer>
 
 </main>
 <script>
