@@ -18,16 +18,9 @@ learned back into that file, commits, pushes, then stops.
 
 ## Why use it
 
-Measured from 63 Claude Code sessions (5,197 requests) at API list prices:
-
-- A request over 400K context costs 4× one under 100K ($0.33 vs $0.08).
-- Resuming after the 1-hour cache expires costs a median $1.21; a fresh start
-  costs $0.27.
-- `/endsession` writes a deliberate handoff for a median $0.27, instead of
-  lossy compaction.
-
-So end sessions at task boundaries and before breaks. Method, price table and
-caveats: [why sessions should be short](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#cost).
+Faster, fewer tokens, lower cost: short answers, less code to review, and
+short sessions that keep each request's context small. The measured numbers:
+[why sessions should be short](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#cost).
 
 ## Install
 
@@ -60,13 +53,13 @@ Local checkouts, manual installs, and Codex notes:
 | `/lean-and-mean:lean-and-mean` | `$lean-and-mean` | Create or review `AGENTS.md`: refresh the block, reorder, verify commands and paths, prune, split past 250 lines. Usually runs on its own |
 | `/lean-and-mean:lean-and-mean debt` | `$lean-and-mean debt` | List every `// lean:` shortcut with its upgrade path |
 | `/lean-and-mean:endsession` | `$endsession` | Save Rules and Next, commit, push, and run `## Done` steps when the work is complete. Then stop. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#endsession) |
-| Session band mod | — | Colored cache countdown on top, task checklist, End session button, auto `/endsession` with 5 minutes of cache left, a Rehydrate / Clear first question when the cache has gone cold. Off in `/config`. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#band) |
-| `@agent-lean-and-mean:explainer` | — | Local `.pages/<slug>.html` explainer page with inline SVG diagrams |
+| Session Status Mod | — | Colored cache countdown on top, task checklist, End session button, auto `/endsession` with 5 minutes of cache left, a Rehydrate / Clear first question when the cache has gone cold. Off in `/config`. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#band) |
+| `@agent-lean-and-mean:explainer` | — | Explainer Agent: local `.pages/<slug>.html` explainer page with inline SVG diagrams |
 
 A manual install into `~/.claude/skills/` gives the bare `/lean-and-mean` and
 `/endsession`.
 
-Utilities (a status line for a new machine, the `typesafe-ai` skill): [extras](https://spinlockdevelopment.github.io/lean-and-mean/extras.html).
+Extras (`/lean-and-mean:statusline`, `/lean-and-mean:typesafe-ai`): [extras](https://spinlockdevelopment.github.io/lean-and-mean/extras.html).
 
 ## How it works
 

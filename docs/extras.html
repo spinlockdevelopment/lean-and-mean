@@ -17,26 +17,32 @@
 <header>
   <div class="eyebrow"><a href="./">lean-and-mean</a> · Extras</div>
   <h1>Extras and utilities</h1>
-  <p class="lede">Optional parts that are not part of the operating mode.</p>
+  <p class="lede">Optional parts that are not part of the operating mode. Each has a command.</p>
 </header>
 
-<p>On this page: <a href="#statusline">Status line</a> · <a href="#typesafe">typesafe-ai</a></p>
+<div class="table-wrap"><table>
+  <tr><th>Command</th><th>Effect</th></tr>
+  <tr><td><code>/lean-and-mean:statusline</code></td><td>Install the <a href="#statusline">status line</a> into <code>~/.claude</code></td></tr>
+  <tr><td><code>/lean-and-mean:typesafe-ai</code></td><td>Build a feature on Jev with the <a href="#typesafe">typesafe-ai</a> skill</td></tr>
+</table></div>
+<p>Both run only when you type them; the assistant never starts them on its own.</p>
 
 <h2 id="statusline">Status line</h2>
-<p><code>extras/statusline.sh</code> sets up a terminal status line on a new machine. It shows the folder, branch, model, context use and the 5-hour limit. The session band shows the cache countdown, so the status line does not.</p>
+<p><code>extras/statusline.sh</code> sets up a terminal status line on a new machine. It shows the folder, branch, model, context use and the 5-hour limit. The Session Status Mod shows the cache countdown, so the status line does not.</p>
+<p>The second line of the script is a version breadcrumb, <code># lean-and-mean statusline &lt;n&gt;</code>. At session start the hook compares it with your copy and suggests the command when yours is missing or old.</p>
 <pre class="mock" aria-label="Status line example"><code>my-app | main | (Opus 5.5) | ctx 34% | 5h 18% · resets in 2h10m</code></pre>
-<p>Plugins cannot set the status line, so you copy it in. The script needs <code>jq</code>. From a checkout of this repo:</p>
-<pre><code>cp extras/statusline.sh ~/.claude/statusline.sh && chmod +x ~/.claude/statusline.sh</code></pre>
-<p>Then add this to <code>~/.claude/settings.json</code>:</p>
+<p>Plugins cannot set the status line, so a command copies it in. The script needs <code>jq</code>. Run:</p>
+<pre><code>/lean-and-mean:statusline</code></pre>
+<p>It copies the script to <code>~/.claude/statusline.sh</code> and adds this to <code>~/.claude/settings.json</code>, asking first if another status line is set:</p>
 <pre><code>"statusLine": { "type": "command", "command": "~/.claude/statusline.sh" }</code></pre>
 
 <h2 id="typesafe">typesafe-ai</h2>
 <p>A bundled copy of <a href="https://github.com/typesafe-ai/skills">TypeSafe AI's skill</a> for building app features on Jev, their System One model. Jev doesn't generate text: it takes natural language plus application state and returns typed answers and probabilities, such as yes/no or pick-one, that ordinary code can combine. It fits routing, ranking, extraction, verification, or anywhere a prompt-and-parse step could become a structured decision.</p>
-<p>The skill reads TypeSafe's live docs and cookbooks as part of each task. The only change from the original is the endpoint: Jev is called through OpenRouter.</p>
+<p>Run it with <code>/lean-and-mean:typesafe-ai</code>. The skill reads TypeSafe's live docs and cookbooks as part of each task. The only change from the original is the endpoint: Jev is called through OpenRouter.</p>
 <pre><code>export OPENROUTER_JEV_API_KEY=...</code></pre>
 <p>Calls go to <code>POST https://openrouter.ai/api/alpha/decisions</code> with model <code>~typesafe/jev-latest</code>; request and response match TypeSafe's API.</p>
 <p>Without that key, Jev isn't used; there is no fallback to TypeSafe's own endpoint or <code>TYPESAFE_API_KEY</code>.</p>
-<p class="note">Disabled for now: the assistant won't load it on its own. Copyright and credit belong to TypeSafe AI (MIT).</p>
+<p class="note">The assistant won't load it on its own. Copyright and credit belong to TypeSafe AI (MIT).</p>
 
 <footer><a href="./">← Back to overview</a> · <a href="guide.html">Guide</a> · Spinlock Development</footer>
 

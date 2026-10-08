@@ -86,6 +86,7 @@ class SessionStart(unittest.TestCase):
         (self.project / 'CLAUDE.md').write_text(self.block + '\n## Rules\n')
         output = self.run_hook('claude')
         self.assertIn('needs the full pass', output)
+        self.assertIn('then re-read AGENTS.md', output)
         self.assertNotIn('Not in', output)
         self.assertNotIn('Lean and mean.', output)
 
@@ -111,7 +112,9 @@ class SessionStart(unittest.TestCase):
         (self.project / 'CLAUDE.md').write_text('@AGENTS.md\n')
         installed = self.home / '.claude/statusline.sh'
         installed.write_text('#!/usr/bin/env bash\n# lean-and-mean statusline 0\n')
-        self.assertIn('not the current extras version', self.run_hook('claude'))
+        output = self.run_hook('claude')
+        self.assertIn('not the current extras version', output)
+        self.assertIn('/lean-and-mean:statusline', output)
         installed.unlink()
         self.assertIn('statusline.sh is missing', self.run_hook('claude'))
         self.assertEqual(self.run_hook('codex'), '')

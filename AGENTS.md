@@ -34,7 +34,7 @@ block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
 CLAUDE.md) so it runs natively; `/endsession` promotes session mistakes
 into Rules, rewrites Next, commits, pushes (PR if needed), then hard-stops. Full
 AGENTS.md review runs at next session start when the hook says it is due.
-v5.7.0, published via the spinlockdevelopment/lean-and-mean marketplace.
+v5.8.0, published via the spinlockdevelopment/lean-and-mean marketplace.
 - POSIX sh (one hook), Markdown skills, JSON manifests, one TSX function-hooks module (Claude only). Python stdlib tests for the hook; `claude plugin test` for the module.
 - Version bump in all three manifests together. Breaking behavior → major.
 - Hook stays POSIX sh, under 35 lines, zero output in the common case.
@@ -55,26 +55,28 @@ SessionStart hook prints the block when AGENTS.md lacks it, or asks for the
 full pass when the block is stale, AGENTS.md is over 250 lines,
 `/endsession` left the review flag, or (Claude) CLAUDE.md
 is not the `@AGENTS.md` stub. Claude only: it suggests installing the extras
-status line when `~/.claude/statusline.sh` lacks the current breadcrumb. Skills are
-prose the model follows. The session band module is the only code that runs per turn.
+status line (`/lean-and-mean:statusline`) when `~/.claude/statusline.sh` lacks the current breadcrumb. Skills are
+prose the model follows. The Session Status Mod (code name: session band) is the only code that runs per turn.
 
 | Path | Purpose |
 |------|---------|
 | `skills/lean-and-mean/operating-mode.md` | The block, source of truth; pasted verbatim into AGENTS.md |
 | `skills/lean-and-mean/SKILL.md` | `/lean-and-mean` create-or-review pass, AGENTS.md structure and CLAUDE.md migration, `debt` |
 | `skills/endsession/SKILL.md` | `/endsession` light hard-stop wrap-up: Rules, auto-memory promotion, Done check, Next, review flag, commit, push/PR, then ship per `## Done`; `disable-model-invocation: true` |
+| `skills/statusline/SKILL.md` | `/lean-and-mean:statusline`: copies `extras/statusline.sh` and sets `statusLine`; user-invoked only |
 | `skills/endsession/agents/openai.yaml` | Codex metadata for `$endsession` |
 | `skills/typesafe-ai/` | Copy of TypeSafe AI's skill (MIT, their credit), Jev routed via OpenRouter; disabled (`disable-model-invocation: true`); an extra, documented only in `docs/extras.html`; resync from `vendor/typesafe-ai-skills` submodule |
 | `hooks/session-start.sh` | Only hook; silent unless block missing, full pass due, or status line not current (Claude only) |
-| `hooks/register.tsx`, `hooks/judge.ts`, `types/index.d.ts` | Session band mod (Claude only): cache countdown on top on every surface (green >30m, yellow >15m, orange >10m, red), Haiku-judged checklist with hide toggle, End session button, auto `/endsession auto` (never ships) at 5m cache left; cold-cache question on the next prompt (Rehydrate / Clear first); `userConfig.sessionBand` toggles it |
-| `extras/statusline.sh` | Optional bash+jq status line for a new machine (user copies it; plugins can't set `statusLine`); no cache countdown, the band has it |
+| `hooks/register.tsx`, `hooks/judge.ts`, `types/index.d.ts` | Session Status Mod, code name session band (Claude only): cache countdown on top on every surface (green >30m, yellow >15m, orange >10m, red), Haiku-judged checklist with hide toggle, End session button, auto `/endsession auto` (never ships) at 5m cache left; cold-cache question on the next prompt (Rehydrate / Clear first); `userConfig.sessionBand` toggles it |
+| `extras/statusline.sh` | Optional bash+jq status line, installed by `/lean-and-mean:statusline` (plugins can't set `statusLine`); no cache countdown, the band has it |
 | `tests/session-band.test.ts`, `tests/band-module.test.tsx` | Band parser, countdown color and auto-end threshold tests; module tests with a stubbed Haiku judge, hide toggle, mocked-clock auto-end and countdown, and the `sessionBand: false` toggle (`claude plugin test .`) |
 | `tests/test_session_start.py` | Hook tests: both hosts, stub check, 3.x and 5.6 layouts, status line note; fake HOME |
 | `agents/explainer.md` | Local explainer-page subagent (`.pages/`, STE prose, inline SVG); `STYLE?` round trip |
 | `hooks/hooks.json` | Wires the hook via `${CLAUDE_PLUGIN_ROOT}` and the band under `modules` |
 | `docs/index.html` | GitHub Pages overview; GitHub link in top bar, raw SKILL.md links, inline links into `guide.html` |
-| `docs/guide.html` | Pages deep dive: /endsession, hook, cost model, session band, explainer, install details; keep figures in sync with README "Why use it" headlines and `docs/index.html` stats |
-| `docs/extras.html` | Pages extras: status line setup, typesafe-ai; README and index link it in one line |
+| `docs/guide.html` | Pages deep dive: YAGNI ladder, AGENTS.md, /endsession, hook, brief cost note, Session Status Mod, Explainer Agent, install details |
+| `docs/md.html` | Renders the skill Markdown from `main` (marked via cdnjs); `?f=` picks from a fixed list |
+| `docs/extras.html` | Pages extras: commands for status line and typesafe-ai; README and index link it in one line |
 | `docs/style.css` | Shared Pages styles |
 | `.claude-plugin/`, `.codex-plugin/` | Claude plugin.json + marketplace.json, Codex plugin.json; versions must match |
 | `AGENTS.md`, `CLAUDE.md` | This file, committed; CLAUDE.md is the `@AGENTS.md` stub |
@@ -85,7 +87,7 @@ prose the model follows. The session band module is the only code that runs per 
 ## Rules
 - Push with the `gh` credential command in Commands; plain `git push` uses a stale keychain token (403'd three times). A fine-grained PAT needs resource owner `spinlockdevelopment` plus Contents write, and Pages write to enable Pages via API; reading a public repo proves nothing about push rights. 2026-09-17
 - Document plugin skills as `/lean-and-mean:<skill>`. Bare `/endsession` only exists for manual installs. 2026-09-15
-- In the hook, match markers as whole lines (`grep -qx`) and wrap `wc -l` as `$(($(wc -l < f)))`. AGENTS.md quotes the review flag inline, so a substring match fired falsely; macOS pads the count with spaces. 2026-09-17
+- In the hook, match markers as whole lines (`grep -qx`) and wrap `wc -l` as `$(($(wc -l < f)))`. AGENTS.md quotes the review flag inline, so a substring match fired falsely; macOS pads the count with spaces. 2026-09-17. The full pass stays at session start (small context, cheap), never in `/endsession`; after it, the model re-reads AGENTS.md, which replaces the copy loaded at start. User chose this over pruning in `/endsession` 2026-10-08.
 - On Fable, spawn subagents as fresh agents with `model: opus` or `sonnet` (Sonnet 5.5 via the alias, `effort: medium` in agent files; planner's pick), never `fork`: forks inherit Fable and ignore the override. Fable only when the user asks. Fable output costs 2× Opus, 5× Sonnet. 2026-09-17
 - Jev is OpenRouter-only: no `OPENROUTER_JEV_API_KEY` means don't use Jev, never fall back to `TYPESAFE_API_KEY` or `api.typesafe.ai`. typesafe-ai stays disabled (out of the Operating Mode block, `disable-model-invocation: true`) until the user asks to check it again. Jev is on OpenRouter at `/api/alpha/decisions`, absent from `/api/v1/models`: check provider docs before calling a model unavailable. 2026-10-01
 - Size card grids to divide the card count (4 cards → 2×2), not `auto-fit`. Auto-fit wrapped four cards to 3+1 on the Pages site. 2026-09-17
@@ -95,12 +97,13 @@ prose the model follows. The session band module is the only code that runs per 
 - Read x.com posts via `curl -s https://api.fxtwitter.com/<user>/status/<id>`. WebFetch on x.com returns 402. 2026-09-30
 - Give every context-file layout change a hook test that starts from the previous release's project state. 4.0.0 nearly shipped with the 3.x migration unreachable behind the block-missing exit; only the advisor caught it. 2026-10-01
 - In mods, write `atom({ plugin: '<literal>', key: '<literal>' })` inline, the literal being the owning plugin's name; rename it when porting a mod into this plugin. A shared `const P` and a leftover `session-band` owner both failed `claude plugin validate`. In mod tests, register every engine stand-in (`session.start` answering `{ cwd }`, `turn.start`) before the first `$` call, and give `turn.complete` a `usage` when cache time matters; each omission failed a run. 2026-10-03. `ui.render` is pure: an `update` there gets the hook skipped (blanked the band 2026-10-06); decide per-surface facts from `$.session.surfaces()` in a timer or `session.start`, stub it in tests, and read `e.surface` only to branch the tree. A `$.clock.now()` with no `mock.clock` stand-in skips the whole hook, so read cheap state first and call the clock only when needed; the 55m auto-end fires in any test that advances past it; `tool.call` args are flat on `e` (`e.questions`), not `e.input`; `ui.find` does not match a Text's `key`, so query Text by `text`. Each cost a failed run 2026-10-07. Call models by alias (`model: 'haiku'`), never a pinned id: the user reverted `claude-haiku-5-5` 2026-10-07.
-- Plugins can't set the main `statusLine` (plugin settings honor only `agent`, `subagentStatusLine`); ship status line scripts in `extras/` for the user to copy. It ticks while idle only with `refreshInterval`; cache expiry is `prompt_cache.expires_at` (epoch s). 2026-10-03
+- Plugins can't set the main `statusLine` (plugin settings honor only `agent`, `subagentStatusLine`); ship status line scripts in `extras/`, installed by a user-only skill (`/lean-and-mean:statusline`); any hook suggestion names a command, never manual copy steps (the user had asked for the command before, 2026-10-08). It ticks while idle only with `refreshInterval`; cache expiry is `prompt_cache.expires_at` (epoch s). 2026-10-03
 - Delete an agent's `~/.claude/agent-memory/<agent>/` after a trial run. An agent trial saved an invented style there, which would have skipped `STYLE?` on real use. 2026-10-03
 - Default to a minor version bump; major only when the user agrees the change is breaking. 5.0.0 was called too aggressive for an additive release. 2026-10-03
 
 ## Next
-After 5.7.0 is published, update and restart. Confirm the band's countdown sits on top in the terminal and desktop, ticks while idle, turns yellow / orange / red at 30 / 15 / 10m left, and stays when tasks are hidden; End session runs `/lean-and-mean:endsession`; auto-end fires at 55m; a cold-cache prompt asks Rehydrate / Clear first; the `/config` toggle hides the band; the hook suggests the status line on a machine without it. Call `@agent-lean-and-mean:explainer` for real (trigger, `STYLE?`, path + diagrams reply), then delete its agent memory.
+After 5.8.0 is published, update and restart. Check the Pages site: `md.html` renders all four skill tabs (statusline appears only after push), the session diagram reads "AGENTS.md current?", the guide's new `#yagni` and `#agents` anchors resolve. Run `/lean-and-mean:statusline` on this machine (it should ask before replacing `statusline-command.sh`). Still unverified from 5.7.0: band countdown colors, auto-end at 55m, cold-cache question, `/config` toggle.
+- P2 — decide on `/lean-and-mean debt`: keep or drop (see `.pages/lean-debt.html`; the `// lean:` marker rule stays either way).
 - P2 — compress Rules with the user, carefully (the mods rule is ~10 lines); no merges without asking.
 - P3 — confirm: append `rate_limits.five_hour.used_percentage` with a timestamp to a log in `extras/statusline.sh`, so plan-limit questions get measured numbers. Only usage-scan candidate worth adding.
 

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lean-and-mean instructions</title>
+<meta name="description" content="The plain-text instructions lean-and-mean gives the model, rendered from the Markdown source on main.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<nav class="topbar">
+  <a class="brand" href="./">lean-and-mean</a>
+  <a class="gh" href="https://github.com/spinlockdevelopment/lean-and-mean">Source on GitHub</a>
+</nav>
+<main>
+
+<header>
+  <div class="eyebrow"><a href="./">lean-and-mean</a> · Instructions</div>
+  <h1 id="title">Instructions</h1>
+  <p class="lede" id="lede"></p>
+  <p class="note" id="meta"></p>
+</header>
+
+<nav class="tabs" id="tabs" aria-label="Instruction files"></nav>
+<article class="md" id="doc"><p>Loading…</p></article>
+
+<footer><a href="./">← Back to overview</a> · <a href="guide.html">Guide</a> · Spinlock Development</footer>
+
+</main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script>
+// The Markdown on main is the source; this page only renders it.
+var RAW = 'https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/';
+var FILES = {
+  'operating-mode': { path: 'skills/lean-and-mean/operating-mode.md', title: 'Operating Mode', lede: 'The block written into AGENTS.md. It is active every session.' },
+  'lean-and-mean': { path: 'skills/lean-and-mean/SKILL.md', title: 'lean-and-mean skill', lede: 'Creates or reviews AGENTS.md and defines its structure.' },
+  'endsession': { path: 'skills/endsession/SKILL.md', title: 'endsession skill', lede: 'The session handoff: Rules, Next, commit, push, ship, stop.' },
+  'statusline': { path: 'skills/statusline/SKILL.md', title: 'statusline skill', lede: 'Installs the extras status line.' }
+};
+var key = new URLSearchParams(location.search).get('f');
+if (!FILES[key]) key = 'operating-mode';
+var f = FILES[key], doc = document.getElementById('doc');
+document.title = f.title + ' · lean-and-mean';
+document.getElementById('title').textContent = f.title;
+document.getElementById('lede').textContent = f.lede;
+document.getElementById('tabs').innerHTML = Object.keys(FILES).map(function (k) {
+  return '<a href="?f=' + k + '"' + (k === key ? ' aria-current="page"' : '') + '>' + FILES[k].title + '</a>';
+}).join('');
+var meta = document.getElementById('meta');
+meta.innerHTML = 'Rendered from <a href="' + RAW + f.path + '"><code>' + f.path + '</code></a> on main.';
+fetch(RAW + f.path).then(function (r) {
+  if (!r.ok) throw new Error(r.status);
+  return r.text();
+}).then(function (md) {
+  // Front matter becomes a definition list above the body.
+  var fm = md.match(/^---\n([\s\S]*?)\n---\n/), dl = '';
+  if (fm) {
+    md = md.slice(fm[0].length);
+    dl = '<dl class="fm">' + fm[1].replace(/\n\s+/g, ' ').split('\n').map(function (line) {
+      var i = line.indexOf(':');
+      return '<dt>' + line.slice(0, i) + '</dt><dd>' + marked.parseInline(line.slice(i + 1).replace(/^\s*>?\s*/, '')) + '</dd>';
+    }).join('') + '</dl>';
+  }
+  doc.innerHTML = dl + marked.parse(md);
+}).catch(function () {
+  doc.innerHTML = '<p>Could not load the file. <a href="' + RAW + f.path + '">Open the raw Markdown</a>.</p>';
+});
+</script>
+</body>
+</html>

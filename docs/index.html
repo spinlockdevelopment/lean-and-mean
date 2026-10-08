@@ -29,7 +29,7 @@
 <figure class="fig">
   <svg viewBox="0 0 760 260" role="img" aria-labelledby="loop-t loop-d">
     <title id="loop-t">One session with lean-and-mean</title>
-    <desc id="loop-d">The session starts and the host loads AGENTS.md. The hook checks it and stays silent unless a pass is due. You work, and each correction becomes one Rule line. /endsession writes Rules and Next. It commits, pushes, and ships per the Done section when the work is complete. The session stops, and the next session starts from Next.</desc>
+    <desc id="loop-d">The session starts and the host loads AGENTS.md. The hook checks that AGENTS.md has the current block, is under 250 lines, has no review flag, and that CLAUDE.md is the stub. If any check fails, the assistant tidies AGENTS.md, reloads it, then does your task. You work, and each correction becomes one Rule line. /endsession writes Rules and Next. It commits, pushes, and ships per the Done section when the work is complete. The session stops, and the next session starts from Next.</desc>
     <defs><marker id="loop-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="currentColor"/></marker></defs>
     <g fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#loop-a)">
       <line x1="150" y1="62" x2="207" y2="62"/>
@@ -49,7 +49,7 @@
       <text x="80" y="57" font-weight="600" font-size="14">Session starts</text>
       <text x="80" y="76" class="mut" font-size="12">host loads AGENTS.md</text>
       <text x="280" y="57" font-weight="600" font-size="14">Hook checks</text>
-      <text x="280" y="76" class="mut" font-size="12">silent unless due</text>
+      <text x="280" y="76" class="mut" font-size="12">AGENTS.md current?</text>
       <text x="480" y="57" font-weight="600" font-size="14">You work</text>
       <text x="480" y="76" class="mut" font-size="12">correction → 1 Rule</text>
       <text x="680" y="57" font-weight="600" font-size="14">/endsession</text>
@@ -58,7 +58,7 @@
       <text x="680" y="226" class="mut" font-size="12">ship per ## Done</text>
       <text x="480" y="207" font-weight="600" font-size="14">Session stops</text>
       <text x="480" y="226" class="mut" font-size="12">Next is saved</text>
-      <text x="280" y="122" class="mut" font-size="12">due → full pass first</text>
+      <text x="280" y="122" class="mut" font-size="12">no → tidy, reload, then your task</text>
       <text x="245" y="203" font-size="12">next session starts on ## Next</text>
     </g>
   </svg>
@@ -67,38 +67,11 @@
 
 <h2>What it does</h2>
 <div class="grid">
-  <div class="card"><h3>Minimal code</h3><p>A YAGNI ladder picks the smallest change that works. New code comes last.</p></div>
-  <div class="card"><h3>Rules that stick</h3><p>Every correction becomes one dated line under <code>## Rules</code>. The file loads every session, so the mistake does not repeat.</p></div>
+  <div class="card"><h3>Minimal code</h3><p>YAGNI: the smallest change that works. New code comes last. <a href="guide.html#yagni">The ladder</a>.</p></div>
+  <div class="card"><h3>Rules that stick</h3><p>Every correction becomes one dated line under <code>## Rules</code>. The file loads every session, so the mistake does not repeat. <a href="guide.html#agents">How AGENTS.md is kept</a>.</p></div>
   <div class="card"><h3>Clean handoffs</h3><p><code>/endsession</code> saves Rules, the next task and the backlog. Then it commits, pushes and stops.</p></div>
   <div class="card"><h3>Short answers</h3><p>The answer comes first, with no filler. Sentences are concise and active, broadly following ASD-STE100. A diagram or a page when that explains better.</p></div>
 </div>
-
-<h3>The YAGNI ladder</h3>
-<p>Before writing code, the assistant stops at the first step that works:</p>
-<ol>
-  <li>Only <em>maybe</em> needed later? Skip it and say so.</li>
-  <li>Already in the project? Reuse it.</li>
-  <li>In the standard library? Use it.</li>
-  <li>Native to the platform (browser, OS, framework)? Use it.</li>
-  <li>An installed dependency does it? Use it.</li>
-  <li>Fits in one line? One line.</li>
-  <li>Otherwise, the smallest new code that works.</li>
-</ol>
-<p>Minimal never means careless. It never cuts input validation at trust boundaries, error handling against data loss, security, accessibility, or anything you asked for. Also:</p>
-<ul>
-  <li><b>Root cause.</b> A bug is fixed at the shared place it comes from, not in every caller.</li>
-  <li><b>Labeled shortcuts.</b> A deliberate shortcut gets a comment such as <code>// lean: up to 1,000 rows, stream if larger</code>.</li>
-  <li><b>One runnable check</b> for logic with branches, loops, parsing, money or security.</li>
-  <li><b>A skipped note.</b> After code, at most three lines say what was left out and when to add it.</li>
-</ul>
-
-<h3>An AGENTS.md that maintains itself</h3>
-<ul>
-  <li><b>Rules.</b> Each correction becomes one dated line. The cap is 15, so the list stays readable.</li>
-  <li><b>Next.</b> <code>## Next</code> names the next task, then a backlog sorted P1 to P3. History stays in <code>git log</code>.</li>
-  <li><b>Fixed layout.</b> Operating Mode, Project &amp; Stack, Commands, Architecture &amp; Layout, Done, Rules, Next, Notes &amp; Pointers. Always in that order. A sub-project can keep its own <code>AGENTS.md</code> in the same layout; Notes &amp; Pointers links to it.</li>
-  <li><b>250-line cap.</b> The file is resent on every request. Overflow moves to linked <code>agents-&lt;category&gt;.md</code> files.</li>
-</ul>
 
 <h2>Commands</h2>
 <div class="table-wrap"><table>
@@ -110,27 +83,26 @@
 <p>Codex uses <code>$lean-and-mean</code> and <code>$endsession</code>. A manual install gives the bare <code>/lean-and-mean</code> and <code>/endsession</code>.</p>
 
 <h2>The session-start hook</h2>
-<p>One short shell script runs when a session starts. It stays silent unless one of these is true:</p>
+<p>A short shell script runs when a session starts. It checks <code>AGENTS.md</code> and prints nothing when all is well:</p>
 <ul>
-  <li><b>The block is not in <code>AGENTS.md</code>.</b> It prints the block for this session and suggests the create pass.</li>
-  <li><b>A review is due.</b> The block is out of date, the file is over 250 lines, <code>/endsession</code> left a review flag, or <code>CLAUDE.md</code> is not the <code>@AGENTS.md</code> stub. The assistant then runs the full pass before your first task.</li>
+  <li><b>No block in <code>AGENTS.md</code>.</b> It loads the block for this session and suggests the create pass.</li>
+  <li><b>The file needs a tidy.</b> The block is older than the plugin, the file is over 250 lines, <code>/endsession</code> flagged a review, or <code>CLAUDE.md</code> is not the <code>@AGENTS.md</code> stub. The assistant runs the full pass first, reloads the new file in place of the copy loaded at start, then does your task.</li>
 </ul>
-<p><a href="guide.html#hook">Every hook condition</a>.</p>
+<p>The tidy runs at session start because the context is small then, so it is cheap. <a href="guide.html#hook">Every hook condition</a>.</p>
 
 <h2 id="extras">Optional parts</h2>
 <div class="grid">
-  <div class="card"><h3><a href="guide.html#band">Session band</a></h3><p>A row above the Claude Code prompt: a colored cache countdown, task checklist, End session button, auto <code>/endsession</code> at 5 minutes cache left, cold-cache question.</p></div>
-  <div class="card"><h3><a href="guide.html#explainer">explainer</a></h3><p>A subagent that writes a local page with diagrams when an answer is too long for the terminal.</p></div>
+  <div class="card"><h3><a href="guide.html#band">Session Status Mod</a></h3><p>A row above the Claude Code prompt: a colored cache countdown, task checklist, End session button, auto <code>/endsession</code> at 5 minutes cache left, cold-cache question.</p></div>
+  <div class="card"><h3><a href="guide.html#explainer">Explainer Agent</a></h3><p>A subagent that writes a local page with diagrams when an answer is too long for the terminal.</p></div>
 </div>
 <p>Utilities, such as a status line and the typesafe-ai skill, are on the <a href="extras.html">extras page</a>.</p>
 
 <h2>Why it pays off</h2>
 <div class="stats">
-  <div class="stat"><b>4×</b><span>cost per request over 400K context versus under 100K ($0.33 vs $0.08): restart at task boundaries</span></div>
-  <div class="stat"><b>$1.21 vs $0.27</b><span>median cost to resume after an hour away versus starting fresh; the worst resume measured, at 455K, was $8.79</span></div>
-  <div class="stat"><b>$0.27</b><span>median <code>/endsession</code>: a deliberate handoff instead of lossy compaction</span></div>
+  <div class="stat"><b>Faster</b><span>short answers and less code to read and review</span></div>
+  <div class="stat"><b>Fewer tokens</b><span>short sessions keep each request's context small</span></div>
+  <div class="stat"><b>Lower cost</b><span>less context resent per request; <a href="guide.html#cost">the numbers</a></span></div>
 </div>
-<p class="note">Measured from 63 sessions and 5,197 requests (2026-09-03 to 2026-10-03) at API list prices, mostly on Opus 5, whose cache reads cost $0.50; on Opus 5.5 at $0.20 the absolute figures are lower. Every tool call resends the whole context, so cost scales with requests × context size. See <a href="guide.html#cost">why sessions should be short</a> for the full model.</p>
 
 <h2 id="install">Install</h2>
 <h3>Claude Code</h3>
@@ -147,11 +119,11 @@ codex plugin add lean-and-mean@lean-and-mean</code></pre>
 <p>Disable the plugin <b>and</b> delete the <code>## Operating Mode</code> section from <code>AGENTS.md</code>. The block lives in the file, so disabling alone is not enough.</p>
 
 <h2>Raw instructions</h2>
-<p>The plugin is plain text the model follows:</p>
+<p>The plugin is plain text the model follows. Each page renders the Markdown on <code>main</code>:</p>
 <ul>
-  <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/lean-and-mean/operating-mode.md">operating-mode.md</a> — the block written into <code>AGENTS.md</code></li>
-  <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/lean-and-mean/SKILL.md">lean-and-mean/SKILL.md</a> — setup, review and file structure</li>
-  <li><a href="https://raw.githubusercontent.com/spinlockdevelopment/lean-and-mean/main/skills/endsession/SKILL.md">endsession/SKILL.md</a> — the session handoff</li>
+  <li><a href="md.html?f=operating-mode">operating-mode.md</a> — the block written into <code>AGENTS.md</code></li>
+  <li><a href="md.html?f=lean-and-mean">lean-and-mean/SKILL.md</a> — setup, review and file structure</li>
+  <li><a href="md.html?f=endsession">endsession/SKILL.md</a> — the session handoff</li>
 </ul>
 <p class="note">lean-and-mean is MIT licensed.</p>
 

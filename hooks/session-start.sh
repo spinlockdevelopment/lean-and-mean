@@ -16,7 +16,7 @@ block="$(dirname "$0")/../skills/lean-and-mean/operating-mode.md"
 if ! grep -qx '## Operating Mode' "$md" 2>/dev/null; then
   # 3.x Claude project: block lives in CLAUDE.md and already loads; migrate it.
   [ -z "${PLUGIN_ROOT:-}" ] && grep -qx '## Operating Mode' "$project/CLAUDE.md" 2>/dev/null &&
-    printf 'lean-and-mean: %s needs the full pass — CLAUDE.md holds the block, not the @AGENTS.md stub; Run the lean-and-mean skill (%s) before the user task, then continue with it.\n' "$md" "$invoke" && exit 0
+    printf 'lean-and-mean: %s needs the full pass — CLAUDE.md holds the block, not the @AGENTS.md stub; Run the lean-and-mean skill (%s) before the user task, then re-read AGENTS.md: it replaces the copy loaded at session start. Then continue with the task.\n' "$md" "$invoke" && exit 0
   cat "$block"; echo
   printf 'Not in %s yet — run %s to write it there. This notice stops once it is.\n' "$md" "$invoke"
   exit 0
@@ -26,9 +26,9 @@ why=""
 n=$(($(wc -l < "$md"))); [ "$n" -gt 250 ] && why="$why $n lines, over the 250 cap;"
 grep -qxF '<!-- lean-and-mean: review -->' "$md" && why="$why /endsession flagged a review;"
 [ -n "${PLUGIN_ROOT:-}" ] || [ "$(cat "$project/CLAUDE.md" 2>/dev/null)" = '@AGENTS.md' ] || why="$why CLAUDE.md is not the @AGENTS.md stub;"
-[ -n "$why" ] && printf 'lean-and-mean: %s needs the full pass —%s Run the lean-and-mean skill (%s) before the user task, then continue with it.\n' "$md" "$why" "$invoke"
+[ -n "$why" ] && printf 'lean-and-mean: %s needs the full pass —%s Run the lean-and-mean skill (%s) before the user task, then re-read AGENTS.md: it replaces the copy loaded at session start. Then continue with the task.\n' "$md" "$why" "$invoke"
 # Claude only: suggest the extras status line until ~/.claude/statusline.sh has its version line.
 sl="$(cd "$(dirname "$0")/.." && pwd)/extras/statusline.sh"
 [ -n "${PLUGIN_ROOT:-}" ] || [ ! -f "$sl" ] || grep -qxF "$(sed -n 2p "$sl")" "$HOME/.claude/statusline.sh" 2>/dev/null ||
-  printf 'lean-and-mean: ~/.claude/statusline.sh is missing or not the current extras version. Tell the user once, in one line, to install it: cp "%s" ~/.claude/statusline.sh && chmod +x ~/.claude/statusline.sh, plus "statusLine": {"type": "command", "command": "~/.claude/statusline.sh"} in ~/.claude/settings.json.\n' "$sl"
+  printf 'lean-and-mean: ~/.claude/statusline.sh is missing or not the current extras version. Tell the user once, in one line, to run /lean-and-mean:statusline.\n'
 exit 0

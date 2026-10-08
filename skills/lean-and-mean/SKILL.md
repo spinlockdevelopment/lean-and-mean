@@ -69,6 +69,8 @@ then without asking, report the one line, and carry on with the user's request.
    Operating Mode, Commands, Done, Rules, Next never move.
 8. Remove the `<!-- lean-and-mean: review -->` flag if present.
 9. Report one line: `<n> → <m> lines. cut: <X>. moved: <Y>. rules +<k>.`
+10. Mid-session, re-read `AGENTS.md` after the pass: the new file replaces
+    the copy the host loaded at session start. Follow only the new one.
 
 ## Structure
 

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>lean-and-mean guide</title>
-<meta name="description" content="lean-and-mean guide: /endsession, the session-start hook, the cost model, the session band mod and its cold-cache question, the explainer agent, and install details.">
+<meta name="description" content="lean-and-mean guide: /endsession, the session-start hook, the YAGNI ladder, AGENTS.md upkeep, the cost model, the Session Status Mod and its cold-cache question, the Explainer Agent, and install details.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,10 +17,38 @@
 <header>
   <div class="eyebrow"><a href="./">lean-and-mean</a> · Guide</div>
   <h1>Guide</h1>
-  <p class="lede">How the session handoff, the hook and the cost model work. Then the session band and the explainer agent. Utilities are on the <a href="extras.html">extras page</a>.</p>
+  <p class="lede">How the code rules, <code>AGENTS.md</code>, the session handoff and the hook work. Then the Session Status Mod and the Explainer Agent. Utilities are on the <a href="extras.html">extras page</a>.</p>
 </header>
 
-<p>On this page: <a href="#endsession">/endsession</a> · <a href="#hook">The session-start hook</a> · <a href="#cost">Why sessions should be short</a> · <a href="#band">Session band mod</a> · <a href="#explainer">explainer</a> · <a href="#manual">Install details</a> · <a href="extras.html">Extras</a></p>
+<p>On this page: <a href="#yagni">YAGNI ladder</a> · <a href="#agents">AGENTS.md</a> · <a href="#endsession">/endsession</a> · <a href="#hook">The session-start hook</a> · <a href="#cost">Why sessions should be short</a> · <a href="#band">Session Status Mod</a> · <a href="#explainer">Explainer Agent</a> · <a href="#manual">Install details</a> · <a href="extras.html">Extras</a></p>
+
+<h2 id="yagni">The YAGNI ladder</h2>
+<p>YAGNI means "you aren't gonna need it". Before writing code, the assistant stops at the first step that works:</p>
+<ol>
+  <li>Only <em>maybe</em> needed later? Skip it and say so.</li>
+  <li>Already in the project? Reuse it.</li>
+  <li>In the standard library? Use it.</li>
+  <li>Native to the platform (browser, OS, framework)? Use it.</li>
+  <li>An installed dependency does it? Use it.</li>
+  <li>Fits in one line? One line.</li>
+  <li>Otherwise, the smallest new code that works.</li>
+</ol>
+<p>Minimal never means careless. It never cuts input validation at trust boundaries, error handling against data loss, security, accessibility, or anything you asked for. Also:</p>
+<ul>
+  <li><b>Root cause.</b> A bug is fixed at the shared place it comes from, not in every caller.</li>
+  <li><b>Labeled shortcuts.</b> A deliberate shortcut gets a comment such as <code>// lean: up to 1,000 rows, stream if larger</code>: the limit, then what to do past it. <code>/lean-and-mean:lean-and-mean debt</code> lists them.</li>
+  <li><b>One runnable check</b> for logic with branches, loops, parsing, money or security.</li>
+  <li><b>A skipped note.</b> After code, at most three lines say what was left out and when to add it.</li>
+</ul>
+
+<h2 id="agents">AGENTS.md</h2>
+<p>One file holds the rules, the next task and the project facts. Codex loads it directly; Claude Code loads it through a <code>CLAUDE.md</code> that holds only <code>@AGENTS.md</code>.</p>
+<ul>
+  <li><b>Rules.</b> Each correction becomes one dated line. The cap is 15, so the list stays readable.</li>
+  <li><b>Next.</b> <code>## Next</code> names the next task, then a backlog sorted P1 to P3. History stays in <code>git log</code>.</li>
+  <li><b>Fixed layout.</b> Operating Mode, Project &amp; Stack, Commands, Architecture &amp; Layout, Done, Rules, Next, Notes &amp; Pointers, always in that order. A sub-project can keep its own <code>AGENTS.md</code> in the same layout.</li>
+  <li><b>250-line cap.</b> The file is resent on every request. Overflow moves to linked <code>agents-&lt;category&gt;.md</code> files.</li>
+</ul>
 
 <h2 id="endsession">/endsession</h2>
 <p>The last message of a session. It turns this session's mistakes and failed approaches into Rules, rewrites <code>## Next</code> and its backlog, flags a full review for the next session if the project's layout or commands changed, then commits and pushes, opening a PR when the branch is a feature branch or the default branch is protected. It never force-pushes. Then it prints a short summary of what was done, what was updated and what comes next. Then it stops.</p>
@@ -29,7 +57,7 @@
   <li><b>One question round.</b> It asks once, up front, about at most three deletes that would remove a Rule or P1 Next item it can't judge. Clearly stale entries are dropped without asking. It never asks whether to commit or push: running it is the yes.</li>
   <li><b>One memory.</b> In Claude Code, project <code>feedback</code> and <code>project</code> entries from built-in auto memory are moved into Rules or Next, then deleted, so the committed <code>AGENTS.md</code> is the single place lessons live. <code>user</code> and <code>reference</code> memories are left alone.</li>
   <li><b>Light on purpose.</b> Context is largest at the end of a session, so the full <code>AGENTS.md</code> review waits for the next session's fresh, cheap context. <code>/endsession</code> only leaves a <code>&lt;!-- lean-and-mean: review --&gt;</code> flag.</li>
-  <li><b>Definition of done.</b> <code>AGENTS.md</code> has a <code>## Done</code> section listing what finished means for this project, with exact commands: say, merge the PR with <code>gh pr merge --squash --delete-branch</code>, then <code>make deploy-staging</code>. It defaults to committed and pushed. When the session's work is complete (what you asked is finished, the project's tests pass, no open question), <code>/endsession</code> runs those steps in order after pushing, then deletes local branches already merged into the default branch with <code>git branch -d</code>. Otherwise, or when a step fails, <code>## Next</code> opens with <code>Not done: &lt;what remains&gt; — &lt;why&gt;</code>, so the next session picks it up. It only runs commands written in <code>## Done</code> or <code>## Commands</code>, never a deploy it guessed. The session band's timed auto end never ships.</li>
+  <li><b>Definition of done.</b> <code>AGENTS.md</code> has a <code>## Done</code> section listing what finished means for this project, with exact commands: say, merge the PR with <code>gh pr merge --squash --delete-branch</code>, then <code>make deploy-staging</code>. It defaults to committed and pushed. When the session's work is complete (what you asked is finished, the project's tests pass, no open question), <code>/endsession</code> runs those steps in order after pushing, then deletes local branches already merged into the default branch with <code>git branch -d</code>. Otherwise, or when a step fails, <code>## Next</code> opens with <code>Not done: &lt;what remains&gt; — &lt;why&gt;</code>, so the next session picks it up. It only runs commands written in <code>## Done</code> or <code>## Commands</code>, never a deploy it guessed. The Session Status Mod's timed auto end never ships.</li>
   <li><b>Safe push.</b> Files that look like secrets (<code>.env</code>, keys, credentials) are never staged; they are named in the summary. A push behind the remote stops without rebasing. Any other push failure gets one attempt, then <code>Unpushed: &lt;branch&gt; — &lt;reason&gt;</code> becomes the first line of <code>## Next</code>.</li>
 </ul>
 
@@ -38,80 +66,23 @@
 <div class="table-wrap"><table>
   <tr><th>Condition</th><th>What it prints</th></tr>
   <tr><td>Block missing from <code>AGENTS.md</code></td><td>The block itself, so the mode is active anyway, plus a nudge to run <code>/lean-and-mean</code></td></tr>
-  <tr><td>Block differs from the plugin's current copy (plugin updated)</td><td rowspan="4">An instruction to run the full <code>/lean-and-mean</code> pass before your first task</td></tr>
+  <tr><td>Block differs from the plugin's current copy (plugin updated)</td><td rowspan="4">An instruction to run the full <code>/lean-and-mean</code> pass before your first task, then re-read <code>AGENTS.md</code>: the new file replaces the copy the host loaded at start</td></tr>
   <tr><td><code>AGENTS.md</code> over 250 lines</td></tr>
   <tr><td><code>/endsession</code> left the review flag</td></tr>
   <tr><td>Claude Code: <code>CLAUDE.md</code> is anything but <code>@AGENTS.md</code></td></tr>
-    <tr><td>Anything else</td><td>Nothing</td></tr>
+  <tr><td>Claude Code: <code>~/.claude/statusline.sh</code> missing or its version line old</td><td>A one-line suggestion to run <code>/lean-and-mean:statusline</code></td></tr>
+  <tr><td>Anything else</td><td>Nothing</td></tr>
 </table></div>
-<p>The <code>CLAUDE.md</code> check is also the upgrade path: a 3.x project kept its block in <code>CLAUDE.md</code>, so the pass merges that file into <code>AGENTS.md</code> and writes the one-line stub. Anything added to <code>CLAUDE.md</code> later moves over the same way. A <code>CLAUDE.local.md</code> keeps working alongside the stub.</p>
+<p>The pass runs at session start, not in <code>/endsession</code>, because the context is small then and each call is cheap. The <code>CLAUDE.md</code> check is also the upgrade path: a 3.x project kept its block in <code>CLAUDE.md</code>, so the pass merges that file into <code>AGENTS.md</code> and writes the one-line stub. Anything added to <code>CLAUDE.md</code> later moves over the same way. A <code>CLAUDE.local.md</code> keeps working alongside the stub.</p>
 
 <h2 id="cost">Why sessions should be short</h2>
-<p>Every tool call resends the whole context as cache reads, so cost scales with requests × context size. Mean cost per request by context size:</p>
-<figure class="fig">
-  <svg viewBox="0 0 620 245" role="img" aria-labelledby="cost-t cost-d">
-    <title id="cost-t">Mean cost per request by context size</title>
-    <desc id="cost-d">Bar chart. Under 50K: $0.07. 50 to 100K: $0.08. 100 to 200K: $0.12. 200 to 400K: $0.19. Over 400K: $0.33. The table below holds the same numbers.</desc>
-    <g class="ln" stroke-width="1">
-      <line x1="60" y1="158.6" x2="610" y2="158.6"/>
-      <line x1="60" y1="107.1" x2="610" y2="107.1"/>
-      <line x1="60" y1="55.7" x2="610" y2="55.7"/>
-    </g>
-    <line x1="60" y1="210" x2="610" y2="210" stroke="currentColor" stroke-width="1"/>
-    <g class="mut" font-size="12" text-anchor="end">
-      <text x="52" y="214">$0</text>
-      <text x="52" y="162.6">$0.10</text>
-      <text x="52" y="111.1">$0.20</text>
-      <text x="52" y="59.7">$0.30</text>
-    </g>
-    <g class="acc">
-      <path class="bar" d="M84 210V178Q84 174 88 174H144Q148 174 148 178V210Z"><title>Under 50K: $0.07 per request</title></path>
-      <path class="bar" d="M196 210V173Q196 169 200 169H256Q260 169 260 173V210Z"><title>50–100K: $0.08 per request</title></path>
-      <path class="bar" d="M308 210V152Q308 148 312 148H368Q372 148 372 152V210Z"><title>100–200K: $0.12 per request</title></path>
-      <path class="bar" d="M420 210V116Q420 112 424 112H480Q484 112 484 116V210Z"><title>200–400K: $0.19 per request</title></path>
-      <path class="bar" d="M532 210V44Q532 40 536 40H592Q596 40 596 44V210Z"><title>Over 400K: $0.33 per request</title></path>
-    </g>
-    <g fill="currentColor" font-size="13" font-weight="600" text-anchor="middle">
-      <text x="116" y="168">$0.07</text>
-      <text x="228" y="163">$0.08</text>
-      <text x="340" y="142">$0.12</text>
-      <text x="452" y="106">$0.19</text>
-      <text x="564" y="34">$0.33</text>
-    </g>
-    <g class="mut" font-size="12" text-anchor="middle">
-      <text x="116" y="230">Under 50K</text>
-      <text x="228" y="230">50–100K</text>
-      <text x="340" y="230">100–200K</text>
-      <text x="452" y="230">200–400K</text>
-      <text x="564" y="230">Over 400K</text>
-    </g>
-  </svg>
-  <figcaption>Cost per request rises with context size. Over 400K, one request costs four times one under 100K.</figcaption>
-</figure>
-<div class="table-wrap"><table>
-  <thead><tr><th>Context</th><th class="num">Under 50K</th><th class="num">50–100K</th><th class="num">100–200K</th><th class="num">200–400K</th><th class="num">Over 400K</th></tr></thead>
-  <tbody>
-    <tr class="hl"><td>Per request</td><td class="num">$0.07</td><td class="num">$0.08</td><td class="num">$0.12</td><td class="num">$0.19</td><td class="num">$0.33</td></tr>
-  </tbody>
-</table></div>
-<p>A request over 400K costs four times one under 100K. Restarting at task boundaries keeps requests in the cheap columns; a fresh session's first request costs a median $0.27.</p>
-<p><b>Walking away is the expensive part.</b> The cache lasts an hour. After that, the next turn re-writes the whole context at 2× input. Across 29 measured cold resumes the median cost $1.21, 4.5× a fresh start, and the worst, at 455K, cost $8.79. Compaction doesn't help: it fires late, after the large-context turns are paid for, and its summary is lossy. <code>/endsession</code> writes a deliberate handoff for a median $0.27 (max $2.19), so end at task boundaries and before any break.</p>
-<p><b>Unrequested code is paid three times:</b> as output (a 150-line speculative helper with tests is ~3K tokens, ~$0.15 on Fable), as context on every later turn (~$0.15 more over 200 requests), and in review and maintenance, which is the real cost.</p>
-<p><b>Concise prose is for readability, not cost.</b> Output, code and thinking included, is 18% of measured spend; cache reads are 56% and cache writes 26%. Trimming chat prose saves a few percent.</p>
-<div class="table-wrap"><table>
-  <thead><tr><th>Per million tokens</th><th class="num">Fable 5.1</th><th class="num">Opus 5.5</th></tr></thead>
-  <tbody>
-    <tr><td>Output</td><td class="num">$50</td><td class="num">$20</td></tr>
-    <tr><td>Cache write, 1-hour (2× input)</td><td class="num">$20</td><td class="num">$8</td></tr>
-    <tr><td>Cache read</td><td class="num">$0.25</td><td class="num">$0.20</td></tr>
-  </tbody>
-</table></div>
-<p class="note">Measured from the maintainer's session logs: 63 Claude Code sessions, 5,197 requests, 2026-09-03 to 2026-10-03, mostly Opus 5, Opus 5.5 and Fable 5.1, priced at the API list rates above. The code-cost example above is modeled. Most requests ran on Opus 5, whose cache reads cost $0.50; on Opus 5.5 at $0.20 the absolute figures are lower. Advisor calls may be undercounted. Not a subscription billing model or a Codex pricing claim; actual costs depend on host, model, caching and context policy.</p>
+<p>Every tool call resends the whole context, so cost scales with requests × context size. In the maintainer's logs (63 sessions, Sept–Oct 2026, API list prices), a request over 400K context cost 4× one under 100K, and a resume after the one-hour cache expired cost a median 4.5× a fresh start. <code>/endsession</code> writes the handoff for a median $0.27. So end at task boundaries and before breaks.</p>
+<p class="note">Measured, not a billing model; actual costs depend on host, model and caching.</p>
 
-<h2 id="band">Session band mod</h2>
-<p>The session band is a row above the Claude Code prompt. It is a mod: a plugin module of function hooks that runs inside the session. The code is <code>hooks/register.tsx</code>, with helpers in <code>hooks/judge.ts</code>. <code>hooks/hooks.json</code> lists it under <code>modules</code>. It is the only plugin code that runs on every turn.</p>
-<p>It is Claude Code only and on by default. Turn it off in <code>/config</code> under Session band. Codex ignores it. It writes nothing to your project; its state lives in Claude Code's plugin storage.</p>
-<pre class="mock" aria-label="Session band example"><code>exp. 42m
+<h2 id="band">Session Status Mod</h2>
+<p>The Session Status Mod is a row above the Claude Code prompt. It is a mod: a plugin module of function hooks that runs inside the session. The code is <code>hooks/register.tsx</code>, with helpers in <code>hooks/judge.ts</code>. <code>hooks/hooks.json</code> lists it under <code>modules</code>. It is the only plugin code that runs on every turn.</p>
+<p>It is Claude Code only and on by default. Turn it off in <code>/config</code> under Session Status Mod. Codex ignores it. It writes nothing to your project; its state lives in Claude Code's plugin storage.</p>
+<pre class="mock" aria-label="Session Status Mod example"><code>exp. 42m
 tasks 2/3   [ hide tasks ]  [ end session ]
   ✓ Fix the login redirect
   ✓ Add a test for it
@@ -125,11 +96,11 @@ tasks 2/3   [ hide tasks ]  [ end session ]
 </ul>
 
 <h3>The cache clock</h3>
-<p>The prompt cache lasts one hour. Each main turn restarts that hour. The band tracks it and acts at two points:</p>
+<p>The prompt cache lasts one hour. Each main turn restarts that hour. The mod tracks it and acts at two points:</p>
 <figure class="fig">
   <svg viewBox="0 0 680 130" role="img" aria-labelledby="clock-t clock-d">
     <title id="clock-t">The one-hour cache clock</title>
-    <desc id="clock-d">At 0 minutes the last turn ends. At 50 minutes the desktop countdown turns yellow. At 55 minutes the band runs /endsession auto. At 60 minutes the cache is cold.</desc>
+    <desc id="clock-d">At 0 minutes the last turn ends. At 50 minutes the countdown turns red. At 55 minutes the mod runs /endsession auto. At 60 minutes the cache is cold.</desc>
     <line class="ln" x1="40" y1="70" x2="523" y2="70" stroke-width="8"/>
     <line class="acc-s" x1="523" y1="70" x2="620" y2="70" stroke-width="8"/>
     <g stroke="currentColor" stroke-width="1.5">
@@ -149,15 +120,15 @@ tasks 2/3   [ hide tasks ]  [ end session ]
       <text x="620" y="48" class="mut" font-size="12" text-anchor="end">cache cold</text>
     </g>
   </svg>
-  <figcaption>Five minutes before the cache goes cold, the band runs <code>/endsession</code> itself. Rules and Next are saved while the context is still cheap to read.</figcaption>
+  <figcaption>Five minutes before the cache goes cold, the mod runs <code>/endsession</code> itself. Rules and Next are saved while the context is still cheap to read.</figcaption>
 </figure>
 <ul>
-  <li><b>Auto end.</b> At 55 minutes, the band runs <code>/lean-and-mean:endsession auto</code>. It commits and pushes, but <code>auto</code> means it never ships. It fires only if no turn is running and you sent a real prompt since the last <code>/endsession</code>. Any <code>/endsession</code>, typed, button or auto, disarms it until your next real prompt.</li>
-  <li><b>Countdown.</b> The top line of the band shows the time left, such as <code>exp. 42m</code>, in the terminal and the desktop app. It is green above 30 minutes, yellow above 15, orange above 10, and red after that.</li>
+  <li><b>Auto end.</b> At 55 minutes, the mod runs <code>/lean-and-mean:endsession auto</code>. It commits and pushes, but <code>auto</code> means it never ships. It fires only if no turn is running and you sent a real prompt since the last <code>/endsession</code>. Any <code>/endsession</code>, typed, button or auto, disarms it until your next real prompt.</li>
+  <li><b>Countdown.</b> The top line of the mod shows the time left, such as <code>exp. 42m</code>, in the terminal and the desktop app. It is green above 30 minutes, yellow above 15, orange above 10, and red after that.</li>
 </ul>
 
 <h3>The cold-cache question</h3>
-<p>After the hour, the next request resends the whole context at full price. So the band asks before it sends a prompt into a cold cache:</p>
+<p>After the hour, the next request resends the whole context at full price. So the mod asks before it sends a prompt into a cold cache:</p>
 <figure class="fig">
   <svg viewBox="0 0 700 420" role="img" aria-labelledby="cold-t cold-d">
     <title id="cold-t">What happens to a prompt sent into a cold cache</title>
@@ -212,7 +183,7 @@ tasks 2/3   [ hide tasks ]  [ end session ]
   <li><b>Dismissing</b> the question sends the prompt. A cache miss is better than a lost prompt.</li>
 </ul>
 
-<h2 id="explainer">explainer</h2>
+<h2 id="explainer">Explainer Agent</h2>
 <p>A subagent, Claude Code only, that writes <code>.pages/&lt;slug&gt;.html</code>: one self-contained page for an answer too long or too structural for the terminal. The Operating Mode block tells Claude to explain in the cheapest form that works: a sentence, then a diagram, then a page. Call it directly with <code>@agent-lean-and-mean:explainer</code>.</p>
 <ul>
   <li><b>Answer first.</b> A short summary on top, then sections, in concise, active sentences that broadly follow ASD-STE100.</li>
