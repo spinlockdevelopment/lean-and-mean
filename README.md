@@ -54,7 +54,7 @@ Local checkouts, manual installs, and Codex notes:
 | `/lean-and-mean:lean-and-mean debt` | `$lean-and-mean debt` | List every `// lean:` shortcut with its upgrade path |
 | `/lean-and-mean:endsession` | `$endsession` | Save Rules and Next, commit, push, and run `## Done` steps when the work is complete. Then stop. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#endsession) |
 | Session Status Mod | — | Colored cache countdown on top, task checklist, End session button, auto `/endsession` with 5 minutes of cache left, a Rehydrate / Clear first question when the cache has gone cold. Off in `/config`. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#band) |
-| `@agent-lean-and-mean:explainer` | — | Explainer Agent: local `.pages/<slug>.html` explainer page with inline SVG diagrams |
+| `@agent-lean-and-mean:explainer` | — | Explainer Agent: local `.pages/<slug>.html` page, written as short Markdown and rendered by the [explainer kit](https://spinlockdevelopment.github.io/lean-and-mean/explainer/) |
 
 A manual install into `~/.claude/skills/` gives the bare `/lean-and-mean` and
 `/endsession`.

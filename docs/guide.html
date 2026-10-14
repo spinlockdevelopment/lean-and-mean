@@ -184,12 +184,12 @@ tasks 2/3   [ hide tasks ]  [ end session ]
 </ul>
 
 <h2 id="explainer">Explainer Agent</h2>
-<p>A subagent, Claude Code only, that writes <code>.pages/&lt;slug&gt;.html</code>: one self-contained page for an answer too long or too structural for the terminal. The Operating Mode block tells Claude to explain in the cheapest form that works: a sentence, then a diagram, then a page. Call it directly with <code>@agent-lean-and-mean:explainer</code>.</p>
+<p>A subagent, Claude Code only, that writes <code>.pages/&lt;slug&gt;.html</code>: one page for an answer too long or too structural for the terminal. The Operating Mode block tells Claude to explain in the cheapest form that works: a sentence, then a diagram, then a page. Call it directly with <code>@agent-lean-and-mean:explainer</code>.</p>
 <ul>
-  <li><b>Answer first.</b> A short summary on top, then sections, in concise, active sentences that broadly follow ASD-STE100.</li>
-  <li><b>Diagrams replace paragraphs.</b> Flows, structures and comparisons are inline SVG with a text label. Tables carry options and trade-offs.</li>
-  <li><b>Style, asked once.</b> On first use the agent replies <code>STYLE?</code>; Claude asks you for dark or light, dense or airy, and one accent colour. The agent saves it in its user memory.</li>
-  <li><b>Contained.</b> No network requests; it can read the project but writes only <code>.pages/</code>, which it gitignores. It states only facts it was given or read, with paths. It has no shell access.</li>
+  <li><b>Markdown only.</b> The agent writes a three-line shell and a Markdown body. The <a href="explainer/">explainer kit</a> renders it: type, both themes, contents rail, code highlighting, Mermaid diagrams and fifteen components. A page costs a fraction of the tokens of hand-written HTML and SVG.</li>
+  <li><b>Answer first.</b> The first paragraph becomes the summary box. Sections follow, in concise, active sentences that broadly follow ASD-STE100.</li>
+  <li><b>Style, asked once.</b> On first use the agent replies <code>STYLE?</code>; Claude asks you for dark, light or auto, dense or airy, and one accent colour. The agent saves it in its user memory.</li>
+  <li><b>Network.</b> Pages load the kit from this site and its libraries from cdnjs and jsDelivr, at pinned versions. Offline, the browser shows the Markdown source. The agent reads the project but writes only <code>.pages/</code>, which it gitignores, and has no shell access.</li>
 </ul>
 
 <h2 id="manual">Install details</h2>

@@ -34,7 +34,7 @@ block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
 CLAUDE.md) so it runs natively; `/endsession` promotes session mistakes
 into Rules, rewrites Next, commits, pushes (PR if needed), then hard-stops. Full
 AGENTS.md review runs at next session start when the hook says it is due.
-v5.8.0, published via the spinlockdevelopment/lean-and-mean marketplace.
+v5.9.0, published via the spinlockdevelopment/lean-and-mean marketplace.
 - POSIX sh (one hook), Markdown skills, JSON manifests, one TSX function-hooks module (Claude only). Python stdlib tests for the hook; `claude plugin test` for the module.
 - Version bump in all three manifests together. Breaking behavior → major.
 - Hook stays POSIX sh, under 35 lines, zero output in the common case.
@@ -71,7 +71,10 @@ prose the model follows. The Session Status Mod (code name: session band) is the
 | `extras/statusline.sh` | Optional bash+jq status line, installed by `/lean-and-mean:statusline` (plugins can't set `statusLine`); no cache countdown, the band has it |
 | `tests/session-band.test.ts`, `tests/band-module.test.tsx` | Band parser, countdown color and auto-end threshold tests; module tests with a stubbed Haiku judge, hide toggle, mocked-clock auto-end and countdown, and the `sessionBand: false` toggle (`claude plugin test .`) |
 | `tests/test_session_start.py` | Hook tests: both hosts, stub check, 3.x and 5.6 layouts, status line note; fake HOME |
-| `agents/explainer.md` | Local explainer-page subagent (`.pages/`, STE prose, inline SVG); `STYLE?` round trip |
+| `agents/explainer.md` | Local explainer-page subagent: writes `.pages/<slug>.html` as a kit shell + Markdown; holds the component cheat sheet; `STYLE?` round trip |
+| `docs/explainer/v1/kit.js`, `kit.css` | Explainer kit, served from Pages: renders the `<xmp>` Markdown body, components, themes; loads marked, highlight.js (cdnjs), mermaid (jsDelivr) |
+| `docs/explainer/index.html` | Kit showcase and visual test, written in the kit's own syntax; every component once |
+| `tests/test_explainer_kit.py` | Kit parser tests through `node` (style, frontmatter, items, grid, tree, path chips) |
 | `hooks/hooks.json` | Wires the hook via `${CLAUDE_PLUGIN_ROOT}` and the band under `modules` |
 | `docs/index.html` | GitHub Pages overview; GitHub link in top bar, raw SKILL.md links, inline links into `guide.html` |
 | `docs/guide.html` | Pages deep dive: YAGNI ladder, AGENTS.md, /endsession, hook, brief cost note, Session Status Mod, Explainer Agent, install details |
@@ -91,7 +94,7 @@ prose the model follows. The Session Status Mod (code name: session band) is the
 - On Fable, spawn subagents as fresh agents with `model: opus` or `sonnet` (Sonnet 5.5 via the alias, `effort: medium` in agent files; planner's pick), never `fork`: forks inherit Fable and ignore the override. Fable only when the user asks. Fable output costs 2× Opus, 5× Sonnet. 2026-09-17
 - Jev is OpenRouter-only: no `OPENROUTER_JEV_API_KEY` means don't use Jev, never fall back to `TYPESAFE_API_KEY` or `api.typesafe.ai`. typesafe-ai stays disabled (out of the Operating Mode block, `disable-model-invocation: true`) until the user asks to check it again. Jev is on OpenRouter at `/api/alpha/decisions`, absent from `/api/v1/models`: check provider docs before calling a model unavailable. 2026-10-01
 - Size card grids to divide the card count (4 cards → 2×2), not `auto-fit`. Auto-fit wrapped four cards to 3+1 on the Pages site. 2026-09-17
-- Shell limits: hand the user a `!` command for pushes of third-party routing text and for `git restore` of their changes (auto mode blocks both; retrying wastes turns); `source ~/.zshrc` in the same Bash call after they add an env var (the tool env is snapshotted at session start). 2026-09-28. The Bash tool is zsh: never start a word with `=` (`echo ====` died as a `=cmd` expansion 2026-10-06).
+- Shell limits: hand the user a `!` command for pushes of third-party routing text and for `git restore` of their changes (auto mode blocks both; retrying wastes turns); `source ~/.zshrc` in the same Bash call after they add an env var (the tool env is snapshotted at session start). 2026-09-28. The Bash tool is zsh: never start a word with `=` (`echo ====` died as a `=cmd` expansion 2026-10-06). Check pages with headless Chrome (`--screenshot`, `--virtual-time-budget`) against a `run_in_background` http.server: the Chrome extension showed an error page for localhost, a `&` server died with its shell, and headless floors the viewport at 500px, so test phone width in a 390px iframe. 2026-10-14
 - In this repo, a stale-block notice from the hook means the installed plugin is older than the repo: report the pass as a no-op, never paste the installed block back. 5.2.0 installed vs 5.3.0 repo fired it 2026-10-05.
 - Plugin agents can't enforce a folder scope: they ignore `hooks` and `permissionMode`, and `tools` takes names only. Scope by instruction plus omitting Bash. 2026-09-28
 - Read x.com posts via `curl -s https://api.fxtwitter.com/<user>/status/<id>`. WebFetch on x.com returns 402. 2026-09-30
@@ -102,7 +105,7 @@ prose the model follows. The Session Status Mod (code name: session band) is the
 - Default to a minor version bump; major only when the user agrees the change is breaking. 5.0.0 was called too aggressive for an additive release. 2026-10-03
 
 ## Next
-After 5.8.0 is published, update and restart. Check the Pages site: `md.html` renders all four skill tabs (statusline appears only after push), the session diagram reads "AGENTS.md current?", the guide's new `#yagni` and `#agents` anchors resolve. Run `/lean-and-mean:statusline` on this machine (it should ask before replacing `statusline-command.sh`). Still unverified from 5.7.0: band countdown colors, auto-end at 55m, cold-cache question, `/config` toggle.
+After 5.9.0 is pushed: open `https://spinlockdevelopment.github.io/lean-and-mean/explainer/` and confirm the kit renders from Pages; trial-run `@agent-lean-and-mean:explainer` on one topic (delete `~/.claude/agent-memory/explainer/` after), and compare its output size with `.pages/session-band.html` (26 KB). Then update and restart. Check the Pages site: `md.html` renders all four skill tabs (statusline appears only after push), the session diagram reads "AGENTS.md current?", the guide's new `#yagni` and `#agents` anchors resolve. Run `/lean-and-mean:statusline` on this machine (it should ask before replacing `statusline-command.sh`). Still unverified from 5.7.0: band countdown colors, auto-end at 55m, cold-cache question, `/config` toggle.
 - P2 — decide on `/lean-and-mean debt`: keep or drop (see `.pages/lean-debt.html`; the `// lean:` marker rule stays either way).
 - P2 — compress Rules with the user, carefully (the mods rule is ~10 lines); no merges without asking.
 - P3 — confirm: append `rate_limits.five_hour.used_percentage` with a timestamp to a log in `extras/statusline.sh`, so plan-limit questions get measured numbers. Only usage-scan candidate worth adding.

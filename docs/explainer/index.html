@@ -1,0 +1,202 @@
+<!doctype html><meta charset="utf-8"><title>Explainer Kit</title>
+<script src="v1/kit.js" data-style="auto dense #2b6cb0"></script>
+<xmp>
+---
+eyebrow: lean-and-mean · explainer kit v1
+date: 2026-10-14T09:00:00+02:00
+---
+# Explainer Kit
+
+The explainer agent writes a short Markdown body. This kit turns it into a finished page: type, both themes, contents rail, diagrams, code highlighting and fifteen components. This page uses every component and is 6 KB of Markdown; the hand-written session band page was 26 KB.
+
+## Page shell
+
+Every page is three lines plus Markdown. The `data-style` value is the saved style: theme, density, accent.
+
+```html .pages/session-band.html:1
+<!doctype html><meta charset="utf-8">
+<script src="https://spinlockdevelopment.github.io/lean-and-mean/explainer/v1/kit.js" data-style="dark dense #14b8a6"></script>
+<xmp>
+---
+date: 2026-10-14T09:00:00+02:00
+---
+# Session band
+First paragraph after the title becomes the summary box.
+## Sections …
+<\/xmp>
+```
+
+```flow
+Agent writes Markdown (a few KB) -> kit.js renders (from Pages) -> marked + highlight.js (cdnjs) -> mermaid (jsDelivr, only if used)
+```
+
+```stats
+6 KB | this page, as written | session band: 26 KB
+15 | components
+2 | themes, auto by default
+0 | build steps
+```
+
+```note Offline
+The body sits in an `<xmp>` element. With no network, the browser shows the Markdown as plain text, so the page still reads.
+```
+
+## Components
+
+Each component is a fenced block. The word after the fence picks it; the rest of that line is its argument. Multi-item components start each item with `# Title`.
+
+```cards
+# Callouts
+`note`, `tip`, `warn`, `risk`, `ok`, `why`. Argument: the title.
+# Cards
+`cards`: one card per `# Title`. Columns divide the count.
+# Stats
+`stats`: `value | label | delta`. A `+` or `−` delta takes a color.
+# Compare
+`compare`: options as `# Title`; end a title with ` *` to mark the pick. Lines `+`, `-`, `=` are pros, cons, neutral.
+```
+
+````tabs
+# Callouts
+```tip Why fences
+Models emit fenced blocks reliably, and the source stays readable as plain Markdown.
+```
+```warn
+A component fence cannot hold a fence of the same length. Use four backticks outside, three inside.
+```
+```risk Breaking change
+Syntax changes go to `v2/`; `v1` pages keep their look.
+```
+# Steps
+```steps
+# Write the body
+The agent writes Markdown with component fences.
+# Load the kit
+One script tag; it loads CSS, fonts and libraries.
+# Render
+Contents rail, progress bar, theme toggle and copy buttons wire themselves.
+```
+# Timeline
+```timeline
+2026-10-03 | Explainer agent added, hand-written HTML and SVG.
+2026-10-05 | First real page: `.pages/session-band.html`, 26 KB.
+2026-10-14 | Kit v1: the agent writes Markdown only.
+```
+````
+
+## Code and files
+
+Inline code that looks like a path, such as `hooks/register.tsx:42` or `agents/explainer.md`, becomes a path chip. A code fence takes a language and a path; a `:line` suffix numbers the lines from there.
+
+```ts hooks/judge.ts:12
+export async function judge(prompt: string): Promise<Item[]> {
+  const res = await $.model({ model: 'haiku', prompt }); // alias, never a pinned id
+  return parse(res.text) ?? [];
+}
+```
+
+````diff
+- <svg viewBox="0 0 640 220"> … 140 lines of paths … </svg>
++ ```mermaid
++ flowchart LR; A-->B
++ ```
+````
+
+```tree
+docs/
+  explainer/
+    index.html      # this page, written in the kit's own syntax
+    v1/
+      kit.js        # renderer, components, behavior
+      kit.css       # the design language: tokens, themes, components
+agents/
+  explainer.md      # the agent; holds the syntax cheat sheet
+```
+
+## Diagrams
+
+Mermaid covers flows, sequences, states and entity relations. It loads only when a page has a `mermaid` fence and takes its colors from the page theme. The argument is the caption. Hover a diagram to enlarge it.
+
+```mermaid The page lifecycle
+flowchart LR
+  A[Caller passes facts] --> B{STYLE saved?}
+  B -- no --> C[Reply STYLE?]
+  B -- yes --> D[Write .pages/slug.html]
+  D --> E[Browser loads kit.js]
+  E --> F[Rendered page]
+```
+
+```mermaid Theme toggle
+sequenceDiagram
+  participant U as Reader
+  participant K as kit.js
+  participant M as mermaid
+  U->>K: Click theme
+  K->>K: Set data-theme, save choice
+  K->>M: Re-render with new colors
+```
+
+```layers
+Page | three-line shell and Markdown body, written by the agent
+kit.js | parses fences, wires tabs, theme, contents, copy, zoom
+kit.css | tokens, light and dark, dense and airy
+CDN libraries | marked, highlight.js, mermaid; pinned versions
+```
+
+## Data
+
+```bars KB
+Hand-written page (session band) | 26
+This page, every component | 6
+kit.js + kit.css, cached once | 51
+```
+
+| Feature | Hand-written | Kit |
+|---|---|---|
+| Both themes | partial | yes |
+| Contents rail | no | yes |
+| Diagrams | yes | yes |
+| Works offline | yes | partial |
+| Page size | 26 KB | 6 KB |
+
+## Choosing a component
+
+```compare
+# Mermaid *
++ Ten lines for a full flowchart
++ Follows the theme
+- Needs the network once
+# Inline SVG
++ Exact layout control
+= Use classes `fill-surface`, `stroke-accent`
+- Hundreds of tokens per diagram
+# flow fence
++ One line
++ No library
+- Linear chains only
+```
+
+```defs
+Kit: `kit.js` plus `kit.css`, served from GitHub Pages under a versioned path.
+Shell: the three lines before the Markdown body.
+Style: theme, density and accent, saved once in the agent's memory.
+Component: a fenced block whose language word the kit knows.
+```
+
+```faq
+# Does the page need the internet?
+Yes, to render. Without it, the browser shows the Markdown source, which still reads.
+# Can a page use raw HTML?
+Yes. Markdown passes HTML through, so a hand-drawn `<svg>` still works.
+# What if a fence word is unknown?
+The kit treats it as a code language and shows a highlighted block.
+```
+
+```why Design choices
+Neutrals lean toward the accent, so any accent gives a coherent page. Paths and line numbers get mono chips, because these pages explain code.
+```
+
+```ok
+This page is the visual test for the kit: every component appears here once.
+```
+</xmp>
