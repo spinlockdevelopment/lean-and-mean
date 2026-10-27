@@ -79,7 +79,7 @@ prose the model follows. The Session Status Mod (code name: session band) is the
 | `docs/index.html` | GitHub Pages overview; GitHub link in top bar, raw SKILL.md links, inline links into `guide.html` |
 | `docs/guide.html` | Pages deep dive: YAGNI ladder, AGENTS.md, /endsession, hook, brief cost note, Session Status Mod, Explainer Agent, install details |
 | `docs/md.html` | Renders the skill Markdown from `main` (marked via cdnjs); `?f=` picks from a fixed list |
-| `docs/extras.html` | Pages extras: commands for status line and typesafe-ai; README and index link it in one line |
+| `docs/extras.html` | Pages extras: status line, Explainer Agent, typesafe-ai; README and index link it in one line |
 | `docs/style.css` | Shared Pages styles |
 | `.claude-plugin/`, `.codex-plugin/` | Claude plugin.json + marketplace.json, Codex plugin.json; versions must match |
 | `AGENTS.md`, `CLAUDE.md` | This file, committed; CLAUDE.md is the `@AGENTS.md` stub |

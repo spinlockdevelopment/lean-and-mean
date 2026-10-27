@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>lean-and-mean extras</title>
-<meta name="description" content="Optional lean-and-mean utilities: a terminal status line for a new machine, and the bundled typesafe-ai skill.">
+<meta name="description" content="Optional lean-and-mean utilities: a terminal status line for a new machine, the Explainer Agent, and the bundled typesafe-ai skill.">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -23,9 +23,10 @@
 <div class="table-wrap"><table>
   <tr><th>Command</th><th>Effect</th></tr>
   <tr><td><code>/lean-and-mean:statusline</code></td><td>Install the <a href="#statusline">status line</a> into <code>~/.claude</code></td></tr>
+  <tr><td><code>@agent-lean-and-mean:explainer</code></td><td>Write a local <a href="#explainer">explainer page</a> with diagrams</td></tr>
   <tr><td><code>/lean-and-mean:typesafe-ai</code></td><td>Build a feature on Jev with the <a href="#typesafe">typesafe-ai</a> skill</td></tr>
 </table></div>
-<p>Both run only when you type them; the assistant never starts them on its own.</p>
+<p>The two slash commands run only when you type them. The assistant can call the Explainer Agent on its own when an answer is too long for the terminal.</p>
 
 <h2 id="statusline">Status line</h2>
 <p><code>extras/statusline.sh</code> sets up a terminal status line on a new machine. It shows the folder, branch, model, context use and the 5-hour limit. The Session Status Mod shows the cache countdown, so the status line does not.</p>
@@ -35,6 +36,10 @@
 <pre><code>/lean-and-mean:statusline</code></pre>
 <p>It copies the script to <code>~/.claude/statusline.sh</code> and adds this to <code>~/.claude/settings.json</code>, asking first if another status line is set:</p>
 <pre><code>"statusLine": { "type": "command", "command": "~/.claude/statusline.sh" }</code></pre>
+
+<h2 id="explainer">Explainer Agent</h2>
+<p>A subagent, Claude Code only, that writes <code>.pages/&lt;slug&gt;.html</code>: one local page with diagrams for an answer too long or too structural for the terminal. It writes a three-line shell and a Markdown body; the <a href="explainer/">explainer kit</a> does the design. On first use it asks for your style once. <a href="guide.html#explainer">Details</a>.</p>
+<pre><code>@agent-lean-and-mean:explainer explain how the session-start hook decides what to print</code></pre>
 
 <h2 id="typesafe">typesafe-ai</h2>
 <p>A bundled copy of <a href="https://github.com/typesafe-ai/skills">TypeSafe AI's skill</a> for building app features on Jev, their System One model. Jev doesn't generate text: it takes natural language plus application state and returns typed answers and probabilities, such as yes/no or pick-one, that ordinary code can combine. It fits routing, ranking, extraction, verification, or anywhere a prompt-and-parse step could become a structured decision.</p>
