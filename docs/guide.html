@@ -91,7 +91,7 @@ tasks 2/3   [ tasks ]  [ end session ]</code></pre>
 ☐ Update the changelog</code></pre>
 <ul>
   <li><b>Task checklist.</b> After each answered turn, Haiku updates the list. It adds the tasks you asked for and ticks the ones the reply shows finished. It runs at low effort with an 8-second cap. A malformed reply keeps the old list.</li>
-  <li><b>Tasks pane.</b> The checklist lives in a pane, and the row keeps only its count, such as <code>tasks 2/3</code>. It opens by itself with the first task when the terminal is at least 144 columns wide, or 110 once you have opened it; narrower, it waits for you to press <b>tasks</b>. In the fullscreen layout it docks beside the transcript; on the main screen (tmux) it sits inline above the prompt. Press <b>tasks</b> again to close it. The desktop app shows it as a sidebar.</li>
+  <li><b>Tasks pane.</b> The checklist lives in a pane, and the row keeps only its count, such as <code>tasks 2/3</code>. It opens by itself with the first task when the terminal is at least 144 columns wide, or 110 once you have opened it; narrower, it waits for you to press <b>tasks</b>. In the fullscreen layout it docks beside the transcript; on the main screen (tmux) it sits inline above the prompt. Press <b>tasks</b> again to close it. The desktop app places it in its own layout.</li>
   <li><b>End session button.</b> It runs <code>/lean-and-mean:endsession</code>. If the command cannot run, it fills the prompt box with it instead.</li>
   <li><b>Nudge.</b> When every task is done, you get a toast and the End session button turns primary. Your next prompt then tells Claude to suggest <code>/endsession</code> first, once per finished list.</li>
   <li><b>Reset.</b> <code>/clear</code> empties the checklist and the cache timer.</li>
