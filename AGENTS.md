@@ -10,17 +10,21 @@ for status. Explain in the cheapest form that lands: a sentence; a diagram
 for a mechanism, flow, or structure; an HTML page for long or revisited
 material. Never state the audience, level, or style; write that way.
 
-Code — YAGNI ladder, stop at first rung that holds:
+Code — first list every place the change must reach (callers, tests,
+fixtures, config) and what it could break: that is scope, extras are not.
+Then the YAGNI ladder, stop at first rung that holds:
 1. Speculative? Skip it, say so.  2. Already in repo? Reuse.  3. Stdlib? Use it.
-4. Native platform feature? Use it.  5. Installed dep? Use it.  6. One line?
-One line.  7. Else minimum new code.
+4. Native platform feature? Use it.  5. Installed dep? Use it.  6. One line a
+reader gets at a glance? One line.  7. Else minimum new code.
 
+Lazy about the solution, never the change: finish what it breaks.
 Bug fix = root cause at the shared call site, not per caller.
+Moved code keeps its validation and error handling.
 Mark shortcuts `// lean: <ceiling>, <upgrade path>`.
 Never cut: input validation at trust boundaries, error handling against data
 loss, security, accessibility, anything explicitly requested.
 Non-trivial logic (branch/loop/parser/money/security) leaves one runnable check.
-After code: ≤3 lines — what was skipped, when to add it.
+After code: ≤3 lines — skipped or unchecked, any risk, when to add it.
 
 Rules below are binding: read them before acting in their area, never
 re-litigate. A correction or failed approach this session becomes one new
@@ -34,7 +38,7 @@ block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
 CLAUDE.md) so it runs natively; `/endsession` promotes session mistakes
 into Rules, rewrites Next, commits, pushes (PR if needed), then hard-stops. Full
 AGENTS.md review runs at next session start when the hook says it is due.
-v5.9.0, published via the spinlockdevelopment/lean-and-mean marketplace.
+v5.10.0, published via the spinlockdevelopment/lean-and-mean marketplace.
 - POSIX sh (one hook), Markdown skills, JSON manifests, one TSX function-hooks module (Claude only). Python stdlib tests for the hook; `claude plugin test` for the module.
 - Version bump in all three manifests together. Breaking behavior → major.
 - Hook stays POSIX sh, under 35 lines, zero output in the common case.
@@ -67,9 +71,9 @@ prose the model follows. The Session Status Mod (code name: session band) is the
 | `skills/endsession/agents/openai.yaml` | Codex metadata for `$endsession` |
 | `skills/typesafe-ai/` | Copy of TypeSafe AI's skill (MIT, their credit), Jev routed via OpenRouter; disabled (`disable-model-invocation: true`); an extra, documented only in `docs/extras.html`; resync from `vendor/typesafe-ai-skills` submodule |
 | `hooks/session-start.sh` | Only hook; silent unless block missing, full pass due, or status line not current (Claude only) |
-| `hooks/register.tsx`, `hooks/judge.ts`, `types/index.d.ts` | Session Status Mod, code name session band (Claude only): cache countdown on top on every surface (green >30m, yellow >15m, orange >10m, red), Haiku-judged checklist with hide toggle, End session button, auto `/endsession auto` (never ships) at 5m cache left; cold-cache question on the next prompt (Rehydrate / Clear first); `userConfig.sessionBand` toggles it |
+| `hooks/register.tsx`, `hooks/judge.ts`, `types/index.d.ts` | Session Status Mod, code name session band (Claude only): cache countdown on top on every surface (green >30m, yellow >15m, orange >10m, red), Haiku-judged checklist in a `session-tasks` pane (opens with the first task, docks beside the transcript in fullscreen ≥110/144 cols, `tasks` button toggles), End session button, auto `/endsession auto` (never ships) at 5m cache left; cold-cache question on the next prompt (Rehydrate / Clear first); `userConfig.sessionBand` toggles it |
 | `extras/statusline.sh` | Optional bash+jq status line, installed by `/lean-and-mean:statusline` (plugins can't set `statusLine`); no cache countdown, the band has it |
-| `tests/session-band.test.ts`, `tests/band-module.test.tsx` | Band parser, countdown color and auto-end threshold tests; module tests with a stubbed Haiku judge, hide toggle, mocked-clock auto-end and countdown, and the `sessionBand: false` toggle (`claude plugin test .`) |
+| `tests/session-band.test.ts`, `tests/band-module.test.tsx` | Band parser, countdown color and auto-end threshold tests; module tests with a stubbed Haiku judge, tasks pane and its toggle, mocked-clock auto-end and countdown, and the `sessionBand: false` toggle (`claude plugin test .`) |
 | `tests/test_session_start.py` | Hook tests: both hosts, stub check, 3.x and 5.6 layouts, status line note; fake HOME |
 | `agents/explainer.md` | Local explainer-page subagent: writes `.pages/<slug>.html` as a kit shell + Markdown; holds the component cheat sheet; `STYLE?` round trip |
 | `docs/explainer/v1/kit.js`, `kit.css` | Explainer kit, served from Pages: renders the `<xmp>` Markdown body, components, themes; loads marked, highlight.js (cdnjs), mermaid (jsDelivr) |

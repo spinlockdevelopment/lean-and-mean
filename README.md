@@ -10,7 +10,8 @@ learned back into that file, commits, pushes, then stops.
 - **Prose.** Answer first. Concise, active sentences in plain technical
   English, broadly following ASD-STE100. No filler or repetition. A diagram or
   an HTML page when that explains it better.
-- **Code.** A YAGNI ladder: skip speculative work, then reuse the repo, stdlib,
+- **Code.** Map what the change must reach and could break, finish all of it,
+  then a YAGNI ladder: skip speculative work, then reuse the repo, stdlib,
   the platform, an installed dependency, one line, and only then new code.
   Never cut input validation, data-loss handling, security, or accessibility.
 - **Memory.** Each correction becomes one binding line under `## Rules`, so it
@@ -53,7 +54,7 @@ Local checkouts, manual installs, and Codex notes:
 | `/lean-and-mean:lean-and-mean` | `$lean-and-mean` | Create or review `AGENTS.md`: refresh the block, reorder, verify commands and paths, prune, split past 250 lines. Usually runs on its own |
 | `/lean-and-mean:lean-and-mean debt` | `$lean-and-mean debt` | List every `// lean:` shortcut with its upgrade path |
 | `/lean-and-mean:endsession` | `$endsession` | Save Rules and Next, commit, push, and run `## Done` steps when the work is complete. Then stop. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#endsession) |
-| Session Status Mod | — | Colored cache countdown on top, task checklist, End session button, auto `/endsession` with 5 minutes of cache left, a Rehydrate / Clear first question when the cache has gone cold. Off in `/config`. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#band) |
+| Session Status Mod | — | Colored cache countdown on top, task checklist in a side pane, End session button, auto `/endsession` with 5 minutes of cache left, a Rehydrate / Clear first question when the cache has gone cold. Off in `/config`. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#band) |
 | `@agent-lean-and-mean:explainer` | — | Explainer Agent: local `.pages/<slug>.html` page, written as short Markdown and rendered by the [explainer kit](https://spinlockdevelopment.github.io/lean-and-mean/explainer/) |
 
 A manual install into `~/.claude/skills/` gives the bare `/lean-and-mean` and

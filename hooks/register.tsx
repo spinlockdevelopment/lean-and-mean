@@ -9,13 +9,14 @@ const tasks = atom({ plugin: 'lean-and-mean', key: 'tasks' } as const, [] as Tas
 const nudged = atom({ plugin: 'lean-and-mean', key: 'nudged' } as const, false)
 const lastPrompt = atom({ plugin: 'lean-and-mean', key: 'lastPrompt' } as const, '')
 const endCommand = atom({ plugin: 'lean-and-mean', key: 'endCommand' } as const, 'lean-and-mean:endsession')
-const tasksHidden = atom({ plugin: 'lean-and-mean', key: 'tasksHidden' } as const, false)
 // true from a real prompt until an endsession runs, so an idle wrapped-up session isn't ended again every hour.
 const armed = atom({ plugin: 'lean-and-mean', key: 'armed' } as const, false)
 // Timer-written clock the band reads, so the cache countdown redraws while idle.
 const now = atom({ plugin: 'lean-and-mean', key: 'now' } as const, 0)
 
 const isEnd = (name: string) => /(^|:)endsession$/.test(name)
+// The checklist pane: docked beside the transcript in the fullscreen layout, else inline above the prompt.
+const PANE = { id: 'session-tasks', title: 'Session tasks' }
 
 const NUDGE =
   'lean-and-mean: every task on this session checklist is done. Before starting the new request, ' +
@@ -129,6 +130,9 @@ export const register: Register = (on, options) => {
     const after = r.isAnswered ? parseTasks(r.text) : null
     if (after) {
       await update($, tasks, () => after)
+      // Unasked, the engine places it from 144 columns (110 once the person opened it) and holds it undrawn below.
+      // lean: on the main-screen layout (tmux) that is inline, not a sidebar; isFullscreen isn't readable here.
+      if (before.length === 0 && after.length > 0) void $.ui.open(PANE).catch(() => undefined)
       if (allDone(after) && !allDone(before)) {
         await update($, nudged, () => false)
         $.ui.toast('All session tasks done: /endsession?')
@@ -145,7 +149,6 @@ export const register: Register = (on, options) => {
 
     const { Box, Text, Button } = $.ui.resolve(e)
     const cache = cacheLabel(at, await read($, now))
-    const hidden = await read($, tasksHidden)
     const done = list.filter(t => t.done).length
     const finished = allDone(list)
     const command = await read($, endCommand)
@@ -173,9 +176,12 @@ export const register: Register = (on, options) => {
           {list.length > 0 && (
             <Button
               key="toggle"
-              label={hidden ? 'show tasks' : 'hide tasks'}
+              label="tasks"
               variant="secondary"
-              onPress={() => update($, tasksHidden, h => !h)}
+              onPress={async () => {
+                const isOpen = (await $.ui.panes()).some(p => p.id === PANE.id)
+                await (isOpen ? $.ui.close({ id: PANE.id }) : $.ui.open(PANE))
+              }}
             />
           )}
           <Button
@@ -185,9 +191,19 @@ export const register: Register = (on, options) => {
             onPress={end}
           />
         </Box>
-        {!hidden && list.map((t, i) => (
-          <Text key={`t${i}`} dimColor={t.done} wrap="truncate-end">
-            {t.done ? '  ✓ ' : '  ☐ '}
+      </Box>
+    )
+  })
+
+  on('ui.render', { component: 'Pane', requestId: PANE.id }, async ($, e) => {
+    const { Box, Text } = $.ui.resolve(e)
+    const list = await read($, tasks)
+    return (
+      <Box flexDirection="column">
+        {list.length === 0 && <Text dimColor>No tasks yet.</Text>}
+        {list.map(t => (
+          <Text dimColor={t.done} wrap="truncate-end">
+            {t.done ? '✓ ' : '☐ '}
             {t.text}
           </Text>
         ))}

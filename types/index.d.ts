@@ -8,7 +8,6 @@ declare module 'claude-code' {
       nudged: boolean
       lastPrompt: string
       endCommand: string
-      tasksHidden: boolean
       armed: boolean
       now: number
     }

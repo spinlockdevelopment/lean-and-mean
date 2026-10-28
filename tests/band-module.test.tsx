@@ -7,9 +7,25 @@ const BAND = {
   props: { hasSurvey: false, isWorking: false, maxRows: 20, bodyColumns: 80, scroll: { offset: 0, bodyRows: 20 }, view: {} },
 } as const
 
+const PANE = {
+  component: 'Pane',
+  requestId: 'session-tasks',
+  props: { title: 'Session tasks', isFocused: false, bodyColumns: 40, placement: 'dock', scroll: { offset: 0, bodyRows: 20 }, view: {} },
+} as const
+
 // Engine stand-ins beneath the plugin; `reply` is what the stubbed Haiku judge answers.
 function world(on: On, reply: string) {
   const calls: string[] = []
+  const panes: string[] = []
+  on('ui.open', async (_$, e) => {
+    if (!panes.includes(e.id)) panes.push(e.id)
+    return { value: { isPlaced: true } }
+  })
+  on('ui.close', async (_$, e) => {
+    panes.splice(panes.indexOf(e.id), 1)
+    return { value: undefined }
+  })
+  on('ui.panes', async () => ({ value: panes.map(id => ({ id, title: id, isShown: true, isFocused: false, isPlaced: true })) }))
   on('model.complete', async (_$, e) => {
     calls.push(e.prompt)
     return { value: { isAnswered: true, text: reply, usage: { input_tokens: 1, output_tokens: 1 } } }
@@ -21,7 +37,7 @@ function world(on: On, reply: string) {
     const { Box } = $.ui.resolve(e)
     return <Box key="engine" />
   })
-  return calls
+  return Object.assign(calls, { panes })
 }
 
 async function turn($: Engine, prompt: string, answer: string) {
@@ -34,22 +50,28 @@ for (const surface of ['terminal', 'desktop'] as const) {
     const calls = world(on, '{"tasks":[{"text":"Add tests","done":true},{"text":"Bump version","done":false}]}')
     await turn($, 'add tests and bump the version', 'Tests added.')
     expect(calls.length).toBe(1)
-    const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...BAND })
-    expect(await ui.find({ type: 'Text', text: /Bump version/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /tasks 1\/2/ })).toBeDefined()
-    expect(await ui.find({ key: 'end' })).toBeDefined()
-    await ui.unmount()
+    // The first checklist opens the pane unasked; the band keeps only the count.
+    expect(calls.panes).toEqual(['session-tasks'])
+    const band = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...BAND })
+    expect(await band.find({ type: 'Text', text: /tasks 1\/2/ })).toBeDefined()
+    expect(await band.find({ type: 'Text', text: /Bump version/ })).toBeUndefined()
+    expect(await band.find({ key: 'end' })).toBeDefined()
+    await band.unmount()
+    const pane = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...PANE })
+    expect(await pane.find({ type: 'Text', text: /☐ Bump version/ })).toBeDefined()
+    expect(await pane.find({ type: 'Text', text: /✓ Add tests/ })).toBeDefined()
+    await pane.unmount()
   })
 
-  test(`hide tasks toggles the checklist (${surface})`, async ($, on) => {
-    world(on, '{"tasks":[{"text":"Bump version","done":false}]}')
+  test(`tasks button closes and reopens the pane (${surface})`, async ($, on) => {
+    const { panes } = world(on, '{"tasks":[{"text":"Bump version","done":false}]}')
     await turn($, 'bump the version', 'Working on it.')
     const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...BAND })
     await ui.press({ key: 'toggle' })
-    expect(await ui.find({ type: 'Text', text: /Bump version/ })).toBeUndefined()
-    expect(await ui.find({ type: 'Text', text: /tasks 0\/1/ })).toBeDefined()
+    expect(panes).toEqual([])
     await ui.press({ key: 'toggle' })
-    expect(await ui.find({ type: 'Text', text: /Bump version/ })).toBeDefined()
+    expect(panes).toEqual(['session-tasks'])
+    expect(await ui.find({ type: 'Text', text: /tasks 0\/1/ })).toBeDefined()
     await ui.unmount()
   })
 
@@ -118,10 +140,6 @@ for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...BAND })
     const color = async () => (await ui.find({ type: 'Text', text: /^exp\./ }))?.props.color
     expect(await ui.find({ type: 'Text', text: /exp\. 60m/ })).toBeDefined()
-    expect(await color()).toBe('green')
-    // Hiding the task list never hides the countdown.
-    await ui.press({ key: 'toggle' })
-    expect(await ui.find({ type: 'Text', text: /Bump version/ })).toBeUndefined()
     expect(await color()).toBe('green')
     await clock.advance(40 * 60_000)
     expect(await ui.find({ type: 'Text', text: /exp\. 20m/ })).toBeDefined()
