@@ -151,7 +151,7 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column">
         <Text key="cache" color={cache?.color} dimColor={!cache}>
-          {cache ? `Prompt cache ${cache.text}` : 'Prompt cache: no request yet'}
+          {cache ? cache.text : 'Cache Idle: no request yet'}
         </Text>
         <Button key="end" label="End session" variant="secondary" onPress={() => endSession($)} />
       </Box>

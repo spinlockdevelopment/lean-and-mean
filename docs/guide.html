@@ -83,7 +83,7 @@
 <h2 id="band">Session Status Mod</h2>
 <p>The Session Status Mod is a row above the Claude Code prompt. It is a mod: a plugin module of function hooks that runs inside the session. The code is <code>hooks/register.tsx</code>, with helpers in <code>hooks/cache.ts</code>. <code>hooks/hooks.json</code> lists it under <code>modules</code>. It is the only plugin code that runs on every turn.</p>
 <p>It is Claude Code only and on by default. Turn it off in <code>/config</code> under Session Status Mod. Codex ignores it. It writes nothing to your project; its state lives in Claude Code's plugin storage.</p>
-<pre class="mock" aria-label="Session Status Mod example"><code>exp. 42m  [ end session ]</code></pre>
+<pre class="mock" aria-label="Session Status Mod example"><code>Cache Idle [*********---] 42m  [ end session ]</code></pre>
 <ul>
   <li><b>Desktop app.</b> The row moves into a <b>Session</b> pane, which opens when the session starts or the app attaches. If the app has no room for it then, your next prompt places it. The app decides where the pane sits.</li>
   <li><b>End session button.</b> It runs <code>/lean-and-mean:endsession</code>. If the command cannot run, it fills the prompt box with it instead.</li>
@@ -120,7 +120,7 @@
 </figure>
 <ul>
   <li><b>Auto end.</b> At 55 minutes, the mod runs <code>/lean-and-mean:endsession auto</code>. It commits and pushes, but <code>auto</code> means it never ships. It fires only if no turn is running and you sent a real prompt since the last <code>/endsession</code>. Any <code>/endsession</code>, typed, button or auto, disarms it until your next real prompt.</li>
-  <li><b>Countdown.</b> The top line of the mod shows the time left, such as <code>exp. 42m</code>, in the terminal and the desktop app. It is green above 30 minutes, yellow above 15, orange above 10, and red after that.</li>
+  <li><b>Countdown.</b> The top line of the mod shows the time left as a bar and minutes, such as <code>Cache Idle [*****-------] 21m</code>, in the terminal and the desktop app. The bar empties as the cache ages. It is green above 30 minutes, yellow above 15, orange above 10, and red after that.</li>
 </ul>
 
 <h3>The cold-cache question</h3>

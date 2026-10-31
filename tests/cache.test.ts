@@ -14,5 +14,7 @@ test('cacheLabel colors by time left', async () => {
   expect([at(31), at(30), at(16), at(15), at(11), at(10), at(5)]).toEqual(
     ['green', 'yellow', 'yellow', '#ff8700', '#ff8700', 'red', 'red'],
   )
-  expect(cacheLabel(0, 61 * 60_000)?.text).toBe('exp. cold')
+  expect(cacheLabel(0, 39 * 60_000)?.text).toBe('Cache Idle [*****-------] 21m')
+  expect(cacheLabel(0, 0)?.text).toBe('Cache Idle [************] 60m')
+  expect(cacheLabel(0, 61 * 60_000)?.text).toBe('Cache Idle [------------] cold')
 })

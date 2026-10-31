@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# lean-and-mean statusline 2
-# Status line: dir | branch | (model) | ctx % | 5h usage (7d when the plan has no 5h limit). Needs jq. Install:
+# lean-and-mean statusline 3
+# Status line: dir | branch | (model) | ctx % | 5h usage | 7d usage (each when the plan reports it). Needs jq. Install:
 #   cp statusline.sh ~/.claude/statusline.sh && chmod +x ~/.claude/statusline.sh
 #   ~/.claude/settings.json: "statusLine": {"type": "command", "command": "~/.claude/statusline.sh"}
 input=$(cat)
@@ -21,16 +21,6 @@ pct_color() {
 root_dir=$(echo "$input" | jq -r '.workspace.project_dir // .cwd // empty')
 dir=$(basename "$root_dir" 2>/dev/null)
 model_raw=$(echo "$input" | jq -r '.model.display_name // empty')
-five_pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
-five_reset=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
-# Plans with no 5h session limit (Ultra) report only the weekly window: show that instead.
-limit_label="5h"
-if [ -z "$five_pct" ]; then
-  limit_label="7d"
-  five_pct=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
-  five_reset=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
-fi
-
 dir_seg=""
 [ -n "$dir" ] && dir_seg="${CYAN_BOLD}${dir}${RESET}"
 
@@ -54,21 +44,25 @@ if [ -n "$used" ]; then
   ctx_seg="ctx $(pct_color "$used")$(printf '%.0f' "$used")%${RESET}"
 fi
 
-usage_seg=""
-if [ -n "$five_pct" ]; then
-  usage_seg="${limit_label} $(pct_color "$five_pct")$(printf '%.0f' "$five_pct")%${RESET}"
-  if [ -n "$five_reset" ]; then
-    now=$(date +%s)
-    diff=$(( five_reset - now ))
+# One rate-limit window: "5h 18% · resets in 2h10m"; empty when the plan does not report it.
+limit_seg() {
+  local pct reset diff d h m left seg
+  pct=$(echo "$input" | jq -r ".rate_limits.$2.used_percentage // empty")
+  [ -z "$pct" ] && return
+  seg="$1 $(pct_color "$pct")$(printf '%.0f' "$pct")%${RESET}"
+  reset=$(echo "$input" | jq -r ".rate_limits.$2.resets_at // empty")
+  if [ -n "$reset" ]; then
+    diff=$(( reset - $(date +%s) ))
     [ "$diff" -lt 0 ] && diff=0
-    d=$(( diff / 86400 ))
-    h=$(( (diff % 86400) / 3600 ))
-    m=$(( (diff % 3600) / 60 ))
+    d=$(( diff / 86400 )); h=$(( (diff % 86400) / 3600 )); m=$(( (diff % 3600) / 60 ))
     left="${h}h${m}m"
     [ "$d" -gt 0 ] && left="${d}d${h}h"
-    usage_seg="${usage_seg} ${DIM}· resets in ${left}${RESET}"
+    seg="${seg} ${DIM}· resets in ${left}${RESET}"
   fi
-fi
+  printf '%s' "$seg"
+}
+five_seg=$(limit_seg 5h five_hour)
+week_seg=$(limit_seg 7d seven_day)
 
 # Build result string with dim " | " separators, only for non-empty parts
 parts=()
@@ -76,7 +70,8 @@ parts=()
 [ -n "$branch_seg" ] && parts+=("$branch_seg")
 [ -n "$model_seg" ]  && parts+=("$model_seg")
 [ -n "$ctx_seg" ]    && parts+=("$ctx_seg")
-[ -n "$usage_seg" ]  && parts+=("$usage_seg")
+[ -n "$five_seg" ]   && parts+=("$five_seg")
+[ -n "$week_seg" ]   && parts+=("$week_seg")
 
 result=""
 for part in "${parts[@]}"; do

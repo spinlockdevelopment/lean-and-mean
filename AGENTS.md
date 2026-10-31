@@ -38,7 +38,7 @@ block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
 CLAUDE.md) so it runs natively; `/endsession` promotes session mistakes
 into Rules, rewrites Next, commits, pushes (PR if needed), then hard-stops. Full
 AGENTS.md review runs at next session start when the hook says it is due.
-v5.11.0, published via the spinlockdevelopment/lean-and-mean marketplace.
+v5.12.0, published via the spinlockdevelopment/lean-and-mean marketplace.
 - POSIX sh (one hook), Markdown skills, JSON manifests, one TSX function-hooks module (Claude only). Python stdlib tests for the hook; `claude plugin test` for the module.
 - Version bump in all three manifests together. Breaking behavior → major.
 - Hook stays POSIX sh, under 35 lines, zero output in the common case.
@@ -71,9 +71,10 @@ prose the model follows. The Session Status Mod (code name: session band) is the
 | `skills/endsession/agents/openai.yaml` | Codex metadata for `$endsession` |
 | `skills/typesafe-ai/` | Copy of TypeSafe AI's skill (MIT, their credit), Jev routed via OpenRouter; disabled (`disable-model-invocation: true`); an extra, documented only in `docs/extras.html`; resync from `vendor/typesafe-ai-skills` submodule |
 | `hooks/session-start.sh` | Only hook; silent unless block missing, full pass due, or status line not current (Claude only) |
-| `hooks/register.tsx`, `hooks/cache.ts`, `types/index.d.ts` | Session Status Mod, code name session band (Claude only): cache countdown (green >30m, yellow >15m, orange >10m, red) and End session button above the prompt, in a `session` pane on desktop (opened at start or desktop attach); no checklist (hosts show their own), auto `/endsession auto` (never ships) at 5m cache left; cold-cache question on the next prompt (Rehydrate / Clear first); `userConfig.sessionBand` toggles it |
-| `extras/statusline.sh` | Optional bash+jq status line, installed by `/lean-and-mean:statusline` (plugins can't set `statusLine`); 5h limit, or 7d when the plan has none (Ultra); no cache countdown, the band has it |
+| `hooks/register.tsx`, `hooks/cache.ts`, `types/index.d.ts` | Session Status Mod, code name session band (Claude only): `Cache Idle [***---] 21m` countdown bar (green >30m, yellow >15m, orange >10m, red) and End session button above the prompt, in a `session` pane on desktop (opened at start or desktop attach); no checklist (hosts show their own), auto `/endsession auto` (never ships) at 5m cache left; cold-cache question on the next prompt (Rehydrate / Clear first); `userConfig.sessionBand` toggles it |
+| `extras/statusline.sh` | Optional bash+jq status line, installed by `/lean-and-mean:statusline` (plugins can't set `statusLine`); 5h and 7d limits, each when reported; no cache countdown, the band has it |
 | `tests/cache.test.ts`, `tests/band-module.test.tsx` | Countdown color and auto-end threshold tests; module tests for band vs desktop pane, mocked-clock auto-end and countdown, cold-cache question, and the `sessionBand: false` toggle (`claude plugin test .`) |
+| `tests/test_statusline.py` | Status line rate-limit segments: both windows, one window |
 | `tests/test_session_start.py` | Hook tests: both hosts, stub check, 3.x and 5.6 layouts, status line note; fake HOME |
 | `agents/explainer.md` | Local explainer-page subagent: writes `.pages/<slug>.html` as a kit shell + Markdown; holds the component cheat sheet; `STYLE?` round trip |
 | `docs/explainer/v1/kit.js`, `kit.css` | Explainer kit, served from Pages: renders the `<xmp>` Markdown body, components, themes; loads marked, highlight.js (cdnjs), mermaid (jsDelivr) |
@@ -109,8 +110,8 @@ prose the model follows. The Session Status Mod (code name: session band) is the
 - Default to a minor version bump; major only when the user agrees the change is breaking. 5.0.0 was called too aggressive for an additive release. 2026-10-03
 
 ## Next
-Not done: the user's version call — 5.11.0 was pushed as a minor bump, but the release drops the checklist; the question 5.11.0 vs 6.0.0 was open when the timed /endsession ran. Ask first.
-Update the plugin (`/plugin install lean-and-mean@lean-and-mean`) and restart; the machine runs 5.7.0. Then check 5.11.0 in the desktop app: the Session pane (countdown + End session) should open at start in the session rail; if it lands elsewhere or waits undrawn (toast), correct `docs/guide.html#band`. Rerun `/lean-and-mean:statusline` and confirm `7d` shows on the Ultra account (assumes `rate_limits.seven_day` mirrors `five_hour`). Trial-run the real `@agent-lean-and-mean:explainer` once (delete `~/.claude/agent-memory/explainer/` after). Run `/lean-and-mean:statusline` (it should ask before replacing `statusline-command.sh`). Check `md.html` renders all four skill tabs. Still unverified from 5.7.0: band countdown colors, auto-end at 55m, cold-cache question, `/config` toggle.
+6.0.0 is reserved for the next feature set (user, 2026-10-30); stay on 5.x minors until then.
+Update the plugin (`/plugin install lean-and-mean@lean-and-mean`) and restart; the machine runs 5.7.0. Then check 5.12.0 in the desktop app: the Session pane (countdown + End session) should open at start in the session rail; if it lands elsewhere or waits undrawn (toast), correct `docs/guide.html#band`. Rerun `/lean-and-mean:statusline` and confirm `5h` and `7d` both show where the plan has both, `7d` alone on Ultra (assumes `rate_limits.seven_day` mirrors `five_hour`). Check the `Cache Idle` bar renders in the band and the pane. Trial-run the real `@agent-lean-and-mean:explainer` once (delete `~/.claude/agent-memory/explainer/` after). Run `/lean-and-mean:statusline` (it should ask before replacing `statusline-command.sh`). Check `md.html` renders all four skill tabs. Still unverified from 5.7.0: band countdown colors, auto-end at 55m, cold-cache question, `/config` toggle.
 - P2 — decide on `/lean-and-mean debt`: keep or drop (see `.pages/lean-debt.html`; the `// lean:` marker rule stays either way).
 - P2 — compress Rules with the user, carefully (the mods rule is ~10 lines); no merges without asking.
 - P3 — decide whether the Pages site moves to the explainer kit: `.pages/compare.html` (serve the repo root) shows each page beside the explainer stand-in's version, about half the bytes with more diagrams; 2026-10-27.
@@ -122,4 +123,3 @@ Update the plugin (`/plugin install lean-and-mean@lean-and-mean`) and restart; t
 - explainer stand-in trial 2026-10-05 (session band page): good page, facts checked against code; its reply added an off-topic false claim, so the reply is now path + diagrams only.
 - Usage scan 2026-10-03: logs from 2026-09-03 only, no rate-limit % recorded anywhere. On Max 5x, ≤10 of 39 5h windows and ≤1 week (all Sep 4–9) would have capped; none since Sep 10. Feature scan of 2,672 prompts: nothing else clears the bar.
 - graphify: adopt only above ~500 files, AGENTS.md section only, no hook-guard, rebuild from git post-commit not Stop.
-<!-- lean-and-mean: review -->
