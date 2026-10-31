@@ -86,8 +86,9 @@
 <pre class="mock" aria-label="Session Status Mod example"><code>Cache Idle █████████░░░ 42m  [ end session ]</code></pre>
 <ul>
   <li><b>Desktop app.</b> The row moves into its own <b>Session</b> pane, which opens when the session starts or the app attaches. If the app has no room for it then, your next prompt places it. The app decides where the pane sits: a plugin pane gets a panel of its own, not a place in the app's session rail. The pane draws the bar as a rounded graphic and lists the session's tasks. Above the bar it names the project folder and the git branch, plus the worktree folder when the session runs in one; then it shows how full the context window is and each subscription limit the last reply reported (5h, weekly), as bars of the same kind: green under 50%, yellow under 75%, orange under 90%, red after that.</li>
-  <li><b>End session button.</b> On desktop it is the pane's primary button, ⏻ End session. It runs <code>/lean-and-mean:endsession</code>. If the command cannot run, it fills the prompt box with it instead.</li>
+  <li><b>End session button.</b> On desktop it is the pane's primary button, ⏻ End Session. It runs <code>/lean-and-mean:endsession</code>. If the command cannot run, it fills the prompt box with it instead.</li>
   <li><b>Tasks (desktop).</b> The pane mirrors the task list the desktop app shows under the latest message: ✓ done, ● in progress, ○ pending. The mod copies the app's own plan tool calls, so it makes no model calls. The terminal shows its own task list, so the row has none.</li>
+  <li><b>Next sessions (desktop).</b> A brief list of the <code>## Next</code> section of <code>AGENTS.md</code>: each line cut to its first clause, with its P1–P3 priority. The mod reads the file at session start and at the end of each turn, so a rewrite by <code>/endsession</code> shows at once, with no model calls.</li>
   <li><b>Reset.</b> <code>/clear</code> resets the cache timer.</li>
 </ul>
 

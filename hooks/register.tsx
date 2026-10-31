@@ -1,8 +1,9 @@
 import { atom, read, update } from 'claude-code'
 import type { Engine, Register } from 'claude-code'
 
-import type { Place, Task, Usage } from '../types'
+import type { NextItem, Place, Task, Usage } from '../types'
 import { BAR_CELLS, CACHE_TTL_MS, autoEndDue, barCells, barSvg, cacheCold, cacheLabel, limitTitle, meterLabel } from './cache'
+import { nextItems } from './next'
 import { applyPlan } from './plan'
 
 const cacheAt = atom({ plugin: 'lean-and-mean', key: 'cacheAt' } as const, null)
@@ -16,6 +17,8 @@ const tasks = atom({ plugin: 'lean-and-mean', key: 'tasks' } as const, [] as Tas
 // Desktop pane header and meters.
 const place = atom({ plugin: 'lean-and-mean', key: 'place' } as const, null as Place | null)
 const usage = atom({ plugin: 'lean-and-mean', key: 'usage' } as const, { context: null, limits: [] } as Usage)
+// Desktop pane: AGENTS.md `## Next`, re-read at turn end, so /endsession's rewrite shows with no model call.
+const upcoming = atom({ plugin: 'lean-and-mean', key: 'upcoming' } as const, [] as NextItem[])
 const PLAN_TOOL = 'mcp__ccd_turn__update_plan'
 const WRAP_TOOL = 'mcp__ccd_turn__wrap_up'
 
@@ -46,7 +49,8 @@ async function openPane($: Engine) {
 const base = (p: string) => p.replace(/\/+$/, '').split('/').pop() || p
 
 // Project is the main tree's folder; a worktree shows its own folder beside the branch.
-async function refreshPlace($: Engine) {
+// Next comes from AGENTS.md at the main tree's root.
+async function refreshPane($: Engine) {
   const root = await $.session.root()
   const repo = await $.session.repo().catch(() => null)
   let next: Place = { project: base(repo?.root ?? root), branch: null, worktree: null }
@@ -56,6 +60,8 @@ async function refreshPlace($: Engine) {
     next = { ...next, branch: head === 'HEAD' ? 'detached' : head || null, worktree: top && top !== repo.root ? base(top) : null }
   }
   await update($, place, () => next)
+  const md = await $.fs.read(`${repo?.root ?? root}/AGENTS.md`).catch(() => null)
+  await update($, upcoming, () => (typeof md === 'string' ? nextItems(md) : []))
 }
 
 const toUsage = (u: { context: { percent?: number }; rateLimits: readonly { kind: string; percentUsed: number }[] }): Usage =>
@@ -99,7 +105,7 @@ export const register: Register = (on, options) => {
     if (found) await update($, endCommand, () => found.name)
     if ((await $.session.surfaces()).includes('desktop')) {
       await openPane($)
-      await refreshPlace($).catch(() => undefined)
+      await refreshPane($).catch(() => undefined)
     }
     const u = await $.session.usage().catch(() => null)
     if (u) await update($, usage, () => toUsage(u))
@@ -109,7 +115,7 @@ export const register: Register = (on, options) => {
   on('session.attach', async ($, e, next) => {
     if (e.surface === 'desktop') {
       await openPane($)
-      await refreshPlace($).catch(() => undefined)
+      await refreshPane($).catch(() => undefined)
     }
     return next(e)
   })
@@ -187,8 +193,8 @@ export const register: Register = (on, options) => {
       await update($, now, () => t)
       await saveCacheAt($, t).catch(() => undefined)
     }
-    // The branch can change in any turn; only the pane shows it.
-    if ((await $.ui.panes()).some(p => p.id === PANE.id)) await refreshPlace($).catch(() => undefined)
+    // The branch and AGENTS.md can change in any turn; only the pane shows them.
+    if ((await $.ui.panes()).some(p => p.id === PANE.id)) await refreshPane($).catch(() => undefined)
     return next(e)
   })
 
@@ -230,6 +236,7 @@ export const register: Register = (on, options) => {
     const { Box, Text, Button, Svg } = $.ui.resolve(e)
     const cache = cacheLabel(await read($, cacheAt), await read($, now))
     const list = await read($, tasks)
+    const later = await read($, upcoming)
     const where = await read($, place)
     const { context, limits } = await read($, usage)
     const mark = { completed: '✓', in_progress: '●', pending: '○' } as const
@@ -270,8 +277,19 @@ export const register: Register = (on, options) => {
             ))}
           </Box>
         )}
+        {later.length > 0 && (
+          <Box key="next" flexDirection="column">
+            <Text weight="semibold">Next sessions</Text>
+            {later.map((n, i) => (
+              <Text key={`next-${i}`}>
+                {n.priority ? <Text dimColor mono>{`${n.priority} `}</Text> : '• '}
+                {n.text}
+              </Text>
+            ))}
+          </Box>
+        )}
         <Button key="end" variant="primary" onPress={() => endSession($)}>
-          ⏻ End session <Text dimColor>save Rules and Next</Text>
+          ⏻ End Session
         </Button>
       </Box>
     )

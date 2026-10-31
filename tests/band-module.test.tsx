@@ -50,6 +50,10 @@ function world(on: On, surfaces: string[] = ['terminal'], placed = true) {
   on('session.repo', async () => ({ value: { root: '/src/proj', remote: null, internal: false, cwd: '' } }))
   on('process.run', async () => ({ value: { exitCode: 0, stdout: 'feat/x\n/w/feature\n', stderr: '' } }) as never)
   on('session.measure', async (_$, e) => ({ changed: e.changed }))
+  on('fs.read', async (_$, e) => {
+    if (e.path !== '/src/proj/AGENTS.md') throw new Error('ENOENT')
+    return { value: '## Rules\n- x\n\n## Next\nShip 5.16.0 (pane); then rest.\n- P2 — decide on `debt`: keep or drop\n\n## Notes\n- y\n' }
+  })
   on('session.usage', async () => ({ value: { startedAt: 0, context: { window: 200_000, percent: 42 }, rateLimits: [{ kind: 'five_hour', percentUsed: 80 }, { kind: 'seven_day', percentUsed: 12.5 }] } }))
   const store = new Map<string, unknown>()
   on('store.get', async (_$, e) => ({ value: store.get(e.key) }))
@@ -105,6 +109,10 @@ test('desktop: pane opens at start and holds Cache Idle timer and End session; b
   expect((await pane.findAll({ type: 'Svg' })).at(-1)?.props.source).toContain('width="0" height="8" rx="4" fill="#22c55e"')
   expect(await pane.find({ key: 'tasks' })).toBeUndefined()
   expect(await pane.find({ key: 'end' })).toBeDefined()
+  expect(await pane.find({ type: 'Text', text: 'Next sessions' })).toBeDefined()
+  expect(await pane.find({ type: 'Text', text: /Ship 5\.16\.0$/ })).toBeDefined()
+  expect(await pane.find({ type: 'Text', text: /decide on debt: keep or drop/ })).toBeDefined()
+  expect(await pane.find({ type: 'Text', text: /save Rules and Next/ })).toBeUndefined()
   await pane.unmount()
 })
 

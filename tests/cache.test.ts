@@ -1,6 +1,7 @@
 import { expect, test } from 'claude-code/testing'
 
 import { autoEndDue, barCells, barSvg, cacheLabel } from '../hooks/cache'
+import { brief, nextItems } from '../hooks/next'
 import { applyPlan } from '../hooks/plan'
 
 test('autoEndDue at 5 minutes left', async () => {
@@ -36,4 +37,17 @@ test('applyPlan mirrors update_plan', async () => {
   expect(s(applyPlan(t, { done: [1, 2], start: 3 }))).toBe('cci')
   expect(s(applyPlan(applyPlan(t, { advance: true }), { advance: true }))).toBe('cci')
   expect(s(t)).toBe('ipp')
+})
+
+test('nextItems reads only ## Next, one brief item per lead line or bullet', async () => {
+  const md = '## Rules\n- r\n## Next\nLead one (aside); more.\nLead two is pending: a long tail that goes on and on past the cap for sure, yes.\n- P1 — fix `x`\n  wrapped tail\n- plain\n## Notes\n- n\n'
+  expect(nextItems(md)).toEqual([
+    { priority: null, text: 'Lead one' },
+    { priority: null, text: 'Lead two is pending' },
+    { priority: 'P1', text: 'fix x wrapped tail' },
+    { priority: null, text: 'plain' },
+  ])
+  expect(nextItems('# none')).toEqual([])
+  const cut = brief('word '.repeat(30))
+  expect(cut.endsWith('word…') && cut.length <= 64).toBe(true)
 })

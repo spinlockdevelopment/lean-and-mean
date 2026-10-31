@@ -10,6 +10,9 @@ export type Place = { project: string; branch: string | null; worktree: string |
 /** Desktop pane meters: context fill and rate-limit windows, each 0 to 100. */
 export type Usage = { context: number | null; limits: { kind: string; percent: number }[] }
 
+/** One AGENTS.md `## Next` line, cut to its first clause; priority is `P1`–`P3` or null for lead lines. */
+export type NextItem = { priority: string | null; text: string }
+
 declare module 'claude-code' {
   interface PluginState {
     'lean-and-mean': {
@@ -20,6 +23,7 @@ declare module 'claude-code' {
       tasks: Task[]
       place: Place | null
       usage: Usage
+      upcoming: NextItem[]
     }
   }
 }
