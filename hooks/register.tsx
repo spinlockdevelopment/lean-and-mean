@@ -1,13 +1,9 @@
 import { atom, read, update } from 'claude-code'
-import type { Register } from 'claude-code'
+import type { Engine, Register } from 'claude-code'
 
-import type { Task } from '../types'
-import { JUDGE_SYSTEM, allDone, autoEndDue, cacheCold, cacheLabel, judgePrompt, parseTasks } from './judge'
+import { autoEndDue, cacheCold, cacheLabel } from './cache'
 
 const cacheAt = atom({ plugin: 'lean-and-mean', key: 'cacheAt' } as const, null)
-const tasks = atom({ plugin: 'lean-and-mean', key: 'tasks' } as const, [] as Task[])
-const nudged = atom({ plugin: 'lean-and-mean', key: 'nudged' } as const, false)
-const lastPrompt = atom({ plugin: 'lean-and-mean', key: 'lastPrompt' } as const, '')
 const endCommand = atom({ plugin: 'lean-and-mean', key: 'endCommand' } as const, 'lean-and-mean:endsession')
 // true from a real prompt until an endsession runs, so an idle wrapped-up session isn't ended again every hour.
 const armed = atom({ plugin: 'lean-and-mean', key: 'armed' } as const, false)
@@ -15,12 +11,26 @@ const armed = atom({ plugin: 'lean-and-mean', key: 'armed' } as const, false)
 const now = atom({ plugin: 'lean-and-mean', key: 'now' } as const, 0)
 
 const isEnd = (name: string) => /(^|:)endsession$/.test(name)
-// The checklist pane: docked beside the transcript in the fullscreen layout, else inline above the prompt.
-const PANE = { id: 'session-tasks', title: 'Session tasks' }
+// Desktop only: the countdown and End session sit in this pane (the app's side rail) instead of above the prompt.
+const PANE = { id: 'session', title: 'Session' }
 
-const NUDGE =
-  'lean-and-mean: every task on this session checklist is done. Before starting the new request, ' +
-  'tell the user in one line that the checklist is complete and suggest running /endsession first; then proceed only if they want to continue.'
+async function openPane($: Engine) {
+  const r = await $.ui.open(PANE).catch(() => undefined)
+  // Unasked (start, attach) it can wait undrawn under the column floor; the next real prompt asks again, which places it.
+  if (r && !r.isPlaced) $.ui.toast(`Session pane waits: ${r.reason}`)
+}
+
+// The End session button, band and pane alike.
+async function endSession($: Engine) {
+  const command = await read($, endCommand)
+  // $.command.run skips this plugin's own command.run hook.
+  await update($, armed, () => false)
+  try {
+    await $.command.run({ command })
+  } catch {
+    await $.prompt.fill({ text: `/${command}` })
+  }
+}
 
 export const register: Register = (on, options) => {
   if (options.sessionBand === false) return
@@ -42,13 +52,17 @@ export const register: Register = (on, options) => {
     $.clock.every(30_000, tick)
     const found = (await $.command.list()).find(c => isEnd(c.name))
     if (found) await update($, endCommand, () => found.name)
+    if ((await $.session.surfaces()).includes('desktop')) await openPane($)
+    return next(e)
+  })
+
+  on('session.attach', async ($, e, next) => {
+    if (e.surface === 'desktop') await openPane($)
     return next(e)
   })
 
   on('session.end', async ($, e, next) => {
     if (e.reason === 'clear') {
-      await update($, tasks, () => [])
-      await update($, nudged, () => false)
       await update($, armed, () => false)
       await update($, cacheAt, () => null)
     }
@@ -89,13 +103,9 @@ export const register: Register = (on, options) => {
           : `Not sent. Run /${command} to save Rules and Next (one cold resend), then /clear and resend your prompt.`,
       }
     }
-    await update($, lastPrompt, () => e.text)
     await update($, armed, () => true)
-    if (allDone(await read($, tasks)) && !(await read($, nudged))) {
-      await update($, nudged, () => true)
-      $.ui.toast('Checklist done: consider /endsession before new work')
-      return next({ ...e, context: [...(e.context ?? []), NUDGE] })
-    }
+    // A prompt is an asked open, placed at any width; a pane closed by hand is not listed, so stays closed.
+    if ((await $.ui.panes()).some(p => p.id === PANE.id && !p.isPlaced)) await openPane($)
     return next(e)
   })
 
@@ -113,100 +123,37 @@ export const register: Register = (on, options) => {
       await update($, cacheAt, () => t)
       await update($, now, () => t)
     }
-    const prompt = await read($, lastPrompt)
-    if (e.reason !== 'answer' || prompt === '') return next(e)
-    await update($, lastPrompt, () => '')
-
-    const before = await read($, tasks)
-    // lean: one Haiku call per main turn, awaited (≤8s); move to fire-and-forget from a timer if it drags.
-    const r = await $.model.complete({
-      model: 'haiku',
-      effort: 'low',
-      maxTokens: 600,
-      timeoutMs: 8000,
-      system: JUDGE_SYSTEM,
-      prompt: judgePrompt(before, prompt, e.answer),
-    })
-    const after = r.isAnswered ? parseTasks(r.text) : null
-    if (after) {
-      await update($, tasks, () => after)
-      // Unasked, the engine places it from 144 columns (110 once the person opened it) and holds it undrawn below.
-      // lean: on the main-screen layout (tmux) that is inline, not a sidebar; isFullscreen isn't readable here.
-      if (before.length === 0 && after.length > 0) void $.ui.open(PANE).catch(() => undefined)
-      if (allDone(after) && !allDone(before)) {
-        await update($, nudged, () => false)
-        $.ui.toast('All session tasks done: /endsession?')
-      }
-    }
     return next(e)
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
-    if (e.props.hasSurvey) return next(e)
+    // Desktop draws these in the pane instead.
+    if (e.props.hasSurvey || e.surface === 'desktop') return next(e)
     const at = await read($, cacheAt)
-    const list = await read($, tasks)
-    if (at === null && list.length === 0) return next(e)
-
+    if (at === null) return next(e)
     const { Box, Text, Button } = $.ui.resolve(e)
     const cache = cacheLabel(at, await read($, now))
-    const done = list.filter(t => t.done).length
-    const finished = allDone(list)
-    const command = await read($, endCommand)
-    const end = async () => {
-      // $.command.run skips this plugin's own command.run hook.
-      await update($, armed, () => false)
-      try {
-        await $.command.run({ command })
-      } catch {
-        await $.prompt.fill({ text: `/${command}` })
-      }
-    }
-
     return (
-      <Box flexDirection="column">
+      <Box>
         {cache && (
           <Text key="cache" color={cache.color}>
-            {cache.text}
+            {`${cache.text}  `}
           </Text>
         )}
-        <Box>
-          <Text key="tasks" dimColor={!finished} color={finished ? 'green' : undefined}>
-            {list.length ? `tasks ${done}/${list.length}${finished ? ' done' : ''}  ` : ''}
-          </Text>
-          {list.length > 0 && (
-            <Button
-              key="toggle"
-              label="tasks"
-              variant="secondary"
-              onPress={async () => {
-                const isOpen = (await $.ui.panes()).some(p => p.id === PANE.id)
-                await (isOpen ? $.ui.close({ id: PANE.id }) : $.ui.open(PANE))
-              }}
-            />
-          )}
-          <Button
-            key="end"
-            label={finished ? 'End session' : 'end session'}
-            variant={finished ? 'primary' : 'secondary'}
-            onPress={end}
-          />
-        </Box>
+        <Button key="end" label="end session" variant="secondary" onPress={() => endSession($)} />
       </Box>
     )
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE.id }, async ($, e) => {
-    const { Box, Text } = $.ui.resolve(e)
-    const list = await read($, tasks)
+    const { Box, Text, Button } = $.ui.resolve(e)
+    const cache = cacheLabel(await read($, cacheAt), await read($, now))
     return (
       <Box flexDirection="column">
-        {list.length === 0 && <Text dimColor>No tasks yet.</Text>}
-        {list.map(t => (
-          <Text dimColor={t.done} wrap="truncate-end">
-            {t.done ? '✓ ' : '☐ '}
-            {t.text}
-          </Text>
-        ))}
+        <Text key="cache" color={cache?.color} dimColor={!cache}>
+          {cache ? `Prompt cache ${cache.text}` : 'Prompt cache: no request yet'}
+        </Text>
+        <Button key="end" label="End session" variant="secondary" onPress={() => endSession($)} />
       </Box>
     )
   })

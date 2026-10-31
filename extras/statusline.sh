@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# lean-and-mean statusline 1
-# Status line: dir | branch | (model) | ctx % | 5h usage. Needs jq. Install:
+# lean-and-mean statusline 2
+# Status line: dir | branch | (model) | ctx % | 5h usage (7d when the plan has no 5h limit). Needs jq. Install:
 #   cp statusline.sh ~/.claude/statusline.sh && chmod +x ~/.claude/statusline.sh
 #   ~/.claude/settings.json: "statusLine": {"type": "command", "command": "~/.claude/statusline.sh"}
 input=$(cat)
@@ -23,6 +23,13 @@ dir=$(basename "$root_dir" 2>/dev/null)
 model_raw=$(echo "$input" | jq -r '.model.display_name // empty')
 five_pct=$(echo "$input" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 five_reset=$(echo "$input" | jq -r '.rate_limits.five_hour.resets_at // empty')
+# Plans with no 5h session limit (Ultra) report only the weekly window: show that instead.
+limit_label="5h"
+if [ -z "$five_pct" ]; then
+  limit_label="7d"
+  five_pct=$(echo "$input" | jq -r '.rate_limits.seven_day.used_percentage // empty')
+  five_reset=$(echo "$input" | jq -r '.rate_limits.seven_day.resets_at // empty')
+fi
 
 dir_seg=""
 [ -n "$dir" ] && dir_seg="${CYAN_BOLD}${dir}${RESET}"
@@ -49,14 +56,17 @@ fi
 
 usage_seg=""
 if [ -n "$five_pct" ]; then
-  usage_seg="5h $(pct_color "$five_pct")$(printf '%.0f' "$five_pct")%${RESET}"
+  usage_seg="${limit_label} $(pct_color "$five_pct")$(printf '%.0f' "$five_pct")%${RESET}"
   if [ -n "$five_reset" ]; then
     now=$(date +%s)
     diff=$(( five_reset - now ))
     [ "$diff" -lt 0 ] && diff=0
-    h=$(( diff / 3600 ))
+    d=$(( diff / 86400 ))
+    h=$(( (diff % 86400) / 3600 ))
     m=$(( (diff % 3600) / 60 ))
-    usage_seg="${usage_seg} ${DIM}· resets in ${h}h${m}m${RESET}"
+    left="${h}h${m}m"
+    [ "$d" -gt 0 ] && left="${d}d${h}h"
+    usage_seg="${usage_seg} ${DIM}· resets in ${left}${RESET}"
   fi
 fi
 

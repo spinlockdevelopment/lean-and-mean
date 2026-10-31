@@ -1,15 +1,13 @@
-export type Task = { text: string; done: boolean }
+/** A `$.clock.now()` reading. */
+export type Millis = number
 
 declare module 'claude-code' {
   interface PluginState {
     'lean-and-mean': {
-      cacheAt: number | null
-      tasks: Task[]
-      nudged: boolean
-      lastPrompt: string
+      cacheAt: Millis | null
       endCommand: string
       armed: boolean
-      now: number
+      now: Millis
     }
   }
 }

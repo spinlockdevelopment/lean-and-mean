@@ -9,27 +9,39 @@ const BAND = {
 
 const PANE = {
   component: 'Pane',
-  requestId: 'session-tasks',
-  props: { title: 'Session tasks', isFocused: false, bodyColumns: 40, placement: 'dock', scroll: { offset: 0, bodyRows: 20 }, view: {} },
+  requestId: 'session',
+  props: { title: 'Session', isFocused: false, bodyColumns: 40, placement: 'dock', scroll: { offset: 0, bodyRows: 20 }, view: {} },
 } as const
 
-// Engine stand-ins beneath the plugin; `reply` is what the stubbed Haiku judge answers.
-function world(on: On, reply: string) {
+// Engine stand-ins beneath the plugin; `surfaces` is what the session draws on.
+// `placed` false: unasked opens wait undrawn, as under the column floor; asked ones place.
+function world(on: On, surfaces: string[] = ['terminal'], placed = true) {
   const calls: string[] = []
   const panes: string[] = []
+  const unplaced: string[] = []
   on('ui.open', async (_$, e) => {
     if (!panes.includes(e.id)) panes.push(e.id)
+    if (!placed && !unplaced.includes(e.id)) {
+      unplaced.push(e.id)
+      return { value: { isPlaced: false, reason: 'under 144 columns' } }
+    }
+    unplaced.splice(unplaced.indexOf(e.id), 1)
     return { value: { isPlaced: true } }
   })
   on('ui.close', async (_$, e) => {
     panes.splice(panes.indexOf(e.id), 1)
     return { value: undefined }
   })
-  on('ui.panes', async () => ({ value: panes.map(id => ({ id, title: id, isShown: true, isFocused: false, isPlaced: true })) }))
+  on('ui.panes', async () => ({ value: panes.map(id => ({ id, title: id, isShown: true, isFocused: false, isPlaced: !unplaced.includes(id) })) }))
   on('model.complete', async (_$, e) => {
     calls.push(e.prompt)
-    return { value: { isAnswered: true, text: reply, usage: { input_tokens: 1, output_tokens: 1 } } }
+    return { value: { isAnswered: false } } as never
   })
+  on('session.start', async (_$, e) => ({ cwd: e.cwd }))
+  on('session.surfaces', async () => ({ value: surfaces }))
+  on('command.list', async () => ({ value: [{ name: 'lean-and-mean:endsession' }] }))
+  on('turn.start', async (_$, e) => ({ turnId: e.turnId }))
+  on('session.attach', async (_$, e) => ({ clientId: e.clientId }))
   on('prompt.submit', async (_$, e) => ({ text: e.text, context: e.context }))
   on('turn.complete', async (_$, e) => ({ text: e.answer }))
   on('ui.toast', async () => ({ value: undefined }))
@@ -37,7 +49,7 @@ function world(on: On, reply: string) {
     const { Box } = $.ui.resolve(e)
     return <Box key="engine" />
   })
-  return Object.assign(calls, { panes })
+  return Object.assign(calls, { panes, unplaced })
 }
 
 async function turn($: Engine, prompt: string, answer: string) {
@@ -45,66 +57,76 @@ async function turn($: Engine, prompt: string, answer: string) {
   await $.turn.complete({ answer, durationMs: 1, isAborted: false, turnId: 't', reason: 'answer' })
 }
 
-for (const surface of ['terminal', 'desktop'] as const) {
-  test(`judge reply becomes the checklist (${surface})`, async ($, on) => {
-    const calls = world(on, '{"tasks":[{"text":"Add tests","done":true},{"text":"Bump version","done":false}]}')
-    await turn($, 'add tests and bump the version', 'Tests added.')
-    expect(calls.length).toBe(1)
-    // The first checklist opens the pane unasked; the band keeps only the count.
-    expect(calls.panes).toEqual(['session-tasks'])
-    const band = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...BAND })
-    expect(await band.find({ type: 'Text', text: /tasks 1\/2/ })).toBeDefined()
-    expect(await band.find({ type: 'Text', text: /Bump version/ })).toBeUndefined()
-    expect(await band.find({ key: 'end' })).toBeDefined()
-    await band.unmount()
-    const pane = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...PANE })
-    expect(await pane.find({ type: 'Text', text: /☐ Bump version/ })).toBeDefined()
-    expect(await pane.find({ type: 'Text', text: /✓ Add tests/ })).toBeDefined()
-    await pane.unmount()
-  })
-
-  test(`tasks button closes and reopens the pane (${surface})`, async ($, on) => {
-    const { panes } = world(on, '{"tasks":[{"text":"Bump version","done":false}]}')
-    await turn($, 'bump the version', 'Working on it.')
-    const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...BAND })
-    await ui.press({ key: 'toggle' })
-    expect(panes).toEqual([])
-    await ui.press({ key: 'toggle' })
-    expect(panes).toEqual(['session-tasks'])
-    expect(await ui.find({ type: 'Text', text: /tasks 0\/1/ })).toBeDefined()
-    await ui.unmount()
-  })
-
-  test(`malformed judge reply keeps the band empty (${surface})`, async ($, on) => {
-    world(on, 'sorry, no JSON')
-    await turn($, 'do a thing', 'Done.')
-    const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...BAND })
-    expect(await ui.find({ key: 'end' })).toBeUndefined()
-    await ui.unmount()
-  })
-
-  test(`sessionBand false: no judge call, no band (${surface})`, { options: { sessionBand: false } }, async ($, on) => {
-    const calls = world(on, '{"tasks":[{"text":"x","done":false}]}')
-    await turn($, 'do a thing', 'Done.')
-    expect(calls.length).toBe(0)
-    const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...BAND })
-    expect(await ui.find({ key: 'end' })).toBeUndefined()
-    await ui.unmount()
-  })
+async function warm($: Engine, surface: 'terminal' | 'desktop') {
+  await $.session.start({ cwd: '/p', surface, isInteractive: true } as never)
+  await $.prompt.submit({ text: 'do a thing', wait: false, origin: { kind: 'composer' } })
+  await $.turn.complete({
+    answer: 'Done.', durationMs: 1, isAborted: false, turnId: 't', reason: 'answer',
+    usage: { input_tokens: 1, output_tokens: 1 },
+  } as never)
 }
 
+test('terminal: band has countdown and end session, no pane, no model call', async ($, on) => {
+  const w = world(on, ['terminal'])
+  mock.clock(on)
+  await warm($, 'terminal')
+  expect(w.length).toBe(0)
+  expect(w.panes).toEqual([])
+  const band = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'terminal', ...BAND })
+  expect(await band.find({ type: 'Text', text: /exp\. 60m/ })).toBeDefined()
+  expect(await band.find({ key: 'end' })).toBeDefined()
+  await band.unmount()
+})
+
+test('desktop: pane opens at start and holds countdown and End session; band is empty', async ($, on) => {
+  const w = world(on, ['desktop'])
+  mock.clock(on)
+  await $.session.start({ cwd: '/p', surface: 'desktop', isInteractive: true } as never)
+  expect(w.panes).toEqual(['session'])
+  await warm($, 'desktop')
+  const band = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'desktop', ...BAND })
+  expect(await band.find({ key: 'end' })).toBeUndefined()
+  await band.unmount()
+  const pane = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'desktop', ...PANE })
+  expect(await pane.find({ type: 'Text', text: /Prompt cache exp\. 60m/ })).toBeDefined()
+  expect(await pane.find({ key: 'end' })).toBeDefined()
+  await pane.unmount()
+})
+
+test('desktop: a pane left undrawn at start is placed by the next prompt', async ($, on) => {
+  const w = world(on, ['desktop'], false)
+  mock.clock(on)
+  await $.session.start({ cwd: '/p', surface: 'desktop', isInteractive: true } as never)
+  expect(w.unplaced).toEqual(['session'])
+  await $.prompt.submit({ text: 'do a thing', wait: false, origin: { kind: 'composer' } })
+  expect(w.unplaced).toEqual([])
+  expect(w.panes).toEqual(['session'])
+})
+
+test('desktop attaching later opens the pane', async ($, on) => {
+  const w = world(on, ['terminal'])
+  await $.session.attach({ surface: 'desktop', clientId: 'desktop:default' } as never)
+  expect(w.panes).toEqual(['session'])
+})
+
+test('sessionBand false: no band, no pane', { options: { sessionBand: false } }, async ($, on) => {
+  const w = world(on, ['desktop'])
+  mock.clock(on)
+  await warm($, 'desktop')
+  expect(w.panes).toEqual([])
+  const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'terminal', ...BAND })
+  expect(await ui.find({ key: 'end' })).toBeUndefined()
+  await ui.unmount()
+})
+
 test('endsession runs once when the cache has 5 minutes left', async ($, on) => {
-  world(on, '{"tasks":[]}')
+  world(on)
   const clock = mock.clock(on)
   const runs: string[] = []
-  on('session.start', async (_$, e) => ({ cwd: e.cwd }))
-  on('command.list', async () => ({ value: [{ name: 'lean-and-mean:endsession' }] }))
-  on('session.surfaces', async () => ({ value: ['terminal'] }))
   on('command.run', async (_$, e) => {
     runs.push(`${e.command} ${e.args}`)
     return { text: '' }
   })
-  on('turn.start', async (_$, e) => ({ turnId: e.turnId }))
   await $.session.start({ cwd: '/p', surface: 'terminal', isInteractive: true } as never)
   await $.prompt.submit({ text: 'do a thing', wait: false, origin: { kind: 'composer' } })
   await $.turn.complete({
@@ -125,20 +147,12 @@ test('endsession runs once when the cache has 5 minutes left', async ($, on) => 
 })
 
 for (const surface of ['terminal', 'desktop'] as const) {
-  test(`cache countdown tops the band, ticks while idle, changes color (${surface})`, async ($, on) => {
-    world(on, '{"tasks":[{"text":"Bump version","done":false}]}')
+  test(`cache countdown ticks while idle, changes color (${surface})`, async ($, on) => {
+    world(on, [surface])
     const clock = mock.clock(on)
-    on('session.start', async (_$, e) => ({ cwd: e.cwd }))
-    on('command.list', async () => ({ value: [] }))
-    on('turn.start', async (_$, e) => ({ turnId: e.turnId }))
-    await $.session.start({ cwd: '/p', surface, isInteractive: true } as never)
-    await $.prompt.submit({ text: 'do a thing', wait: false, origin: { kind: 'composer' } })
-    await $.turn.complete({
-      answer: 'Done.', durationMs: 1, isAborted: false, turnId: 't', reason: 'answer',
-      usage: { input_tokens: 1, output_tokens: 1 },
-    } as never)
-    const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...BAND })
-    const color = async () => (await ui.find({ type: 'Text', text: /^exp\./ }))?.props.color
+    await warm($, surface)
+    const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...(surface === 'desktop' ? PANE : BAND) })
+    const color = async () => (await ui.find({ type: 'Text', text: /exp\./ }))?.props.color
     expect(await ui.find({ type: 'Text', text: /exp\. 60m/ })).toBeDefined()
     expect(await color()).toBe('green')
     await clock.advance(40 * 60_000)
@@ -155,14 +169,10 @@ for (const surface of ['terminal', 'desktop'] as const) {
 
 // A session idle past the 1h cache (auto-ended, or not when endFirst is false), `answer` picked in the cold-cache question; returns what the stand-ins saw.
 async function cold($: Engine, on: On, answer: string, endFirst: boolean) {
-  world(on, '{"tasks":[]}')
+  world(on)
   const clock = mock.clock(on)
   const seen = { asked: [] as string[], filled: [] as string[] }
-  on('session.start', async (_$, e) => ({ cwd: e.cwd }))
-  on('command.list', async () => ({ value: [{ name: 'lean-and-mean:endsession' }] }))
-  on('session.surfaces', async () => ({ value: ['terminal'] }))
   on('command.run', async () => ({ text: '' }))
-  on('turn.start', async (_$, e) => ({ turnId: e.turnId }))
   on('prompt.fill', async (_$, e) => {
     seen.filled.push(e.text)
     return { isFilled: true }
@@ -210,7 +220,7 @@ test('cold cache without endsession: Clear first fills /endsession', async ($, o
 })
 
 test('warm cache asks nothing', async ($, on) => {
-  world(on, '{"tasks":[]}')
+  world(on)
   const asked: string[] = []
   on('tool.call', async (_$, e) => {
     asked.push(e.tool)
