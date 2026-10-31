@@ -9,7 +9,7 @@ const cacheAt = atom({ plugin: 'lean-and-mean', key: 'cacheAt' } as const, null)
 const endCommand = atom({ plugin: 'lean-and-mean', key: 'endCommand' } as const, 'lean-and-mean:endsession')
 // true from a real prompt until an endsession runs, so an idle wrapped-up session isn't ended again every hour.
 const armed = atom({ plugin: 'lean-and-mean', key: 'armed' } as const, false)
-// Timer-written clock the band reads, so the cache countdown redraws while idle.
+// Timer-written clock the band reads, so the Cache Idle timer redraws while idle.
 const now = atom({ plugin: 'lean-and-mean', key: 'now' } as const, 0)
 // Desktop pane: the host's task list, mirrored from its plan tool.
 const tasks = atom({ plugin: 'lean-and-mean', key: 'tasks' } as const, [] as Task[])
@@ -205,7 +205,7 @@ export const register: Register = (on, options) => {
             </Text>
           </Box>
           {cache && Svg && (
-            <Svg source={barSvg(cache.fraction, cache.hex)} alt={`Prompt cache: ${cache.minutes} left`} />
+            <Svg source={barSvg(cache.fraction, cache.hex)} alt={`Prompt cache idle: ${cache.minutes}`} />
           )}
         </Box>
         {list.length > 0 && (

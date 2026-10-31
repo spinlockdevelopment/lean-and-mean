@@ -96,7 +96,7 @@
 <figure class="fig">
   <svg viewBox="0 0 680 130" role="img" aria-labelledby="clock-t clock-d">
     <title id="clock-t">The one-hour cache clock</title>
-    <desc id="clock-d">At 0 minutes the last turn ends. At 50 minutes the countdown turns red. At 55 minutes the mod runs /endsession auto. At 60 minutes the cache is cold.</desc>
+    <desc id="clock-d">At 0 minutes the last turn ends. At 50 minutes the Cache Idle timer turns red. At 55 minutes the mod runs /endsession auto. At 60 minutes the cache is cold.</desc>
     <line class="ln" x1="40" y1="70" x2="523" y2="70" stroke-width="8"/>
     <line class="acc-s" x1="523" y1="70" x2="620" y2="70" stroke-width="8"/>
     <g stroke="currentColor" stroke-width="1.5">
@@ -109,7 +109,7 @@
       <text x="40" y="100" font-weight="600">0m</text>
       <text x="40" y="116" class="mut" font-size="12">last turn ends</text>
       <text x="523" y="32" font-weight="600" text-anchor="end">50m</text>
-      <text x="523" y="48" class="mut" font-size="12" text-anchor="end">countdown turns red</text>
+      <text x="523" y="48" class="mut" font-size="12" text-anchor="end">timer turns red</text>
       <text x="572" y="100" font-weight="600" text-anchor="middle">55m</text>
       <text x="572" y="116" class="mut" font-size="12" text-anchor="middle">auto /endsession</text>
       <text x="620" y="32" font-weight="600" text-anchor="end">60m</text>
@@ -120,7 +120,7 @@
 </figure>
 <ul>
   <li><b>Auto end.</b> At 55 minutes, the mod runs <code>/lean-and-mean:endsession auto</code>. It commits and pushes, but <code>auto</code> means it never ships. It fires only if no turn is running and you sent a real prompt since the last <code>/endsession</code>. Any <code>/endsession</code>, typed, button or auto, disarms it until your next real prompt.</li>
-  <li><b>Countdown.</b> The top line of the mod shows the time left as a bar and minutes, such as <code>Cache Idle █████░░░░░░░ 21m</code>, in the terminal; the desktop pane draws the same bar as a graphic. The bar empties as the cache ages. The time survives a restart or resume of the session; a session with no reply since the plugin loaded shows <i>waiting for a reply</i>. It is green above 30 minutes, yellow above 15, orange above 10, and red after that.</li>
+  <li><b>Cache Idle.</b> The top line of the mod shows the time since the last reply as a bar and minutes, such as <code>Cache Idle █████░░░░░░░ 21m</code>, in the terminal; the desktop pane draws the same bar as a graphic. The minutes count up and the bar fills as the cache ages; at 60 minutes it reads <i>cold</i>. The time survives a restart or resume of the session; a session with no reply since the plugin loaded shows <i>waiting for a reply</i>. It is green under 30 minutes, yellow under 45, orange under 50, and red after that.</li>
 </ul>
 
 <h3>The cold-cache question</h3>

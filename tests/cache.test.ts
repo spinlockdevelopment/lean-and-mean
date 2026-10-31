@@ -9,17 +9,19 @@ test('autoEndDue at 5 minutes left', async () => {
   expect(autoEndDue(0, 55 * 60_000)).toBe(true)
 })
 
-test('cacheLabel colors by time left', async () => {
-  const at = (m: number) => cacheLabel(0, (60 - m) * 60_000)?.color
+test('cacheLabel counts idle time up and colors by it', async () => {
+  const at = (m: number) => cacheLabel(0, m * 60_000)?.color
   expect(cacheLabel(null, 0)).toBe(null)
-  expect([at(31), at(30), at(16), at(15), at(11), at(10), at(5)]).toEqual(
+  expect([at(29), at(30), at(44), at(45), at(49), at(50), at(55)]).toEqual(
     ['green', 'yellow', 'yellow', '#ff8700', '#ff8700', 'red', 'red'],
   )
-  expect(cacheLabel(0, 39 * 60_000)?.minutes).toBe('21m')
+  expect(cacheLabel(0, 0)?.minutes).toBe('0m')
+  expect(cacheLabel(0, 21.5 * 60_000)?.minutes).toBe('21m')
+  expect(cacheLabel(0, 21 * 60_000)?.fraction).toBe(21 / 60)
   expect(cacheLabel(0, 61 * 60_000)?.minutes).toBe('cold')
 })
 
-test('bar fills by time left', async () => {
+test('bar fills by idle time', async () => {
   expect([barCells(1), barCells(21 / 60), barCells(0.001), barCells(0)]).toEqual([12, 5, 1, 0])
   expect(barSvg(0.5, '#22c55e')).toContain('width="100" height="8" rx="4" fill="#22c55e"')
 })

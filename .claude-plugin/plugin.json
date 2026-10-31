@@ -1,7 +1,7 @@
 {
   "name": "lean-and-mean",
   "description": "Concise prose and YAGNI code, installed into the project AGENTS.md. /endsession writes Rules and Next, commits, pushes, then stops.",
-  "version": "5.13.0",
+  "version": "5.14.0",
   "author": {
     "name": "Spinlock Development",
     "url": "https://github.com/spinlockdevelopment"
@@ -15,7 +15,7 @@
     "sessionBand": {
       "type": "boolean",
       "title": "Session Status Mod",
-      "description": "Colored prompt-cache countdown and End session button (above the prompt; in a side pane on desktop), auto /endsession at 5 minutes of prompt cache left.",
+      "description": "Colored Cache Idle timer (minutes since the last reply) and End session button (above the prompt; in a side pane on desktop), auto /endsession at 5 minutes of prompt cache left.",
       "default": true
     }
   }

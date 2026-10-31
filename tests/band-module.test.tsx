@@ -73,20 +73,20 @@ async function warm($: Engine, surface: 'terminal' | 'desktop') {
   } as never)
 }
 
-test('terminal: band has countdown and end session, no pane, no model call', async ($, on) => {
+test('terminal: band has Cache Idle timer and end session, no pane, no model call', async ($, on) => {
   const w = world(on, ['terminal'])
   mock.clock(on)
   await warm($, 'terminal')
   expect(w.length).toBe(0)
   expect(w.panes).toEqual([])
   const band = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'terminal', ...BAND })
-  expect(await band.find({ type: 'Text', text: '█'.repeat(12) })).toBeDefined()
-  expect(await band.find({ type: 'Text', text: / 60m/ })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: '░'.repeat(12) })).toBeDefined()
+  expect(await band.find({ type: 'Text', text: / 0m/ })).toBeDefined()
   expect(await band.find({ key: 'end' })).toBeDefined()
   await band.unmount()
 })
 
-test('desktop: pane opens at start and holds countdown and End session; band is empty', async ($, on) => {
+test('desktop: pane opens at start and holds Cache Idle timer and End session; band is empty', async ($, on) => {
   const w = world(on, ['desktop'])
   mock.clock(on)
   await $.session.start({ cwd: '/p', surface: 'desktop', isInteractive: true } as never)
@@ -96,8 +96,8 @@ test('desktop: pane opens at start and holds countdown and End session; band is 
   expect(await band.find({ key: 'end' })).toBeUndefined()
   await band.unmount()
   const pane = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'desktop', ...PANE })
-  expect(await pane.find({ type: 'Text', text: '60m' })).toBeDefined()
-  expect((await pane.find({ type: 'Svg' }))?.props.source).toContain('width="200" height="8" rx="4" fill="#22c55e"')
+  expect(await pane.find({ type: 'Text', text: '0m' })).toBeDefined()
+  expect((await pane.find({ type: 'Svg' }))?.props.source).toContain('width="0" height="8" rx="4" fill="#22c55e"')
   expect(await pane.find({ key: 'tasks' })).toBeUndefined()
   expect(await pane.find({ key: 'end' })).toBeDefined()
   await pane.unmount()
@@ -157,21 +157,21 @@ test('endsession runs once when the cache has 5 minutes left', async ($, on) => 
 })
 
 for (const surface of ['terminal', 'desktop'] as const) {
-  test(`cache countdown ticks while idle, changes color (${surface})`, async ($, on) => {
+  test(`Cache Idle counts up while idle, changes color (${surface})`, async ($, on) => {
     world(on, [surface])
     const clock = mock.clock(on)
     await warm($, surface)
     const ui = await $.ui.mount({ plugin: 'lean-and-mean', surface, ...(surface === 'desktop' ? PANE : BAND) })
     const color = async () => (await ui.find({ type: 'Text', text: /\d+m/ }))?.props.color
-    expect(await ui.find({ type: 'Text', text: /60m/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /\b0m/ })).toBeDefined()
     expect(await color()).toBe('green')
     await clock.advance(40 * 60_000)
-    expect(await ui.find({ type: 'Text', text: /20m/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /40m/ })).toBeDefined()
     expect(await color()).toBe('yellow')
     await clock.advance(7 * 60_000)
     expect(await color()).toBe('#ff8700')
     await clock.advance(4 * 60_000)
-    expect(await ui.find({ type: 'Text', text: /9m/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /51m/ })).toBeDefined()
     expect(await color()).toBe('red')
     await ui.unmount()
   })
@@ -264,7 +264,7 @@ test('desktop pane mirrors the host task list; wrap_up checks it off', async ($,
   await pane.unmount()
 })
 
-test('cache countdown survives a restart through $.store', async ($, on) => {
+test('Cache Idle timer survives a restart through $.store', async ($, on) => {
   const w = world(on, ['desktop'])
   const clock = mock.clock(on)
   // A new process: no $.state yet, the store holds the last request 20m ago.
@@ -272,6 +272,6 @@ test('cache countdown survives a restart through $.store', async ($, on) => {
   await clock.advance(20 * 60_000)
   await $.session.start({ cwd: '/p', surface: 'desktop', isInteractive: true } as never)
   const pane = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'desktop', ...PANE })
-  expect(await pane.find({ type: 'Text', text: '40m' })).toBeDefined()
+  expect(await pane.find({ type: 'Text', text: '20m' })).toBeDefined()
   await pane.unmount()
 })
