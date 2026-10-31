@@ -54,7 +54,7 @@ Local checkouts, manual installs, and Codex notes:
 | `/lean-and-mean:lean-and-mean` | `$lean-and-mean` | Create or review `AGENTS.md`: refresh the block, reorder, verify commands and paths, prune, split past 250 lines. Usually runs on its own |
 | `/lean-and-mean:lean-and-mean debt` | `$lean-and-mean debt` | List every `// lean:` shortcut with its upgrade path |
 | `/lean-and-mean:endsession` | `$endsession` | Save Rules and Next, commit, push, and run `## Done` steps when the work is complete. Then stop. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#endsession) |
-| Session Status Mod | — | Colored cache countdown and End session button (a side pane in the desktop app), auto `/endsession` with 5 minutes of cache left, a Rehydrate / Clear first question when the cache has gone cold. Off in `/config`. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#band) |
+| Session Status Mod | — | Cache Idle countdown bar and End session button (a Session pane with the task list in the desktop app), auto `/endsession` with 5 minutes of cache left, a Rehydrate / Clear first question when the cache has gone cold. Off in `/config`. [Details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#band) |
 | `@agent-lean-and-mean:explainer` | — | Explainer Agent: local `.pages/<slug>.html` page, written as short Markdown and rendered by the [explainer kit](https://spinlockdevelopment.github.io/lean-and-mean/explainer/) |
 
 A manual install into `~/.claude/skills/` gives the bare `/lean-and-mean` and

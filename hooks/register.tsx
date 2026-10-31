@@ -1,7 +1,9 @@
 import { atom, read, update } from 'claude-code'
 import type { Engine, Register } from 'claude-code'
 
-import { autoEndDue, cacheCold, cacheLabel } from './cache'
+import type { Task } from '../types'
+import { BAR_CELLS, CACHE_TTL_MS, autoEndDue, barCells, barSvg, cacheCold, cacheLabel } from './cache'
+import { applyPlan } from './plan'
 
 const cacheAt = atom({ plugin: 'lean-and-mean', key: 'cacheAt' } as const, null)
 const endCommand = atom({ plugin: 'lean-and-mean', key: 'endCommand' } as const, 'lean-and-mean:endsession')
@@ -9,6 +11,24 @@ const endCommand = atom({ plugin: 'lean-and-mean', key: 'endCommand' } as const,
 const armed = atom({ plugin: 'lean-and-mean', key: 'armed' } as const, false)
 // Timer-written clock the band reads, so the cache countdown redraws while idle.
 const now = atom({ plugin: 'lean-and-mean', key: 'now' } as const, 0)
+// Desktop pane: the host's task list, mirrored from its plan tool.
+const tasks = atom({ plugin: 'lean-and-mean', key: 'tasks' } as const, [] as Task[])
+const PLAN_TOOL = 'mcp__ccd_turn__update_plan'
+const WRAP_TOOL = 'mcp__ccd_turn__wrap_up'
+
+// $.state dies with the process, so a restart or resume showed no countdown. $.store keeps
+// { sessionId: cacheAt } across processes, pruned to entries still inside the TTL.
+const STORE_KEY = 'cacheAt'
+async function saveCacheAt($: Engine, t: number) {
+  const id = await $.session.id()
+  const all = ((await $.store.get(STORE_KEY)) ?? {}) as Record<string, number>
+  const kept = Object.fromEntries(Object.entries(all).filter(([, at]) => t - at < CACHE_TTL_MS))
+  await $.store.set(STORE_KEY, { ...kept, [id]: t })
+}
+async function storedCacheAt($: Engine) {
+  const all = ((await $.store.get(STORE_KEY)) ?? {}) as Record<string, number>
+  return all[await $.session.id()] ?? null
+}
 
 const isEnd = (name: string) => /(^|:)endsession$/.test(name)
 // Desktop only: the countdown and End session sit in this pane (the app's side rail) instead of above the prompt.
@@ -48,6 +68,10 @@ export const register: Register = (on, options) => {
       // Queued until the session is idle; not awaited so the timer isn't held for the whole wrap-up.
       $.command.run({ command: await read($, endCommand), args: 'auto' }).catch(() => $.ui.toast('Auto /endsession failed: run it by hand'))
     }
+    if ((await read($, cacheAt)) === null) {
+      const at = await storedCacheAt($).catch(() => null)
+      if (at !== null) await update($, cacheAt, () => at)
+    }
     await tick()
     $.clock.every(30_000, tick)
     const found = (await $.command.list()).find(c => isEnd(c.name))
@@ -65,6 +89,10 @@ export const register: Register = (on, options) => {
     if (e.reason === 'clear') {
       await update($, armed, () => false)
       await update($, cacheAt, () => null)
+      await update($, tasks, () => [])
+      const all = ((await $.store.get(STORE_KEY).catch(() => undefined)) ?? {}) as Record<string, number>
+      const { [await $.session.id()]: _, ...rest } = all
+      await $.store.set(STORE_KEY, rest).catch(() => undefined)
     }
     return next(e)
   })
@@ -118,12 +146,26 @@ export const register: Register = (on, options) => {
     if (e.agentId !== undefined) return next(e)
     if (e.turnId === inTurn) inTurn = null
     // usage present = a real request ran, so the 1h cache was refreshed (interrupted turns too).
-    if (e.usage) {
+    // An answered turn did too: covers a host that sends no usage.
+    if (e.usage || (e.reason === 'answer' && !e.isAborted)) {
       const t = await $.clock.now()
       await update($, cacheAt, () => t)
       await update($, now, () => t)
+      await saveCacheAt($, t).catch(() => undefined)
     }
     return next(e)
+  })
+
+  on('tool.call', { tool: PLAN_TOOL }, async ($, e, next) => {
+    const r = await next(e)
+    if (!('deny' in r && r.deny) && !r.isError) await update($, tasks, t => applyPlan(t, e as never))
+    return r
+  })
+
+  on('tool.call', { tool: WRAP_TOOL }, async ($, e, next) => {
+    const r = await next(e)
+    if (!('deny' in r && r.deny) && !r.isError) await update($, tasks, t => t.map(x => ({ ...x, status: 'completed' as const })))
+    return r
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
@@ -136,9 +178,12 @@ export const register: Register = (on, options) => {
     return (
       <Box>
         {cache && (
-          <Text key="cache" color={cache.color}>
-            {`${cache.text}  `}
-          </Text>
+          <Box key="cache">
+            <Text color={cache.color}>Cache Idle </Text>
+            <Text key="bar" color={cache.color}>{'█'.repeat(barCells(cache.fraction))}</Text>
+            <Text dimColor>{'░'.repeat(BAR_CELLS - barCells(cache.fraction))}</Text>
+            <Text key="left" color={cache.color} weight="bold">{` ${cache.minutes}  `}</Text>
+          </Box>
         )}
         <Button key="end" label="end session" variant="secondary" onPress={() => endSession($)} />
       </Box>
@@ -146,13 +191,33 @@ export const register: Register = (on, options) => {
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE.id }, async ($, e) => {
-    const { Box, Text, Button } = $.ui.resolve(e)
+    const { Box, Text, Button, Svg } = $.ui.resolve(e)
     const cache = cacheLabel(await read($, cacheAt), await read($, now))
+    const list = await read($, tasks)
+    const mark = { completed: '✓', in_progress: '●', pending: '○' } as const
     return (
-      <Box flexDirection="column">
-        <Text key="cache" color={cache?.color} dimColor={!cache}>
-          {cache ? cache.text : 'Cache Idle: no request yet'}
-        </Text>
+      <Box flexDirection="column" gap={1}>
+        <Box key="cache" flexDirection="column" gap="xs">
+          <Box flexDirection="row" justifyContent="space-between">
+            <Text weight="semibold">Cache Idle</Text>
+            <Text key="left" color={cache?.color} dimColor={!cache} weight="semibold" tabular>
+              {cache ? cache.minutes : 'waiting for a reply'}
+            </Text>
+          </Box>
+          {cache && Svg && (
+            <Svg source={barSvg(cache.fraction, cache.hex)} alt={`Prompt cache: ${cache.minutes} left`} />
+          )}
+        </Box>
+        {list.length > 0 && (
+          <Box key="tasks" flexDirection="column">
+            <Text weight="semibold">Tasks</Text>
+            {list.map((t, i) => (
+              <Text key={`task-${i}`} dimColor={t.status === 'completed'} weight={t.status === 'in_progress' ? 'semibold' : 'regular'}>
+                {`${mark[t.status]} ${t.content}`}
+              </Text>
+            ))}
+          </Box>
+        )}
         <Button key="end" label="End session" variant="secondary" onPress={() => endSession($)} />
       </Box>
     )
