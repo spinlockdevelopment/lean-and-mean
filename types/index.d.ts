@@ -4,6 +4,12 @@ export type Millis = number
 /** One step of the host's task list, as the desktop plan tool sends it. */
 export type Task = { content: string; status: 'pending' | 'in_progress' | 'completed' }
 
+/** Desktop pane header: project folder, git branch, and the worktree folder when not the main tree. */
+export type Place = { project: string; branch: string | null; worktree: string | null }
+
+/** Desktop pane meters: context fill and rate-limit windows, each 0 to 100. */
+export type Usage = { context: number | null; limits: { kind: string; percent: number }[] }
+
 declare module 'claude-code' {
   interface PluginState {
     'lean-and-mean': {
@@ -12,6 +18,8 @@ declare module 'claude-code' {
       armed: boolean
       now: Millis
       tasks: Task[]
+      place: Place | null
+      usage: Usage
     }
   }
 }

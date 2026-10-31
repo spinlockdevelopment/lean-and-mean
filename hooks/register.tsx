@@ -1,8 +1,8 @@
 import { atom, read, update } from 'claude-code'
 import type { Engine, Register } from 'claude-code'
 
-import type { Task } from '../types'
-import { BAR_CELLS, CACHE_TTL_MS, autoEndDue, barCells, barSvg, cacheCold, cacheLabel } from './cache'
+import type { Place, Task, Usage } from '../types'
+import { BAR_CELLS, CACHE_TTL_MS, autoEndDue, barCells, barSvg, cacheCold, cacheLabel, limitTitle, meterLabel } from './cache'
 import { applyPlan } from './plan'
 
 const cacheAt = atom({ plugin: 'lean-and-mean', key: 'cacheAt' } as const, null)
@@ -13,6 +13,9 @@ const armed = atom({ plugin: 'lean-and-mean', key: 'armed' } as const, false)
 const now = atom({ plugin: 'lean-and-mean', key: 'now' } as const, 0)
 // Desktop pane: the host's task list, mirrored from its plan tool.
 const tasks = atom({ plugin: 'lean-and-mean', key: 'tasks' } as const, [] as Task[])
+// Desktop pane header and meters.
+const place = atom({ plugin: 'lean-and-mean', key: 'place' } as const, null as Place | null)
+const usage = atom({ plugin: 'lean-and-mean', key: 'usage' } as const, { context: null, limits: [] } as Usage)
 const PLAN_TOOL = 'mcp__ccd_turn__update_plan'
 const WRAP_TOOL = 'mcp__ccd_turn__wrap_up'
 
@@ -39,6 +42,24 @@ async function openPane($: Engine) {
   // Unasked (start, attach) it can wait undrawn under the column floor; the next real prompt asks again, which places it.
   if (r && !r.isPlaced) $.ui.toast(`Session pane waits: ${r.reason}`)
 }
+
+const base = (p: string) => p.replace(/\/+$/, '').split('/').pop() || p
+
+// Project is the main tree's folder; a worktree shows its own folder beside the branch.
+async function refreshPlace($: Engine) {
+  const root = await $.session.root()
+  const repo = await $.session.repo().catch(() => null)
+  let next: Place = { project: base(repo?.root ?? root), branch: null, worktree: null }
+  if (repo) {
+    const r = await $.process.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD', '--show-toplevel'], { cwd: root, timeoutMs: 2000 }).catch(() => null)
+    const [head, top] = r?.exitCode === 0 ? r.stdout.trim().split('\n') : []
+    next = { ...next, branch: head === 'HEAD' ? 'detached' : head || null, worktree: top && top !== repo.root ? base(top) : null }
+  }
+  await update($, place, () => next)
+}
+
+const toUsage = (u: { context: { percent?: number }; rateLimits: readonly { kind: string; percentUsed: number }[] }): Usage =>
+  ({ context: u.context.percent ?? null, limits: u.rateLimits.map(l => ({ kind: l.kind, percent: l.percentUsed })) })
 
 // The End session button, band and pane alike.
 async function endSession($: Engine) {
@@ -76,12 +97,25 @@ export const register: Register = (on, options) => {
     $.clock.every(30_000, tick)
     const found = (await $.command.list()).find(c => isEnd(c.name))
     if (found) await update($, endCommand, () => found.name)
-    if ((await $.session.surfaces()).includes('desktop')) await openPane($)
+    if ((await $.session.surfaces()).includes('desktop')) {
+      await openPane($)
+      await refreshPlace($).catch(() => undefined)
+    }
+    const u = await $.session.usage().catch(() => null)
+    if (u) await update($, usage, () => toUsage(u))
     return next(e)
   })
 
   on('session.attach', async ($, e, next) => {
-    if (e.surface === 'desktop') await openPane($)
+    if (e.surface === 'desktop') {
+      await openPane($)
+      await refreshPlace($).catch(() => undefined)
+    }
+    return next(e)
+  })
+
+  on('session.measure', async ($, e, next) => {
+    await update($, usage, () => toUsage(e))
     return next(e)
   })
 
@@ -153,6 +187,8 @@ export const register: Register = (on, options) => {
       await update($, now, () => t)
       await saveCacheAt($, t).catch(() => undefined)
     }
+    // The branch can change in any turn; only the pane shows it.
+    if ((await $.ui.panes()).some(p => p.id === PANE.id)) await refreshPlace($).catch(() => undefined)
     return next(e)
   })
 
@@ -194,20 +230,36 @@ export const register: Register = (on, options) => {
     const { Box, Text, Button, Svg } = $.ui.resolve(e)
     const cache = cacheLabel(await read($, cacheAt), await read($, now))
     const list = await read($, tasks)
+    const where = await read($, place)
+    const { context, limits } = await read($, usage)
     const mark = { completed: '✓', in_progress: '●', pending: '○' } as const
+    // One labelled bar: Cache Idle, Context, each rate-limit window.
+    const meter = (key: string, title: string, value: string, color: string | undefined, bar?: { fraction: number; hex: string }) => (
+      <Box key={key} flexDirection="column" gap="xs">
+        <Box flexDirection="row" justifyContent="space-between">
+          <Text weight="semibold">{title}</Text>
+          <Text key="value" color={color} dimColor={!bar} weight="semibold" tabular>{value}</Text>
+        </Box>
+        {bar && Svg && <Svg source={barSvg(bar.fraction, bar.hex)} alt={`${title}: ${value}`} />}
+      </Box>
+    )
+    const ctx = context === null ? null : meterLabel(context)
     return (
       <Box flexDirection="column" gap={1}>
-        <Box key="cache" flexDirection="column" gap="xs">
-          <Box flexDirection="row" justifyContent="space-between">
-            <Text weight="semibold">Cache Idle</Text>
-            <Text key="left" color={cache?.color} dimColor={!cache} weight="semibold" tabular>
-              {cache ? cache.minutes : 'waiting for a reply'}
-            </Text>
+        {where && (
+          <Box key="place" flexDirection="column">
+            <Text size="heading" weight="semibold">{where.project}</Text>
+            {where.branch && (
+              <Text key="branch" dimColor mono>{`⎇ ${where.branch}${where.worktree ? `  ·  worktree ${where.worktree}` : ''}`}</Text>
+            )}
           </Box>
-          {cache && Svg && (
-            <Svg source={barSvg(cache.fraction, cache.hex)} alt={`Prompt cache idle: ${cache.minutes}`} />
-          )}
-        </Box>
+        )}
+        {ctx && meter('context', 'Context', ctx.text, ctx.color, ctx)}
+        {limits.map(l => {
+          const m = meterLabel(l.percent)
+          return meter(`limit-${l.kind}`, limitTitle(l.kind), m.text, m.color, m)
+        })}
+        {meter('cache', 'Cache Idle', cache ? cache.minutes : 'waiting for a reply', cache?.color, cache ?? undefined)}
         {list.length > 0 && (
           <Box key="tasks" flexDirection="column">
             <Text weight="semibold">Tasks</Text>
@@ -218,7 +270,9 @@ export const register: Register = (on, options) => {
             ))}
           </Box>
         )}
-        <Button key="end" label="End session" variant="secondary" onPress={() => endSession($)} />
+        <Button key="end" variant="primary" onPress={() => endSession($)}>
+          ⏻ End session <Text dimColor>save Rules and Next</Text>
+        </Button>
       </Box>
     )
   })

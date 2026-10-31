@@ -13,9 +13,23 @@ export function cacheLabel(cacheAt: number | null, now: number) {
   if (cacheAt === null) return null
   const idle = Math.min(CACHE_TTL_MS, Math.max(0, now - cacheAt))
   const m = idle / 60_000
-  const [color, hex] = m < 30 ? ['green', '#22c55e'] : m < 45 ? ['yellow', '#eab308'] : m < 50 ? ['#ff8700', '#ff8700'] : ['red', '#ef4444']
+  const [color, hex] = tone(m, 30, 45, 50)
   return { minutes: idle === CACHE_TTL_MS ? 'cold' : `${Math.floor(m)}m`, fraction: idle / CACHE_TTL_MS, color, hex }
 }
+
+/** [terminal color, SVG hex]: green below `y`, yellow below `o`, orange below `r`, else red. */
+const tone = (v: number, y: number, o: number, r: number) =>
+  v < y ? ['green', '#22c55e'] : v < o ? ['yellow', '#eab308'] : v < r ? ['#ff8700', '#ff8700'] : ['red', '#ef4444']
+
+/** Context or rate-limit fill, 0 to 100, for a pane meter: <50% green, <75% yellow, <90% orange, else red. */
+export function meterLabel(percent: number) {
+  const p = Math.min(100, Math.max(0, percent))
+  const [color, hex] = tone(p, 50, 75, 90)
+  return { text: `${Math.round(p)}%`, fraction: p / 100, color, hex }
+}
+
+/** Rate-limit window names as the pane shows them. */
+export const limitTitle = (kind: string) => ({ five_hour: '5h limit', seven_day: 'Weekly limit' } as Record<string, string>)[kind] ?? kind
 
 /** True once the 1h prompt cache has expired: the next request resends the whole context uncached. */
 export const cacheCold = (cacheAt: number | null, now: number) => cacheAt !== null && now >= cacheAt + CACHE_TTL_MS
