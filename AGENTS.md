@@ -123,4 +123,3 @@ Open question to the user: after a reply finishes, does the desktop Session pane
 - explainer stand-in trial 2026-10-05 (session band page): good page, facts checked against code; its reply added an off-topic false claim, so the reply is now path + diagrams only.
 - Usage scan 2026-10-03: logs from 2026-09-03 only, no rate-limit % recorded anywhere. On Max 5x, ≤10 of 39 5h windows and ≤1 week (all Sep 4–9) would have capped; none since Sep 10. Feature scan of 2,672 prompts: nothing else clears the bar.
 - graphify: adopt only above ~500 files, AGENTS.md section only, no hook-guard, rebuild from git post-commit not Stop.
-<!-- lean-and-mean: review -->
