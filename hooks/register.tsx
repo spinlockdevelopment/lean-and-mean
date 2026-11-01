@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { Engine, Register } from 'claude-code'
 
 import type { NextItem, Place, Task, Usage } from '../types'
-import { BAR_CELLS, CACHE_TTL_MS, autoEndDue, barCells, barSvg, cacheCold, cacheLabel, limitTitle, meterLabel } from './cache'
+import { BAR_CELLS, BUSY_CELLS, BUSY_COLOR, BUSY_HEX, CACHE_TTL_MS, autoEndDue, barCells, barSvg, busySvg, cacheCold, cacheLabel, limitTitle, meterLabel } from './cache'
 import { nextItems } from './next'
 import { applyPlan } from './plan'
 
@@ -10,6 +10,9 @@ const cacheAt = atom({ plugin: 'lean-and-mean', key: 'cacheAt' } as const, null)
 const endCommand = atom({ plugin: 'lean-and-mean', key: 'endCommand' } as const, 'lean-and-mean:endsession')
 // true from a real prompt until an endsession runs, so an idle wrapped-up session isn't ended again every hour.
 const armed = atom({ plugin: 'lean-and-mean', key: 'armed' } as const, false)
+// The main loop's running turn id, null when idle. cacheAt only moves at turn end, so while set
+// the Cache Idle bar shows BUSY and auto-end waits: a 55m+ turn would otherwise look expired mid-turn.
+const inTurn = atom({ plugin: 'lean-and-mean', key: 'inTurn' } as const, null as string | null)
 // Timer-written clock the band reads, so the Cache Idle timer redraws while idle.
 const now = atom({ plugin: 'lean-and-mean', key: 'now' } as const, 0)
 // Desktop pane: the host's task list, mirrored from its plan tool.
@@ -81,20 +84,19 @@ async function endSession($: Engine) {
 
 export const register: Register = (on, options) => {
   if (options.sessionBand === false) return
-  // cacheAt only moves at turn end, so a 55m+ turn would look expired mid-turn.
-  // lean: module variable, lost on reload mid-turn; move to an atom if that bites.
-  let inTurn: string | null = null
 
   on('session.start', async ($, e, next) => {
     const tick = async () => {
       const t = await $.clock.now()
       await update($, now, () => t)
-      if (inTurn !== null || !(await read($, armed)) || !autoEndDue(await read($, cacheAt), t)) return
+      if ((await read($, inTurn)) !== null || !(await read($, armed)) || !autoEndDue(await read($, cacheAt), t)) return
       await update($, armed, () => false)
       $.ui.toast('Prompt cache expires in 5m: running /endsession')
       // Queued until the session is idle; not awaited so the timer isn't held for the whole wrap-up.
       $.command.run({ command: await read($, endCommand), args: 'auto' }).catch(() => $.ui.toast('Auto /endsession failed: run it by hand'))
     }
+    // Start and reload both come between turns; a turn id left by a crash would pin BUSY.
+    await update($, inTurn, () => null)
     if ((await read($, cacheAt)) === null) {
       const at = await storedCacheAt($).catch(() => null)
       if (at !== null) await update($, cacheAt, () => at)
@@ -145,7 +147,7 @@ export const register: Register = (on, options) => {
   on('prompt.submit', async ($, e, next) => {
     if (e.origin.kind === 'plugin' || e.text.trimStart().startsWith('/')) return next(e)
     const at = await read($, cacheAt)
-    if (e.turnId === undefined && inTurn === null && at !== null && cacheCold(at, await $.clock.now())) {
+    if (e.turnId === undefined && (await read($, inTurn)) === null && at !== null && cacheCold(at, await $.clock.now())) {
       // armed false = an endsession (auto, button or typed) ran after the last real prompt.
       const ended = !(await read($, armed))
       const command = await read($, endCommand)
@@ -177,14 +179,15 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
-  on('turn.start', async (_$, e, next) => {
-    inTurn = e.turnId
+  on('turn.start', async ($, e, next) => {
+    // Subagent turns run inside a main-loop turn; only the main loop counts.
+    if (e.agentId === undefined) await update($, inTurn, () => e.turnId)
     return next(e)
   })
 
   on('turn.complete', async ($, e, next) => {
     if (e.agentId !== undefined) return next(e)
-    if (e.turnId === inTurn) inTurn = null
+    if (e.turnId === (await read($, inTurn))) await update($, inTurn, () => null)
     // usage present = a real request ran, so the 1h cache was refreshed (interrupted turns too).
     // An answered turn did too: covers a host that sends no usage.
     if (e.usage || (e.reason === 'answer' && !e.isAborted)) {
@@ -214,11 +217,19 @@ export const register: Register = (on, options) => {
     // Desktop draws these in the pane instead.
     if (e.props.hasSurvey || e.surface === 'desktop') return next(e)
     const at = await read($, cacheAt)
-    if (at === null) return next(e)
+    const busy = (await read($, inTurn)) !== null
+    if (at === null && !busy) return next(e)
     const { Box, Text, Button } = $.ui.resolve(e)
-    const cache = cacheLabel(at, await read($, now))
+    const cache = busy ? null : cacheLabel(at, await read($, now))
     return (
       <Box>
+        {busy && (
+          <Box key="cache">
+            <Text color={BUSY_COLOR}>Cache Idle </Text>
+            <Text key="bar" color="white" backgroundColor={BUSY_COLOR} weight="bold">{BUSY_CELLS}</Text>
+            <Text>{'  '}</Text>
+          </Box>
+        )}
         {cache && (
           <Box key="cache">
             <Text color={cache.color}>Cache Idle </Text>
@@ -234,6 +245,7 @@ export const register: Register = (on, options) => {
 
   on('ui.render', { component: 'Pane', requestId: PANE.id }, async ($, e) => {
     const { Box, Text, Button, Svg } = $.ui.resolve(e)
+    const busy = (await read($, inTurn)) !== null
     const cache = cacheLabel(await read($, cacheAt), await read($, now))
     const list = await read($, tasks)
     const later = await read($, upcoming)
@@ -241,13 +253,13 @@ export const register: Register = (on, options) => {
     const { context, limits } = await read($, usage)
     const mark = { completed: '✓', in_progress: '●', pending: '○' } as const
     // One labelled bar: Cache Idle, Context, each rate-limit window.
-    const meter = (key: string, title: string, value: string, color: string | undefined, bar?: { fraction: number; hex: string }) => (
+    const meter = (key: string, title: string, value: string, color: string | undefined, bar?: { fraction: number; hex: string }, svg?: string) => (
       <Box key={key} flexDirection="column" gap="xs">
         <Box flexDirection="row" justifyContent="space-between">
           <Text weight="semibold">{title}</Text>
           <Text key="value" color={color} dimColor={!bar} weight="semibold" tabular>{value}</Text>
         </Box>
-        {bar && Svg && <Svg source={barSvg(bar.fraction, bar.hex)} alt={`${title}: ${value}`} />}
+        {bar && Svg && <Svg source={svg ?? barSvg(bar.fraction, bar.hex)} alt={`${title}: ${value}`} />}
       </Box>
     )
     const ctx = context === null ? null : meterLabel(context)
@@ -266,7 +278,9 @@ export const register: Register = (on, options) => {
           const m = meterLabel(l.percent)
           return meter(`limit-${l.kind}`, limitTitle(l.kind), m.text, m.color, m)
         })}
-        {meter('cache', 'Cache Idle', cache ? cache.minutes : 'waiting for a reply', cache?.color, cache ?? undefined)}
+        {busy
+          ? meter('cache', 'Cache Idle', 'busy', BUSY_COLOR, { fraction: 1, hex: BUSY_HEX }, busySvg())
+          : meter('cache', 'Cache Idle', cache ? cache.minutes : 'waiting for a reply', cache?.color, cache ?? undefined)}
         {list.length > 0 && (
           <Box key="tasks" flexDirection="column">
             <Text weight="semibold">Tasks</Text>

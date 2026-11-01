@@ -19,6 +19,7 @@ declare module 'claude-code' {
       cacheAt: Millis | null
       endCommand: string
       armed: boolean
+      inTurn: string | null
       now: Millis
       tasks: Task[]
       place: Place | null

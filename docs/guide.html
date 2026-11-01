@@ -121,7 +121,7 @@
 </figure>
 <ul>
   <li><b>Auto end.</b> At 55 minutes, the mod runs <code>/lean-and-mean:endsession auto</code>. It commits and pushes, but <code>auto</code> means it never ships. It fires only if no turn is running and you sent a real prompt since the last <code>/endsession</code>. Any <code>/endsession</code>, typed, button or auto, disarms it until your next real prompt.</li>
-  <li><b>Cache Idle.</b> The top line of the mod shows the time since the last reply as a bar and minutes, such as <code>Cache Idle █████░░░░░░░ 21m</code>, in the terminal; the desktop pane draws the same bar as a graphic. The minutes count up and the bar fills as the cache ages; at 60 minutes it reads <i>cold</i>. The time survives a restart or resume of the session; a session with no reply since the plugin loaded shows <i>waiting for a reply</i>. It is green under 30 minutes, yellow under 45, orange under 50, and red after that.</li>
+  <li><b>Cache Idle.</b> The top line of the mod shows the time since the last reply as a bar and minutes, such as <code>Cache Idle █████░░░░░░░ 21m</code>, in the terminal; the desktop pane draws the same bar as a graphic. The minutes count up and the bar fills as the cache ages; at 60 minutes it reads <i>cold</i>. The time survives a restart or resume of the session; a session with no reply since the plugin loaded shows <i>waiting for a reply</i>. It is green under 30 minutes, yellow under 45, orange under 50, and red after that. While Claude is working on a turn, the bar is full and blue with <b>BUSY</b> in the middle, and the timer does not run; it starts again from 0 when the reply ends.</li>
 </ul>
 
 <h3>The cold-cache question</h3>

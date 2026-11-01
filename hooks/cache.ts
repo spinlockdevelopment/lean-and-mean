@@ -40,6 +40,16 @@ export const barSvg = (fraction: number, hex: string) =>
   `<rect width="200" height="8" rx="4" fill="#8884" />` +
   `<rect width="${Math.round(fraction * 200)}" height="8" rx="4" fill="${hex}" /></svg>`
 
+/** Busy (a main-loop turn running): blue, the bar full with BUSY centered. */
+export const BUSY_COLOR = 'blue'
+export const BUSY_HEX = '#3b82f6'
+export const busySvg = () =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="14" viewBox="0 0 200 14">` +
+  `<rect width="200" height="14" rx="7" fill="${BUSY_HEX}" />` +
+  `<text x="100" y="10.5" text-anchor="middle" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#fff">BUSY</text></svg>`
+
 /** Terminal bar cells filled, rounded up so any idle time shows. */
 export const BAR_CELLS = 12
 export const barCells = (fraction: number) => Math.ceil(fraction * BAR_CELLS)
+/** Terminal busy bar: BUSY centered in the bar's cells. */
+export const BUSY_CELLS = 'BUSY'.padStart((BAR_CELLS + 4) / 2).padEnd(BAR_CELLS)
