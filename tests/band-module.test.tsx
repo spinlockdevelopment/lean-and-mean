@@ -308,6 +308,34 @@ test('desktop pane: project, branch and worktree, then Context and limit meters'
   await pane.unmount()
 })
 
+test('desktop pane: Context and Weekly bars split into baseline and growth, weekly reset caption', async ($, on) => {
+  const w = world(on, ['desktop'])
+  const start = new Date(2026, 10, 4, 9, 0).getTime()
+  const clock = mock.clock(on, { now: start })
+  const resetsAt = new Date(start + (2 * 1440 + 4 * 60) * 60_000).toISOString()
+  const week = (p: number) => [{ kind: 'seven_day', percentUsed: p, resetsAt }]
+  await warm($, 'desktop')
+  // Day baseline taken at the first reading: 12.5%, stored for later sessions.
+  expect(w.store.get('weekBase')).toEqual({ day: '2026-11-4', percent: 12.5 })
+  await $.session.measure({ context: { window: 200_000, percent: 50 }, rateLimits: week(20), changed: ['context', 'rateLimits'] } as never)
+  await $.prompt.submit({ text: 'next', wait: false, origin: { kind: 'composer' } })
+  await $.session.measure({ context: { window: 200_000, percent: 58 }, rateLimits: week(20), changed: ['context'] } as never)
+  let pane = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'desktop', ...PANE })
+  const svgs = await pane.findAll({ type: 'Svg' })
+  expect(svgs.find(x => String(x.props.alt).startsWith('Context'))?.props.alt).toBe('Context: 58%, +8%')
+  expect(svgs.find(x => String(x.props.alt).startsWith('Weekly'))?.props.alt).toBe('Weekly limit: 20%, +8%')
+  expect(await pane.find({ type: 'Text', text: '+8%' })).toBeDefined()
+  expect((await pane.find({ type: 'Text', text: 'resets in 2d 4h' }))?.props.size).toBe('caption')
+  await pane.unmount()
+  // Next day: the baseline restarts, so nothing is "added today" yet.
+  await clock.advance(24 * 60 * 60_000)
+  await $.session.measure({ context: { window: 200_000, percent: 58 }, rateLimits: week(21), changed: ['rateLimits'] } as never)
+  pane = await $.ui.mount({ plugin: 'lean-and-mean', surface: 'desktop', ...PANE })
+  expect((await pane.findAll({ type: 'Svg' })).find(x => String(x.props.alt).startsWith('Weekly'))?.props.alt).toBe('Weekly limit: 21%')
+  expect(await pane.find({ type: 'Text', text: 'resets in 1d 4h' })).toBeDefined()
+  await pane.unmount()
+})
+
 test('a running main-loop turn shows BUSY in the bar, pane and band; subagent turns do not', async ($, on) => {
   world(on, ['desktop'])
   const clock = mock.clock(on)

@@ -1,8 +1,8 @@
 import { atom, read, update } from 'claude-code'
 import type { Engine, Register } from 'claude-code'
 
-import type { NextItem, Place, Task, Usage } from '../types'
-import { BAR_CELLS, BUSY_CELLS, BUSY_COLOR, BUSY_HEX, CACHE_TTL_MS, autoEndDue, barCells, barSvg, busySvg, cacheCold, cacheLabel, limitTitle, meterLabel } from './cache'
+import type { DayBase, NextItem, Place, Task, Usage } from '../types'
+import { BAR_CELLS, BUSY_CELLS, BUSY_COLOR, BUSY_HEX, CACHE_TTL_MS, autoEndDue, barCells, barSvg, busySvg, cacheCold, cacheLabel, dayKey, limitTitle, meterLabel, rebase, resetIn } from './cache'
 import { nextItems } from './next'
 import { applyPlan } from './plan'
 
@@ -22,6 +22,9 @@ const place = atom({ plugin: 'lean-and-mean', key: 'place' } as const, null as P
 const usage = atom({ plugin: 'lean-and-mean', key: 'usage' } as const, { context: null, limits: [] } as Usage)
 // Desktop pane: AGENTS.md `## Next`, re-read at turn end, so /endsession's rewrite shows with no model call.
 const upcoming = atom({ plugin: 'lean-and-mean', key: 'upcoming' } as const, [] as NextItem[])
+// Two-tone bars: context fill at the last real prompt, weekly limit at the day's first reading.
+const contextBase = atom({ plugin: 'lean-and-mean', key: 'contextBase' } as const, null as number | null)
+const weekBase = atom({ plugin: 'lean-and-mean', key: 'weekBase' } as const, null as DayBase | null)
 const PLAN_TOOL = 'mcp__ccd_turn__update_plan'
 const WRAP_TOOL = 'mcp__ccd_turn__wrap_up'
 
@@ -67,8 +70,21 @@ async function refreshPane($: Engine) {
   await update($, upcoming, () => (typeof md === 'string' ? nextItems(md) : []))
 }
 
-const toUsage = (u: { context: { percent?: number }; rateLimits: readonly { kind: string; percentUsed: number }[] }): Usage =>
-  ({ context: u.context.percent ?? null, limits: u.rateLimits.map(l => ({ kind: l.kind, percent: l.percentUsed })) })
+type UsageIn = { context: { percent?: number }; rateLimits: readonly { kind: string; percentUsed: number; resetsAt?: string }[] }
+
+// Kept in $.store so the day's baseline survives restarts and is shared by the day's sessions.
+const WEEK_KEY = 'weekBase'
+async function setUsage($: Engine, u: UsageIn) {
+  const next: Usage = { context: u.context.percent ?? null, limits: u.rateLimits.map(l => ({ kind: l.kind, percent: l.percentUsed, resetsAt: l.resetsAt })) }
+  await update($, usage, () => next)
+  const week = next.limits.find(l => l.kind === 'seven_day')
+  const t = await read($, now)
+  if (!week || !t) return
+  const was = (await read($, weekBase)) ?? (((await $.store.get(WEEK_KEY).catch(() => undefined)) ?? null) as DayBase | null)
+  const base = rebase(was, dayKey(t), week.percent)
+  await update($, weekBase, () => base)
+  if (base !== was) await $.store.set(WEEK_KEY, base).catch(() => undefined)
+}
 
 // The End session button, band and pane alike.
 async function endSession($: Engine) {
@@ -110,7 +126,7 @@ export const register: Register = (on, options) => {
       await refreshPane($).catch(() => undefined)
     }
     const u = await $.session.usage().catch(() => null)
-    if (u) await update($, usage, () => toUsage(u))
+    if (u) await setUsage($, u)
     return next(e)
   })
 
@@ -123,7 +139,7 @@ export const register: Register = (on, options) => {
   })
 
   on('session.measure', async ($, e, next) => {
-    await update($, usage, () => toUsage(e))
+    await setUsage($, e)
     return next(e)
   })
 
@@ -174,6 +190,8 @@ export const register: Register = (on, options) => {
       }
     }
     await update($, armed, () => true)
+    const { context } = await read($, usage)
+    await update($, contextBase, () => context)
     // A prompt is an asked open, placed at any width; a pane closed by hand is not listed, so stays closed.
     if ((await $.ui.panes()).some(p => p.id === PANE.id && !p.isPlaced)) await openPane($)
     return next(e)
@@ -251,17 +269,34 @@ export const register: Register = (on, options) => {
     const later = await read($, upcoming)
     const where = await read($, place)
     const { context, limits } = await read($, usage)
+    const ctxFrom = await read($, contextBase)
+    const week = await read($, weekBase)
+    const t = await read($, now)
     const mark = { completed: '✓', in_progress: '●', pending: '○' } as const
-    // One labelled bar: Cache Idle, Context, each rate-limit window.
-    const meter = (key: string, title: string, value: string, color: string | undefined, bar?: { fraction: number; hex: string }, svg?: string) => (
-      <Box key={key} flexDirection="column" gap="xs">
-        <Box flexDirection="row" justifyContent="space-between">
-          <Text weight="semibold">{title}</Text>
-          <Text key="value" color={color} dimColor={!bar} weight="semibold" tabular>{value}</Text>
+    // One labelled bar: Cache Idle, Context, each rate-limit window. `from` (0 to 100) splits the
+    // bar into pale baseline and solid growth; `note` is a dim caption under it.
+    type Bar = { fraction: number; hex: string; from?: number; svg?: string; note?: string | null }
+    const meter = (key: string, title: string, value: string, color: string | undefined, bar?: Bar) => {
+      const grew = bar?.from === undefined ? 0 : Math.round(bar.fraction * 100 - bar.from)
+      return (
+        <Box key={key} flexDirection="column" gap="xs">
+          <Box flexDirection="row" justifyContent="space-between">
+            <Text weight="semibold">{title}</Text>
+            <Box key="values" flexDirection="row" gap="xs">
+              {grew > 0 && <Text key="grew" dimColor tabular>{`+${grew}%`}</Text>}
+              <Text key="value" color={color} dimColor={!bar} weight="semibold" tabular>{value}</Text>
+            </Box>
+          </Box>
+          {bar && Svg && (
+            <Svg
+              source={bar.svg ?? barSvg(bar.fraction, bar.hex, bar.from === undefined ? undefined : bar.from / 100)}
+              alt={`${title}: ${value}${grew > 0 ? `, +${grew}%` : ''}`}
+            />
+          )}
+          {bar?.note && <Text key="note" size="caption" dimColor>{bar.note}</Text>}
         </Box>
-        {bar && Svg && <Svg source={svg ?? barSvg(bar.fraction, bar.hex)} alt={`${title}: ${value}`} />}
-      </Box>
-    )
+      )
+    }
     const ctx = context === null ? null : meterLabel(context)
     return (
       <Box flexDirection="column" gap={1}>
@@ -273,13 +308,15 @@ export const register: Register = (on, options) => {
             )}
           </Box>
         )}
-        {ctx && meter('context', 'Context', ctx.text, ctx.color, ctx)}
+        {ctx && meter('context', 'Context', ctx.text, ctx.color, { ...ctx, from: ctxFrom !== null && context !== null && ctxFrom <= context ? ctxFrom : undefined })}
         {limits.map(l => {
           const m = meterLabel(l.percent)
-          return meter(`limit-${l.kind}`, limitTitle(l.kind), m.text, m.color, m)
+          const weekly = l.kind === 'seven_day'
+          const bar = weekly ? { ...m, from: week?.day === dayKey(t) ? week.percent : undefined, note: resetIn(l.resetsAt, t) } : m
+          return meter(`limit-${l.kind}`, limitTitle(l.kind), m.text, m.color, bar)
         })}
         {busy
-          ? meter('cache', 'Cache Idle', 'busy', BUSY_COLOR, { fraction: 1, hex: BUSY_HEX }, busySvg())
+          ? meter('cache', 'Cache Idle', 'busy', BUSY_COLOR, { fraction: 1, hex: BUSY_HEX, svg: busySvg() })
           : meter('cache', 'Cache Idle', cache ? cache.minutes : 'waiting for a reply', cache?.color, cache ?? undefined)}
         {list.length > 0 && (
           <Box key="tasks" flexDirection="column">

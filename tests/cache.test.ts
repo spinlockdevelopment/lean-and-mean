@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { autoEndDue, barCells, barSvg, cacheLabel } from '../hooks/cache'
+import { autoEndDue, barCells, barSvg, cacheLabel, dayKey, rebase, resetIn } from '../hooks/cache'
 import { brief, nextItems } from '../hooks/next'
 import { applyPlan } from '../hooks/plan'
 
@@ -50,4 +50,31 @@ test('nextItems reads only ## Next, one brief item per lead line or bullet', asy
   expect(nextItems('# none')).toEqual([])
   const cut = brief('word '.repeat(30))
   expect(cut.endsWith('word…') && cut.length <= 64).toBe(true)
+})
+
+test('two-tone bar: pale baseline, solid growth', async () => {
+  const svg = barSvg(0.6, '#22c55e', 0.5)
+  expect(svg).toContain('width="120" height="8" rx="4" fill="#22c55e" fill-opacity="0.5"')
+  expect(svg).toContain('x="100" width="20" height="8" fill="#22c55e"')
+  expect(barSvg(0.5, '#22c55e', 0.5)).not.toContain('clip-path')
+  expect(barSvg(0.5, '#22c55e')).not.toContain('fill-opacity')
+})
+
+test('weekly baseline restarts on a new day or a reset', async () => {
+  const b = { day: 'd1', percent: 20 }
+  expect(rebase(null, 'd1', 20)).toEqual(b)
+  expect(rebase(b, 'd1', 25)).toBe(b)
+  expect(rebase(b, 'd2', 25)).toEqual({ day: 'd2', percent: 25 })
+  expect(rebase(b, 'd1', 3)).toEqual({ day: 'd1', percent: 3 })
+  const t = new Date(2026, 10, 4, 23, 59).getTime()
+  expect(dayKey(t)).toBe('2026-11-4')
+  expect(dayKey(t + 120_000)).toBe('2026-11-5')
+})
+
+test('resetIn reads days and hours, then hours and minutes', async () => {
+  const now = Date.parse('2026-11-04T10:00:00Z')
+  expect(resetIn('2026-11-06T14:00:00Z', now)).toBe('resets in 2d 4h')
+  expect(resetIn('2026-11-04T13:10:00Z', now)).toBe('resets in 3h 10m')
+  expect(resetIn('2026-11-04T10:05:00Z', now)).toBe('resets in 5m')
+  expect([resetIn(undefined, now), resetIn('2026-11-04T09:00:00Z', now), resetIn('junk', now)]).toEqual([null, null, null])
 })

@@ -8,7 +8,10 @@ export type Task = { content: string; status: 'pending' | 'in_progress' | 'compl
 export type Place = { project: string; branch: string | null; worktree: string | null }
 
 /** Desktop pane meters: context fill and rate-limit windows, each 0 to 100. */
-export type Usage = { context: number | null; limits: { kind: string; percent: number }[] }
+export type Usage = { context: number | null; limits: { kind: string; percent: number; resetsAt?: string }[] }
+
+/** Weekly limit percent at the first reading of a local day: the pale part of its bar. */
+export type DayBase = { day: string; percent: number }
 
 /** One AGENTS.md `## Next` line, cut to its first clause; priority is `P1`–`P3` or null for lead lines. */
 export type NextItem = { priority: string | null; text: string }
@@ -25,6 +28,8 @@ declare module 'claude-code' {
       place: Place | null
       usage: Usage
       upcoming: NextItem[]
+      contextBase: number | null
+      weekBase: DayBase | null
     }
   }
 }
