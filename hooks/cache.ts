@@ -40,8 +40,8 @@ export function barSvg(fraction: number, hex: string, from?: number) {
   const w = Math.round(fraction * 200)
   const x = from === undefined ? w : Math.min(w, Math.round(Math.max(0, from) * 200))
   const added = w - x > 0
-    ? `<clipPath id="f"><rect width="${w}" height="8" rx="4" /></clipPath>` +
-      `<rect x="${x}" width="${w - x}" height="8" fill="${hex}" clip-path="url(#f)" />`
+    ? `<clipPath id="f${w}"><rect width="${w}" height="8" rx="4" /></clipPath>` +
+      `<rect x="${x}" width="${w - x}" height="8" fill="${hex}" clip-path="url(#f${w})" />`
     : ''
   return `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="8" viewBox="0 0 200 8">` +
     `<rect width="200" height="8" rx="4" fill="#8884" />` +
