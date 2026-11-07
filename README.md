@@ -28,7 +28,7 @@ short sessions that keep each request's context small. The measured numbers:
 **Claude Code** (or `/plugin marketplace add …` and `/plugin install …` in the app):
 
 ```sh
-claude plugin marketplace add spinlockdevelopment/lean-and-mean
+claude plugin marketplace add https://github.com/spinlockdevelopment/lean-and-mean
 claude plugin install lean-and-mean@lean-and-mean
 ```
 
@@ -37,12 +37,16 @@ Restart Claude Code, then run `/lean-and-mean:lean-and-mean` once per project.
 **Codex:**
 
 ```sh
-codex plugin marketplace add spinlockdevelopment/lean-and-mean
+codex plugin marketplace add https://github.com/spinlockdevelopment/lean-and-mean
 codex plugin add lean-and-mean@lean-and-mean
 ```
 
 Start a new session at the project root, trust the SessionStart hook when
 prompted, and run `$lean-and-mean` once.
+
+Codex has no plugin idle timer or exposed cache-expiry timestamp. Use
+`$endsession` to close a session manually; Claude's automatic cache countdown
+and end-session action remain Claude-only.
 
 Local checkouts, manual installs, and Codex notes:
 [install details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#manual).

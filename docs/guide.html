@@ -190,12 +190,13 @@
 </ul>
 
 <h2 id="manual">Install details</h2>
-<p><b>Claude Code.</b> In the app, <code>/plugin marketplace add spinlockdevelopment/lean-and-mean</code> then <code>/plugin install lean-and-mean@lean-and-mean</code> does the same as the shell commands. Restart afterwards: the hook loads only at session start.</p>
+<p><b>Claude Code.</b> In the app, <code>/plugin marketplace add https://github.com/spinlockdevelopment/lean-and-mean</code> then <code>/plugin install lean-and-mean@lean-and-mean</code> does the same as the shell commands. Restart afterwards: the hook loads only at session start.</p>
 <p><b>Claude Code, manual:</b> copy <code>skills/lean-and-mean/</code> and <code>skills/endsession/</code> into <code>~/.claude/skills/</code>, copy <code>hooks/session-start.sh</code> somewhere, and add the <code>SessionStart</code> entry from <code>hooks/hooks.json</code> to <code>~/.claude/settings.json</code>, pointing at that script. Manual installs get the bare <code>/endsession</code> and <code>/lean-and-mean</code>.</p>
-<p><b>Codex.</b> To test unpushed changes, install from a local checkout:</p>
-<pre><code>codex plugin marketplace add ~/src/lean-and-mean
+<p><b>Codex.</b> Add this GitHub repository as the marketplace, then install:</p>
+<pre><code>codex plugin marketplace add https://github.com/spinlockdevelopment/lean-and-mean
 codex plugin add lean-and-mean@lean-and-mean</code></pre>
-<p>Codex reads <code>.claude-plugin/marketplace.json</code>; its plugin metadata is <code>.codex-plugin/plugin.json</code>. Installing does not authorize hooks: trust the SessionStart hook when prompted. Select the skill in the picker. Start Codex at the project root, the same scope the hook checks. Nested instruction files still apply and are not rewritten. Remove any <code>AGENTS.override.md</code>: Codex reads it instead of <code>AGENTS.md</code>. The hook needs a POSIX shell (macOS, Linux or WSL). See <a href="https://developers.openai.com/plugins/build/plugins">OpenAI plugin packaging</a>.</p>
+<p>Codex reads <code>.agents/plugins/marketplace.json</code> and the root <code>plugin.json</code>. Its SessionStart hook is separate from the Claude UI module. Installing does not authorize hooks: review and trust the hook when prompted. Start a new session at the project root, then select <code>$lean-and-mean</code> in the skill picker. Nested instruction files still apply and are not rewritten. Remove any <code>AGENTS.override.md</code>: Codex reads it instead of <code>AGENTS.md</code>. The hook needs a POSIX shell (macOS, Linux or WSL). See <a href="https://developers.openai.com/plugins/build/plugins">OpenAI plugin packaging</a>.</p>
+<p><b>Cache timing on Codex.</b> Run <code>$endsession</code> to close a session manually. Codex hooks run at defined turn and session events; they do not provide an idle countdown or a cache-expiry timestamp to plugins. The Claude Session Status Mod's automatic five-minute warning and end-session action are therefore Claude-only. A guessed timer would be unreliable because cache retention varies by model and request settings.</p>
 <p><b>Codex without plugin support:</b> copy both skill folders into <code>~/.agents/skills/</code> and run <code>$lean-and-mean</code> yourself. The mode persists, but there is no automatic session-start review.</p>
 <p><b>Turning it off.</b> Disable the plugin <b>and</b> delete the Operating Mode block. Disabling alone leaves the rules active; deleting alone lets the hook suggest setup again.</p>
 

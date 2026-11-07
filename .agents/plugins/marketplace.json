@@ -1,0 +1,20 @@
+{
+  "name": "lean-and-mean",
+  "interface": {
+    "displayName": "Lean and Mean"
+  },
+  "plugins": [
+    {
+      "name": "lean-and-mean",
+      "source": {
+        "source": "local",
+        "path": "./"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

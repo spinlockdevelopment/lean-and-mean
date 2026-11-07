@@ -106,11 +106,11 @@
 
 <h2 id="install">Install</h2>
 <h3>Claude Code</h3>
-<pre><code>claude plugin marketplace add spinlockdevelopment/lean-and-mean
+<pre><code>claude plugin marketplace add https://github.com/spinlockdevelopment/lean-and-mean
 claude plugin install lean-and-mean@lean-and-mean</code></pre>
 <p>Restart Claude Code. Then run <code>/lean-and-mean:lean-and-mean</code> once in each project. It writes <code>AGENTS.md</code> and the <code>CLAUDE.md</code> stub. Until then, the hook loads the block each session and reminds you.</p>
 <h3>Codex</h3>
-<pre><code>codex plugin marketplace add spinlockdevelopment/lean-and-mean
+<pre><code>codex plugin marketplace add https://github.com/spinlockdevelopment/lean-and-mean
 codex plugin add lean-and-mean@lean-and-mean</code></pre>
 <p>Start a new session at the project root. Trust the SessionStart hook when prompted. Then run <code>$lean-and-mean</code> once.</p>
 <p>No plugin support, or want bare command names? See <a href="guide.html#manual">manual install</a>.</p>

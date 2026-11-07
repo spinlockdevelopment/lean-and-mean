@@ -1,0 +1,28 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "lean-and-mean",
+  "version": "5.19.0",
+  "description": "Concise prose, YAGNI code, and session handoffs in AGENTS.md.",
+  "author": {
+    "name": "Spinlock Development",
+    "url": "https://github.com/spinlockdevelopment"
+  },
+  "homepage": "https://github.com/spinlockdevelopment/lean-and-mean",
+  "repository": "https://github.com/spinlockdevelopment/lean-and-mean",
+  "license": "MIT",
+  "extensions": {
+    "com.openai": {
+      "hooks": "./hooks/codex.json",
+      "interface": {
+        "displayName": "Lean and Mean",
+        "shortDescription": "Concise prose, minimal code, useful handoffs",
+        "longDescription": "Concise prose, YAGNI code, and session handoffs in AGENTS.md.",
+        "developerName": "Spinlock Development",
+        "category": "Productivity",
+        "capabilities": ["Read", "Write"],
+        "websiteURL": "https://github.com/spinlockdevelopment/lean-and-mean",
+        "defaultPrompt": ["Use $lean-and-mean to set up this project."]
+      }
+    }
+  }
+}

@@ -38,9 +38,9 @@ block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
 CLAUDE.md) so it runs natively; `/endsession` promotes session mistakes
 into Rules, rewrites Next, commits, pushes (PR if needed), then hard-stops. Full
 AGENTS.md review runs at next session start when the hook says it is due.
-v5.18.1, published via the spinlockdevelopment/lean-and-mean marketplace.
+v5.19.0, packaged for Codex with a portable manifest and repo marketplace.
 - POSIX sh (one hook), Markdown skills, JSON manifests, one TSX function-hooks module (Claude only). Python stdlib tests for the hook; `claude plugin test` for the module.
-- Version bump in all three manifests together. Breaking behavior → major.
+- Version bump in the portable manifest and three legacy manifests together. Breaking behavior → major.
 - Hook stays POSIX sh, under 35 lines, zero output in the common case.
 - Any change to `extras/statusline.sh` bumps its line-2 breadcrumb (`# lean-and-mean statusline <n>`); the hook compares that line with `~/.claude/statusline.sh`.
 - Skill descriptions short: every installed skill's description costs context each turn.
@@ -51,7 +51,7 @@ sh -n hooks/session-start.sh
 claude plugin validate .claude-plugin/plugin.json && claude plugin test .
 python3 -m unittest discover tests
 CLAUDE_PROJECT_DIR=/path/to/project sh hooks/session-start.sh
-node -e 'for (const f of ["hooks/hooks.json",".claude-plugin/plugin.json",".claude-plugin/marketplace.json",".codex-plugin/plugin.json"]) JSON.parse(require("fs").readFileSync(f))'
+node -e 'for (const f of ["plugin.json",".agents/plugins/marketplace.json","hooks/codex.json","hooks/hooks.json",".claude-plugin/plugin.json",".claude-plugin/marketplace.json",".codex-plugin/plugin.json"]) JSON.parse(require("fs").readFileSync(f))'
 git -c credential.helper= -c credential.helper='!gh auth git-credential' push
 
 ## Architecture & Layout
@@ -80,13 +80,14 @@ prose the model follows. The Session Status Mod (code name: session band) is the
 | `docs/explainer/v1/kit.js`, `kit.css` | Explainer kit, served from Pages: renders the `<xmp>` Markdown body, components, themes; loads marked, highlight.js (cdnjs), mermaid (jsDelivr) |
 | `docs/explainer/index.html` | Kit showcase and visual test, written in the kit's own syntax; every component once |
 | `tests/test_explainer_kit.py` | Kit parser tests through `node` (style, frontmatter, items, grid, tree, path chips) |
-| `hooks/hooks.json` | Wires the hook via `${CLAUDE_PLUGIN_ROOT}` and the band under `modules` |
+| `hooks/hooks.json` | Claude hook and TSX Session Status Mod |
+| `hooks/codex.json`, `plugin.json`, `.agents/plugins/marketplace.json` | Codex-only SessionStart hook, portable manifest, repo marketplace |
 | `docs/index.html` | GitHub Pages overview; GitHub link in top bar, raw SKILL.md links, inline links into `guide.html` |
 | `docs/guide.html` | Pages deep dive: YAGNI ladder, AGENTS.md, /endsession, hook, brief cost note, Session Status Mod, Explainer Agent, install details |
 | `docs/md.html` | Renders the skill Markdown from `main` (marked via cdnjs); `?f=` picks from a fixed list |
 | `docs/extras.html` | Pages extras: status line, Explainer Agent, typesafe-ai; README and index link it in one line |
 | `docs/style.css` | Shared Pages styles |
-| `.claude-plugin/`, `.codex-plugin/` | Claude plugin.json + marketplace.json, Codex plugin.json; versions must match |
+| `.claude-plugin/`, `.codex-plugin/` | Claude manifests and Codex compatibility manifest; versions must match the portable manifest |
 | `AGENTS.md`, `CLAUDE.md` | This file, committed; CLAUDE.md is the `@AGENTS.md` stub |
 
 ## Done
