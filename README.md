@@ -34,19 +34,23 @@ claude plugin install lean-and-mean@lean-and-mean
 
 Restart Claude Code, then run `/lean-and-mean:lean-and-mean` once per project.
 
-**Codex:**
+**Codex desktop and CLI** (run these commands in a terminal):
 
 ```sh
 codex plugin marketplace add https://github.com/spinlockdevelopment/lean-and-mean
 codex plugin add lean-and-mean@lean-and-mean
 ```
 
-Start a new session at the project root, trust the SessionStart hook when
-prompted, and run `$lean-and-mean` once.
+Reopen the desktop app or CLI after installing. Review the plugin's SessionStart
+hook in desktop **Settings → Hooks** or CLI `/hooks`, then start a chat at the
+project root and run `$lean-and-mean` once.
 
-Codex has no plugin idle timer or exposed cache-expiry timestamp. Use
-`$endsession` to close a session manually; Claude's automatic cache countdown
-and end-session action remain Claude-only.
+To refresh an existing Git marketplace, run
+`codex plugin marketplace upgrade lean-and-mean` and reopen Codex.
+
+For the floating Session panel on macOS, build and install
+[Codex Companion](extras/codex-companion/README.md) from a checkout. The
+companion uses its own activity hooks and shows estimated cache idle time.
 
 Local checkouts, manual installs, and Codex notes:
 [install details](https://spinlockdevelopment.github.io/lean-and-mean/guide.html#manual).

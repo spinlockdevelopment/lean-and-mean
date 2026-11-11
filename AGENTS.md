@@ -38,7 +38,7 @@ block into a project's AGENTS.md (Claude loads it via a `@AGENTS.md` stub
 CLAUDE.md) so it runs natively; `/endsession` promotes session mistakes
 into Rules, rewrites Next, commits, pushes (PR if needed), then hard-stops. Full
 AGENTS.md review runs at next session start when the hook says it is due.
-v5.19.0, packaged for Codex with a portable manifest and repo marketplace.
+v5.20.0, packaged for Codex with a portable manifest and repo marketplace.
 - POSIX sh (one hook), Markdown skills, JSON manifests, one TSX function-hooks module (Claude only). Python stdlib tests for the hook; `claude plugin test` for the module.
 - Version bump in the portable manifest and three legacy manifests together. Breaking behavior → major.
 - Hook stays POSIX sh, under 35 lines, zero output in the common case.

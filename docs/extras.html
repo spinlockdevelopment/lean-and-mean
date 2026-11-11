@@ -17,16 +17,27 @@
 <header>
   <div class="eyebrow"><a href="./">lean-and-mean</a> · Extras</div>
   <h1>Extras and utilities</h1>
-  <p class="lede">Optional parts that are not part of the operating mode. Each has a command.</p>
+  <p class="lede">Optional tools for Claude Code and Codex.</p>
 </header>
 
 <div class="table-wrap"><table>
   <tr><th>Command</th><th>Effect</th></tr>
+  <tr><td><a href="#codex-companion">Codex Companion</a></td><td>Open a macOS Session panel for Codex</td></tr>
   <tr><td><code>/lean-and-mean:statusline</code></td><td>Install the <a href="#statusline">status line</a> into <code>~/.claude</code></td></tr>
   <tr><td><code>@agent-lean-and-mean:explainer</code></td><td>Write a local <a href="#explainer">explainer page</a> with diagrams</td></tr>
   <tr><td><code>/lean-and-mean:typesafe-ai</code></td><td>Build a feature on Jev with the <a href="#typesafe">typesafe-ai</a> skill</td></tr>
 </table></div>
 <p>The two slash commands run only when you type them. The assistant can call the Explainer Agent on its own when an answer is too long for the terminal.</p>
+
+<h2 id="codex-companion">Codex Companion</h2>
+<p>The macOS menu bar app opens a floating panel with the Git branch, context usage, weekly limit, estimated cache idle time, cached tokens, recorded tasks, and Next entries. It follows Codex’s appearance setting.</p>
+<p>Clone the repository and build the companion with Xcode Command Line Tools and Python 3.</p>
+<pre><code>git clone https://github.com/spinlockdevelopment/lean-and-mean.git
+cd lean-and-mean/extras/codex-companion
+sh build.sh
+python3 setup-hooks.py
+open ".build/Codex Companion.app"</code></pre>
+<p>Review the companion hooks in desktop <b>Settings → Hooks</b> or CLI <code>/hooks</code>, then send a prompt. <a href="https://github.com/spinlockdevelopment/lean-and-mean/blob/main/extras/codex-companion/README.md">Setup and removal instructions</a>.</p>
 
 <h2 id="statusline">Status line</h2>
 <p><code>extras/statusline.sh</code> sets up a terminal status line on a new machine. It shows the folder, branch, model, context use, the 5-hour limit (<code>5h</code>) and the weekly limit (<code>7d</code>). A plan that reports only one limit shows only that one. The Session Status Mod shows the cache countdown, so the status line does not.</p>

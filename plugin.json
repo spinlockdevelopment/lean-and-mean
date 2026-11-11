@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "lean-and-mean",
-  "version": "5.19.0",
+  "version": "5.20.0",
   "description": "Concise prose, YAGNI code, and session handoffs in AGENTS.md.",
   "author": {
     "name": "Spinlock Development",
